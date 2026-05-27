@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "interview": {
+    "ambiguity_threshold": 0.2,
+    "max_rounds": 20
+  },
+  "review": {
+    "max_loopback_attempts": 2
+  },
+  "verify": {
+    "coverage_threshold": 85,
+    "max_loopback_attempts": 3
+  },
+  "execute": {
+    "tdd_self_heal_max": 2,
+    "worktree_parent": null
+  },
+  "language_overrides": {
+    "test_command": null,
+    "coverage_command": null
+  },
+  "pr": {
+    "default_base_branch": null,
+    "default_draft": false
+  }
+}
