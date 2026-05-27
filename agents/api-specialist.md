@@ -1,7 +1,7 @@
 ---
 name: css-api-specialist
-description: REST/GraphQL/gRPC/tRPC contract design specialist (CSS pipeline, opus)
-model: opus
+description: REST/GraphQL/gRPC/tRPC contract design specialist (CSS pipeline, sonnet)
+model: sonnet
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/api-specialist.md
 ---
