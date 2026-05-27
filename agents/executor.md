@@ -33,42 +33,48 @@ css_stages: [execute]
   </Constraints>
 
   <Worktree_Boundary>
-    **이 섹션은 강제 정책입니다. 위반 시 실행을 즉시 중단합니다.**
+    **This section is HARD POLICY. Any violation aborts the run immediately.**
 
-    ## 0단계 — 작업 디렉토리 설정 (다른 모든 작업보다 먼저 실행)
-    계획 파일 읽기, 스펙 인덱싱, 파일 쓰기 등 어떤 작업보다도 먼저:
+    ## Step 0 — Set working directory (runs before ANYTHING else)
+    Before reading any plan file, before indexing specs, before writing any file:
 
     ```bash
-    cd "<worktree-root>"   # <inputs> 블록에 전달된 정확한 경로
-    pwd                    # 반드시 <worktree-root>를 출력해야 함; 다르면 중단
+    cd "<worktree-root>"   # the exact path passed in the <inputs> block
+    pwd                    # must print <worktree-root>; abort if it does not
     ```
 
-    `cd` 실패 또는 `pwd`가 `<worktree-root>`와 일치하지 않으면:
-    `VERDICT=ESCALATE reason="<path>에서 워크트리 진입 불가"` 출력 후 종료.
+    If `cd` fails or `pwd` does not match `<worktree-root>` exactly, emit
+    `VERDICT=ESCALATE reason="cannot enter worktree at <path>"` and stop.
 
-    ## 강제 규칙 — 예외 없음
-    1. 모든 `Write`, `Edit`, `Bash` 등 파일 변경 호출의 경로는
-       반드시 `<worktree-root>/`로 시작해야 한다 (심볼릭 링크 해석 후 기준).
-       쓰려는 파일의 절대 경로가 `<worktree-root>/`로 시작하지 않으면
-       해당 쓰기를 중단하고 `VERDICT=ESCALATE reason="워크트리 외부 쓰기 시도: <path>"` 출력.
+    ## Hard rules — no exceptions
+    1. Every `Write`, `Edit`, `Bash`, or equivalent file-mutation call MUST have
+       a path that starts with `<worktree-root>/` (after resolving symlinks).
+       If you are about to write a file and its absolute path does NOT start with
+       `<worktree-root>/`, ABORT that write and emit `VERDICT=ESCALATE
+       reason="attempted write outside worktree: <path>"`.
 
-    2. 스펙 아티팩트의 모든 경로("해당 테스트 파일 경로", GREEN 템플릿 파일 대상 등)는
-       **워크트리 상대 경로**로 처리한다. 파일 작업 전 반드시 `<worktree-root>/`를 앞에 붙인다.
-       절대 경로나 프로젝트 루트 상대 경로로 취급하지 않는다.
+    2. All paths taken from spec artifacts ("indicated test file path", GREEN
+       template file targets, etc.) are treated as **worktree-relative**.
+       Prepend `<worktree-root>/` before any file operation. Never treat them
+       as project-root-relative or absolute paths.
 
-    3. 폴백 스페셜리스트 호출 시 프롬프트에 아래 문장을 그대로 포함한다:
-       > "모든 파일은 반드시 `<worktree-root>` 안에 작성해야 합니다.
-       > 해당 접두사로 시작하지 않는 경로가 반환되면 익스큐터가 패치를 적용하지 않고 거부합니다."
-       패치 적용 전 모든 경로를 검증한다. `<worktree-root>` 외부 경로는 거부한다.
+    3. When dispatching a fallback specialist, include this line verbatim in
+       their prompt:
+       > "You MUST write all files inside `<worktree-root>`. Any path you
+       > return that does not start with that prefix will be rejected by the
+       > executor without applying the patch."
+       After receiving the specialist's patch, validate every path in it before
+       applying. Reject any path outside `<worktree-root>`.
 
-    4. `git` 명령(add, commit, status)은 `<worktree-root>`에서 실행한다.
-       메인 프로젝트 루트에서 실행하지 않는다.
+    4. `git` commands (add, commit, status) are run from `<worktree-root>`.
+       Never run them from the main project root.
 
-    5. `VERDICT=PASS` 선언 전 반드시 실행:
+    5. Before declaring `VERDICT=PASS`, run:
        ```bash
        git -C "<main-project-root>" status --short
        ```
-       예상치 못한 수정 사항이 보이면 `VERDICT=ESCALATE reason="메인 트리가 수정됨"` 출력 후 해당 경로 목록 표시.
+       If this shows any unexpected modifications, emit
+       `VERDICT=ESCALATE reason="main tree was modified"` and list the paths.
   </Worktree_Boundary>
 
   <Domain_Dispatch_Table>
