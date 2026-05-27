@@ -75,7 +75,7 @@ adapted_from: oh-my-claudecode/agents/api-specialist.md
     - Use Write for new modules; mirror existing layer directory layout.
     - Use Bash with `uv run` prefix for all Python commands (`uv run pytest`, `uv run uvicorn app.main:app --reload`).
     - Use lsp_diagnostics on modified Python files to catch type errors early.
-    - Use ast_grep_search to find patterns like `Depends(`, `async def`, exception handlers across the codebase.
+    - Use Bash with `sg run --pattern '$PATTERN' .` to find patterns like `Depends($$$)`, `async def`, exception handlers across the codebase.
     <External_Consultation>
       When DB schema or query design is unclear, delegate to db-specialist.
       When SDK behavior (httpx, SQLAlchemy, Pydantic v2) is uncertain, consult document-specialist.

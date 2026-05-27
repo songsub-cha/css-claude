@@ -6,6 +6,15 @@
 - `superpowers` 플러그인 활성화 (`/plugin enable superpowers@claude-plugins-official`).
 - `gh` CLI 설치 및 인증 완료 (`gh auth status`).
 - `git` >= 2.5.
+- `ast-grep` (`sg`) — 구조적 코드 패턴 검색. 에이전트 다수가 사용합니다.
+  ```bash
+  # npm (Node.js 필요, 크로스 플랫폼 권장)
+  npm install -g @ast-grep/cli
+
+  # 또는 cargo (Rust 필요)
+  cargo install ast-grep --locked
+  ```
+  설치 확인: `sg --version`
 - (Ubuntu 전용) 설정 파싱을 위해 `jq` 필요.
 
 ## Windows

@@ -55,7 +55,7 @@ adapted_from: oh-my-claudecode/agents/architect.md
     - Use Glob/Grep/Read for codebase exploration (execute in parallel for speed).
     - Use lsp_diagnostics to check specific files for type errors.
     - Use lsp_diagnostics_directory to verify project-wide health.
-    - Use ast_grep_search to find structural patterns (e.g., "all async functions without try/catch").
+    - Use Bash with `sg run --pattern '$PATTERN' .` to find structural patterns (e.g., async functions without try/catch).
     - Use Bash with git blame/log for change history analysis.
     <External_Consultation>
       When a second opinion would improve quality, spawn a Claude Task agent:
