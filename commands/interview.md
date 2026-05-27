@@ -1,0 +1,47 @@
+---
+description: Brainstorm an idea into a spec via superpowers:brainstorming (CSS pipeline stage 1)
+argument-hint: "[--slug <name>] <idea>"
+---
+
+# /css:interview
+
+Run a deep, Socratic brainstorming session to turn an idea into a CSS spec. Wraps `superpowers:brainstorming`.
+
+## Steps
+
+1. **Parse arguments**: extract `--slug` if present; the remainder is the idea text.
+
+2. **Resolve session**:
+   - If `--slug <name>` provided and `<project>/.claude/css/sessions/<name>.json` exists → resume.
+   - Else generate a new kebab-case slug from the idea (e.g. "JWT auth middleware" → `jwt-auth-middleware`). If the generated slug collides with an existing session file, append a numeric suffix.
+   - Initialize `<project>/.claude/css/sessions/<slug>.json` if new, or load it if resuming.
+   - Update `<project>/.claude/css/sessions/_active.json` with `{"latest_slug": "<slug>"}`.
+   - Acquire phase lock.
+
+3. **Verify superpowers is enabled**: read `~/.claude/settings.json`. If `enabledPlugins["superpowers@claude-plugins-official"]` is not true, abort with: "CSS requires the superpowers plugin. Enable via /plugin and retry."
+
+4. **Echo header**: print `[css:interview @ slug={slug}]` on the first line of the response.
+
+5. **Invoke brainstorming**:
+   ```
+   Skill("superpowers:brainstorming")
+   ```
+   Pass the idea text as the user's initial request inside the invoked skill's context. **Important override**: when brainstorming reaches its terminal "Invoke writing-plans skill" step, do NOT auto-invoke writing-plans. CSS calls `/css:plan` as a separate stage to keep each command independently runnable. Tell brainstorming: "Stop after the user-approves-spec gate; CSS will continue from there."
+
+6. **On brainstorming completion**:
+   - Locate the spec file written by brainstorming (typically `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`).
+   - Update session file: `phases.interview.status = "completed"`, `phases.interview.artifact = "<spec path>"`, `phases.interview.completed_at = <ISO timestamp>`.
+   - Refresh `_active.json`.
+
+7. **Release lock** and announce next step:
+   "Spec 작성 완료: `<spec path>`. 다음 단계: `/css:plan` 또는 `/css:ship --slug <slug>`로 진행."
+
+<self_check>
+- [ ] Artifact written by brainstorming (spec markdown file exists)
+- [ ] session file (sessions/{slug}.json) phase status updated to completed
+- [ ] _active.json.latest_slug updated
+- [ ] Final line contains NEXT=plan or ARTIFACT=<spec path>
+- [ ] No policy violations
+</self_check>
+
+$ARGUMENTS
