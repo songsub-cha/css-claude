@@ -1,22 +1,22 @@
-# Installation
+# 설치
 
-## Prerequisites
+## 사전 조건
 
-- Claude Code installed (the desktop app or CLI). Run it at least once so `~/.claude/` exists.
-- `superpowers` plugin enabled (`/plugin enable superpowers@claude-plugins-official`).
-- `gh` CLI installed and authenticated (`gh auth status`).
+- Claude Code 설치 (데스크톱 앱 또는 CLI). 최소 한 번 실행해서 `~/.claude/` 디렉토리가 생성되어 있어야 합니다.
+- `superpowers` 플러그인 활성화 (`/plugin enable superpowers@claude-plugins-official`).
+- `gh` CLI 설치 및 인증 완료 (`gh auth status`).
 - `git` >= 2.5.
-- (Ubuntu only) `jq` for settings introspection.
+- (Ubuntu 전용) 설정 파싱을 위해 `jq` 필요.
 
 ## Windows
 
 ```powershell
 git clone https://github.com/songsub-cha/css-claude.git
 cd css-claude
-.\scripts\install.ps1
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1
 ```
 
-To overwrite an existing personal config: `.\scripts\install.ps1 -Force`
+기존 개인 설정을 덮어쓰려면: `powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Force`
 
 ## Ubuntu 22.04
 
@@ -26,21 +26,21 @@ cd css-claude
 bash scripts/install.sh
 ```
 
-To overwrite an existing personal config: `FORCE=1 bash scripts/install.sh`
+기존 개인 설정을 덮어쓰려면: `FORCE=1 bash scripts/install.sh`
 
-## Verifying
+## 설치 확인
 
-After install, in any project that uses git:
+설치 후, git을 사용하는 아무 프로젝트에서:
 
 ```
 /css:ship "add a hello-world function"
 ```
 
-You should see the brainstorming flow begin. Ctrl+C is safe — your session state is preserved.
+brainstorming 흐름이 시작되면 정상입니다. `Ctrl+C`는 언제든 안전하며 세션 상태가 유지됩니다.
 
-## Uninstalling
+## 제거
 
-Windows: `.\scripts\uninstall.ps1`
+Windows: `powershell -ExecutionPolicy Bypass -File scripts\uninstall.ps1`
 Ubuntu:  `bash scripts/uninstall.sh`
 
-Personal config (`~/.claude/css/config.json`) and project artifacts (`<project>/.claude/css/`) are kept. Remove manually if you no longer want them.
+개인 설정(`~/.claude/css/config.json`)과 프로젝트 산출물(`<project>/.claude/css/`)은 제거되지 않습니다. 필요 없으면 수동으로 삭제하세요.
