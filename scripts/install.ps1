@@ -14,9 +14,15 @@
 #>
 [CmdletBinding()]
 param(
-  [string]$SourcePath = (Join-Path $PSScriptRoot ".."),
+  [string]$SourcePath = "",
   [switch]$Force
 )
+
+# $PSScriptRoot is empty when invoked via `powershell -File` from an external shell
+if (-not $SourcePath) {
+  $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+  $SourcePath = Join-Path $scriptDir ".."
+}
 
 $ErrorActionPreference = "Stop"
 
