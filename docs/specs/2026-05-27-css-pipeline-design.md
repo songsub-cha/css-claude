@@ -692,7 +692,7 @@ Each command `.md` ends with:
 Repository layout:
 
 ```
-css-claude/                       # private GitHub repo (e.g. github.com/<user>/css-claude)
+css-claude/                       # private GitHub repo (e.g. github.com/songsub-cha/css-claude)
 ├── README.md
 ├── LICENSE                       # personal use license
 ├── commands/                     # source of truth for ~/.claude/commands/css/
@@ -745,7 +745,7 @@ Design (final code in implementation phase):
 
 ```powershell
 # install.ps1 — Windows installer for CSS
-# Usage: irm https://raw.githubusercontent.com/<user>/css-claude/main/scripts/install.ps1 | iex
+# Usage: irm https://raw.githubusercontent.com/songsub-cha/css-claude/main/scripts/install.ps1 | iex
 #    or: .\scripts\install.ps1 -SourcePath .
 
 param(
@@ -781,7 +781,7 @@ Design (final code in implementation phase):
 ```bash
 #!/usr/bin/env bash
 # install.sh — Ubuntu 22.04 installer for CSS
-# Usage: curl -fsSL https://raw.githubusercontent.com/<user>/css-claude/main/scripts/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/songsub-cha/css-claude/main/scripts/install.sh | bash
 #    or: bash scripts/install.sh
 
 set -euo pipefail
