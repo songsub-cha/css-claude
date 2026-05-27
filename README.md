@@ -18,7 +18,7 @@ Eight slash commands under the `/css:` namespace that walk a feature from idea t
 
 - **Idea-to-PR automation** with explicit human checkpoints at high-stakes decisions
 - **TDD enforced** with ≥85% coverage in the execute stage
-- **17 specialized sub-agents** for API, DB, UI (web + Android), infra, security, testing, debugging, refactoring, async, LLM apps, and prompt engineering
+- **18 specialized sub-agents** for plan review, code-quality review, API, DB, UI (web + Android), infra, security, testing, debugging, refactoring, async, LLM apps, and prompt engineering
 - **Auto language detection**: JS/TS, Python, Go, Rust, Java (Maven), Java/Kotlin (Gradle, including Android Jetpack Compose)
 - **Stateful & resumable** via `<project>/.claude/css/session.json`
 - **Bounded automatic loopback** between stages, with user escalation when limits are hit

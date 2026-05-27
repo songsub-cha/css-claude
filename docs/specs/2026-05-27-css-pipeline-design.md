@@ -20,7 +20,7 @@ CSS (Claude Super System) is a personal, global software-development automation 
 2. **Quality by construction**: TDD with ≥85% coverage enforced, structured planning before implementation, multi-pass review/verify with bounded automatic loopback.
 3. **Cross-project reusability**: install once at `~/.claude/`, works in any project on the user's machine.
 4. **Independence from OMC**: `/css:*` does not depend on oh-my-claudecode (OMC). It relies only on Claude Code standard plugins (specifically `superpowers`) and `gh` CLI.
-5. **Domain-aware delegation**: 17 specialized sub-agents cover API, DB, UI (web + Android), infra, security, testing, debugging, refactoring, async, LLM apps, and prompt authoring.
+5. **Domain-aware delegation**: 18 specialized sub-agents cover plan review, code-quality review, API, DB, UI (web + Android), infra, security, testing, debugging, refactoring, async, LLM apps, and prompt authoring.
 
 ### Non-Goals (v1)
 
@@ -63,10 +63,10 @@ CSS (Claude Super System) is a personal, global software-development automation 
 ┌──────────────────────▼──────────────────────────────────┐
 │  Agents Layer  (~/.claude/agents/css/)                  │
 │  reviewer / executor / verifier / documenter /          │
-│  pr-creator / api-specialist / ui-engineer /            │
-│  architect / db-specialist / infra-engineer /           │
-│  security-reviewer / test-engineer / debugger /         │
-│  code-simplifier / async-coder /                        │
+│  pr-creator / code-reviewer / api-specialist /          │
+│  ui-engineer / architect / db-specialist /              │
+│  infra-engineer / security-reviewer / test-engineer /   │
+│  debugger / code-simplifier / async-coder /             │
 │  langgraph-engineer / prompt-engineer                   │
 │                                                          │
 │  Role: stage- and domain-specific workers with policy   │
@@ -111,11 +111,12 @@ CSS (Claude Super System) is a personal, global software-development automation 
 │       └── ship.md            # /css:ship (master)
 ├── agents/
 │   └── css/
-│       ├── reviewer.md
+│       ├── reviewer.md             # plan reviewer (used by /css:review)
 │       ├── executor.md
 │       ├── verifier.md
 │       ├── documenter.md
 │       ├── pr-creator.md
+│       ├── code-reviewer.md        # code-quality reviewer (used by /css:verify)
 │       ├── api-specialist.md
 │       ├── ui-engineer.md
 │       ├── architect.md
@@ -155,7 +156,9 @@ CSS (Claude Super System) is a personal, global software-development automation 
 │   ├── exec-log-{slug}-{ts}.md
 │   └── worktree-{slug}/                  # metadata only; the actual worktree lives at ../{repo}-css-{slug}
 ├── verifies/
-│   └── verify-{slug}-{ts}.md
+│   ├── verify-{slug}-{ts}.md
+│   ├── code-review-{slug}-{ts}.md
+│   └── security-review-{slug}-{ts}.md
 └── documents/
     └── doc-staging-{slug}.md
 ```
@@ -249,15 +252,22 @@ All eight commands follow the same skeleton:
 
 ### `/css:verify [--exec-log <log-path>]`
 
-- **Agent**: `css-verifier` (with mandatory `css-security-reviewer`)
+- **Agent**: `css-verifier` (with mandatory `css-code-reviewer` and `css-security-reviewer`)
 - **Behavior**:
   1. Run the full test suite in the worktree using the detected commands.
   2. Run coverage tool, ensure ≥85%.
   3. Map each acceptance criterion in the spec to concrete code/test evidence.
-  4. Always invoke `css-security-reviewer` (OWASP, secrets scan, dependency audit).
-  5. Verdict: `PASS | LOOPBACK_TO_EXECUTE | ESCALATE`.
+  4. Always invoke in parallel:
+     - `css-code-reviewer` (code quality: readability, naming, idioms, dead code, potential bugs, performance smells)
+     - `css-security-reviewer` (OWASP, secrets scan, dependency audit)
+  5. Aggregate findings into a single verdict: `PASS | LOOPBACK_TO_EXECUTE | ESCALATE`.
+     - LOOPBACK_TO_EXECUTE if either reviewer reports CRITICAL or HIGH, or tests fail, or coverage <85%, or acceptance criteria not mapped.
+     - MEDIUM/LOW code-quality findings are recorded but do not block.
   6. Auto-loopback up to 3 attempts. Then user escalation.
-- **Output**: `.claude/css/verifies/verify-{slug}-{ts}.md`.
+- **Output**:
+  - `.claude/css/verifies/verify-{slug}-{ts}.md` (aggregate report)
+  - `.claude/css/verifies/code-review-{slug}-{ts}.md` (code-quality findings)
+  - `.claude/css/verifies/security-review-{slug}-{ts}.md` (security findings)
 
 ### `/css:document [--from-worktree]`
 
@@ -292,15 +302,18 @@ All eight commands follow the same skeleton:
 
 ## Agent Specifications
 
-### Stage Agents (5)
+### Stage Agents (6)
 
 | Agent | Model | Source | Key Policy |
 |-------|-------|--------|-----------|
-| `css-reviewer` | opus | OMC `code-reviewer` + CSS adaptations | Coverage-matrix audit, specialist dispatch, verdict |
+| `css-reviewer` | opus | OMC `code-reviewer` + CSS adaptations | Plan review: coverage-matrix audit, specialist dispatch, plan verdict |
 | `css-executor` | sonnet (opus fallback for complex tasks) | CSS-native | TDD enforcement, worktree isolation |
-| `css-verifier` | sonnet (opus fallback) | CSS-native | Test/coverage/criteria mapping, loopback decision |
+| `css-verifier` | sonnet (opus fallback) | CSS-native | Test/coverage/criteria mapping, aggregate loopback decision |
+| `css-code-reviewer` | opus (read-only) | OMC `code-reviewer` + CSS adaptations (code-quality focus) | Code-quality review at verify: readability, naming, idioms, dead code, latent bugs, performance smells |
 | `css-documenter` | sonnet | OMC `document-specialist` + CSS adaptations | docs/{slug}/ structure, example extraction |
 | `css-pr-creator` | haiku | OMC `git-master` + CSS adaptations | gh CLI workflow, PR body template, no force push |
+
+**Note on the two reviewers**: `css-reviewer` (plan reviewer, runs in `/css:review`) and `css-code-reviewer` (code-quality reviewer, runs in `/css:verify`) share the same OMC source (`code-reviewer.md`) but apply its methodology to different artifacts. The plan reviewer audits plans against specs and dispatches domain specialists. The code reviewer audits the implemented code in the worktree for quality issues.
 
 ### Domain Specialists (12, copied from OMC with CSS headers)
 
@@ -453,6 +466,9 @@ For Android specifically: Material 3, Jetpack Compose preferred (Kotlin), 48dp t
 | verify | Acceptance criterion not mapped | LOOPBACK_TO_EXECUTE |
 | verify | Interface drift from api-spec | LOOPBACK_TO_EXECUTE |
 | verify | UI accessibility violation (Android <48dp, etc.) | LOOPBACK_TO_EXECUTE |
+| verify | css-code-reviewer reports CRITICAL or HIGH (latent bug, broken contract, severe perf regression) | LOOPBACK_TO_EXECUTE |
+| verify | css-code-reviewer reports MEDIUM/LOW only | Record, do not block |
+| verify | css-security-reviewer reports CRITICAL or HIGH | LOOPBACK_TO_EXECUTE |
 
 ### Counters
 
@@ -531,7 +547,9 @@ USER: /css:ship "<idea>"
 
 7. /css:verify (auto-loop)
    loop:
-     css-verifier + css-security-reviewer run
+     css-verifier runs the test suite + coverage + criteria mapping
+     css-code-reviewer + css-security-reviewer run in parallel
+     verifier aggregates verdict
      verdict == PASS → break
      verdict == LOOPBACK_TO_EXECUTE → /css:execute --resume (failed tasks only)
      attempts >= 3 → escalate
