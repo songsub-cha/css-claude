@@ -2,7 +2,7 @@
 
 **CSS — Claude Super System**: a personal, global software-development automation pipeline for [Claude Code](https://claude.com/claude-code).
 
-Status: **Design phase**. Implementation pending.
+Status: **v0.1.0**. Personal-use pipeline. See [`docs/installation.md`](docs/installation.md) for setup.
 
 ## What it is
 
@@ -13,6 +13,16 @@ Eight slash commands under the `/css:` namespace that walk a feature from idea t
                                                                                                         ↑
                                                 /css:ship  ──── runs everything with 3 gates ──────────┘
 ```
+
+## Quick start
+
+After installation:
+
+```
+/css:ship "<your idea>"
+```
+
+See [`docs/usage.md`](docs/usage.md) for full command reference.
 
 ## Highlights
 
