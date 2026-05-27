@@ -50,6 +50,11 @@ Create or attach to a git worktree, then drive the executor through batches with
      rich_specs_dir: <project>/.claude/css/plans/
      </inputs>
      <task>
+     첫 번째 동작 — 파일 읽기 전: `cd {worktree path} && pwd`.
+     디렉토리 진입 실패 시 VERDICT=ESCALATE로 중단.
+     이후 모든 파일 경로는 {worktree path} 기준 상대 경로다.
+     절대 경로가 {worktree path}로 시작하지 않는 파일은 쓰거나 편집하거나 삭제하지 않는다.
+
      Implement the plan task-by-task using strict Red-Green-Refactor TDD with the cache-first protocol:
        - RED: copy the matching rich-spec section's RED scaffold to the worktree, run, must fail.
        - GREEN: copy the matching rich-spec section's GREEN template, run tests.
@@ -80,6 +85,7 @@ Create or attach to a git worktree, then drive the executor through batches with
 - [ ] Branch css/{slug} created and contains task commits
 - [ ] exec-log file exists with cache_miss_count recorded
 - [ ] Coverage measured and recorded
+- [ ] `git -C <main-project-root> status` 에 예상치 못한 수정 사항 없음
 </self_check>
 
 $ARGUMENTS
