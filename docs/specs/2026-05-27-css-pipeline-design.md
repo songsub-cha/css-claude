@@ -270,7 +270,7 @@ All eight commands follow the same skeleton:
 | Alembic migration, SQLAlchemy model, raw SQL, Redis client, ARQ worker | `css-db-specialist` | `db-spec-{slug}-*.md` |
 | Dockerfile, docker-compose*.yml, k8s manifest, GitHub/GitLab CI workflow, nginx config | `css-infra-engineer` | `infra-spec-{slug}-*.md` |
 | `async def` / `await` / `asyncio.*` / `TaskGroup` / async generator (Python) | `css-async-coder` | `async-spec-{slug}-*.md` |
-| imports of `langchain`, `langgraph`, `langfuse`; StateGraph/`@tool` usage | `css-langgraph-engineer` | `llm-app-spec-{slug}-*.md` |
+| imports of `langchain`, `langgraph`, `langfuse`, or vector store SDKs (`chromadb`, `pinecone`, `weaviate-client`, `qdrant-client`, `faiss`, `langchain_postgres.PGVector`); StateGraph/`@tool` usage; RAG / embedding / chunking workflows | `css-langgraph-engineer` | `llm-app-spec-{slug}-*.md` |
 | LLM system-prompt file authoring (9-section template targets) | `css-prompt-engineer` | `prompt-spec-{slug}-*.md` |
 
 First match wins (top-to-bottom). When a task matches multiple rows, the dominant artifact's specialist is used; other specs are passed as supplementary context.
@@ -353,12 +353,12 @@ Specialists fall into two groups by behavior:
 
 | Agent | Model | Domain | Stages | Dispatched From |
 |-------|-------|--------|--------|-----------------|
-| `css-api-specialist` | opus | REST/GraphQL/gRPC/tRPC contract design + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
-| `css-ui-engineer` | opus | Web + Android UI/UX (Material 3, Compose, web frameworks) + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
+| `css-api-specialist` | sonnet | REST/GraphQL/gRPC/tRPC contract design + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
+| `css-ui-engineer` | sonnet | Web + Android UI/UX (Material 3, Compose, web frameworks) + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
 | `css-db-specialist` | sonnet | PostgreSQL, Redis, ARQ, migrations + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
 | `css-infra-engineer` | sonnet | Docker, K8s, CI/CD, nginx + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
 | `css-async-coder` | sonnet | Python asyncio concurrency + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
-| `css-langgraph-engineer` | sonnet | LangChain/LangGraph/LangFuse LLM apps + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
+| `css-langgraph-engineer` | sonnet | LangChain/LangGraph/LangFuse + vector DB / RAG (Chroma, Pinecone, Weaviate, Qdrant, FAISS, pgvector-via-LangChain) + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
 | `css-prompt-engineer` | opus | 9-section prompt design + authoring | review, execute | css-reviewer (review), css-executor (execute GREEN) |
 | `css-architect` | opus (read-only) | System architecture, module boundaries | review | css-reviewer (advisory) |
 | `css-security-reviewer` | opus (read-only) | OWASP, secrets, dependency audit | verify, review | css-verifier (always), css-reviewer (on demand) |

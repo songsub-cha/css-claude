@@ -850,7 +850,7 @@ css_stages: [execute]
     | Alembic migration, SQLAlchemy model, raw SQL, Redis client, ARQ worker | `css-db-specialist` | `db-spec-{slug}-*.md` |
     | Dockerfile, docker-compose*.yml, k8s manifest, GitHub/GitLab CI workflow, nginx config | `css-infra-engineer` | `infra-spec-{slug}-*.md` |
     | `async def` / `await` / `asyncio.*` / `TaskGroup` / async generator (Python only) | `css-async-coder` | `async-spec-{slug}-*.md` |
-    | imports of `langchain`, `langgraph`, `langfuse`; StateGraph/`@tool` usage | `css-langgraph-engineer` | `llm-app-spec-{slug}-*.md` |
+    | imports of `langchain`, `langgraph`, `langfuse`, or vector store SDKs (`chromadb`, `pinecone`, `weaviate-client`, `qdrant-client`, `faiss`, `langchain_postgres.PGVector`); StateGraph/`@tool` usage; RAG/embedding/chunking workflows | `css-langgraph-engineer` | `llm-app-spec-{slug}-*.md` |
     | LLM system-prompt file authoring (9-section template targets) | `css-prompt-engineer` | `prompt-spec-{slug}-*.md` |
 
     If a task matches multiple rows, pick the row of the dominant artifact and pass the other spec(s) as supplementary context to the specialist.
@@ -1200,8 +1200,8 @@ Copy `D:/03_Workspace/oh-my-claudecode-main/agents/api-specialist.md` to `agents
 ```yaml
 ---
 name: css-api-specialist
-description: REST/GraphQL/gRPC/tRPC contract design specialist (CSS pipeline, opus)
-model: opus
+description: REST/GraphQL/gRPC/tRPC contract design specialist (CSS pipeline, sonnet)
+model: sonnet
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/api-specialist.md
 ---
@@ -1240,8 +1240,8 @@ This is the only domain agent that combines two OMC sources (`designer.md` + `fr
 ```markdown
 ---
 name: css-ui-engineer
-description: Web + Android UI/UX designer/engineer (Material 3, Compose, web frameworks) (CSS pipeline, opus)
-model: opus
+description: Web + Android UI/UX designer/engineer (Material 3, Compose, web frameworks) (CSS pipeline, sonnet)
+model: sonnet
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/designer.md + frontend-engineer.md
 ---
@@ -1554,7 +1554,7 @@ OMC source: `D:/03_Workspace/oh-my-claudecode-main/agents/langgraph-engineer.md`
 ```yaml
 ---
 name: css-langgraph-engineer
-description: LangChain/LangGraph/LangFuse LLM application specialist (CSS pipeline, sonnet)
+description: LLM-app + vector DB / RAG specialist — LangChain/LangGraph/LangFuse and Chroma/Pinecone/Weaviate/Qdrant/FAISS/pgvector (CSS pipeline, sonnet)
 model: sonnet
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/langgraph-engineer.md
@@ -1565,9 +1565,9 @@ adapted_from: oh-my-claudecode/agents/langgraph-engineer.md
 
 ```markdown
 <Used_By_CSS>
-  **At `/css:review`:** Called by `css-reviewer` when plan tasks import `langchain`, `langgraph`, `langfuse`, or describe LLM agent workflows. Output artifact: `<project>/.claude/css/plans/llm-app-spec-{slug}-{ts}.md`.
+  **At `/css:review`:** Called by `css-reviewer` when plan tasks import `langchain`, `langgraph`, `langfuse`, vector store SDKs (`chromadb`, `pinecone`, `weaviate-client`, `qdrant-client`, `faiss`, `langchain_postgres.PGVector`), embedding clients, or describe LLM-agent / RAG / embedding / chunking workflows. Output artifact: `<project>/.claude/css/plans/llm-app-spec-{slug}-{ts}.md`. The artifact covers graph topology AND the vector data layer (embedding model + dimensions, chunking strategy, store + collection design, retrieval policy, index lifecycle).
 
-  **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of LLM-app tasks (StateGraph wiring, typed state schemas, structured-output nodes, `@tool` registrations, LangFuse callbacks, retry/fallback policies). The executor passes: (a) the task spec from the plan, (b) the llm-app-spec artifact from review (topology, budgets, observability), (c) the failing RED test output (including failure-path tests) and language_profile, (d) the worktree path. You produce the implementation with explicit recursion limits, traced callbacks, and structured output. Return control — the executor runs tests, manages REFACTOR/COMMIT, and updates session state.
+  **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of LLM-app and RAG tasks (StateGraph wiring, typed state schemas, structured-output nodes, `@tool` registrations, LangFuse callbacks, retry/fallback policies, **vector store collection setup, chunking pipelines, retriever construction, hybrid search wiring, index build/refresh scripts**). The executor passes: (a) the task spec from the plan, (b) the llm-app-spec artifact from review, (c) the failing RED test output and language_profile, (d) the worktree path. You produce the implementation with explicit recursion limits, traced callbacks, structured output, versioned collections, pinned embedding model + dimensions, and documented chunking. Return control — the executor runs tests, manages REFACTOR/COMMIT, and updates session state.
 </Used_By_CSS>
 ```
 

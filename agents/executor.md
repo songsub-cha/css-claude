@@ -42,7 +42,7 @@ css_stages: [execute]
     | Alembic migration, SQLAlchemy model, raw SQL, Redis client, ARQ worker | `css-db-specialist` | `db-spec-{slug}-*.md` |
     | Dockerfile, docker-compose*.yml, k8s manifest, GitHub/GitLab CI workflow, nginx config | `css-infra-engineer` | `infra-spec-{slug}-*.md` |
     | `async def` / `await` / `asyncio.*` / `TaskGroup` / async generator (Python only) | `css-async-coder` | `async-spec-{slug}-*.md` |
-    | imports of `langchain`, `langgraph`, `langfuse`; StateGraph/`@tool` usage | `css-langgraph-engineer` | `llm-app-spec-{slug}-*.md` |
+    | imports of `langchain`, `langgraph`, `langfuse`, or vector store SDKs (`chromadb`, `pinecone`, `weaviate-client`, `qdrant-client`, `faiss`, `langchain_postgres.PGVector`); StateGraph/`@tool` usage; RAG/embedding/chunking workflows | `css-langgraph-engineer` | `llm-app-spec-{slug}-*.md` |
     | LLM system-prompt file authoring (9-section template targets) | `css-prompt-engineer` | `prompt-spec-{slug}-*.md` |
 
     If a task matches multiple rows (e.g. a FastAPI endpoint that also uses async), pick the row of the dominant artifact and pass the other spec(s) as supplementary context to the specialist.
