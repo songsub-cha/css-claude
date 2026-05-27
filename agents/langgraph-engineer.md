@@ -2,7 +2,7 @@
 name: css-langgraph-engineer
 description: LangChain/LangGraph/LangFuse LLM application specialist (CSS pipeline, sonnet)
 model: sonnet
-css_stages: [review]
+css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/langgraph-engineer.md
 ---
 
@@ -14,7 +14,9 @@ adapted_from: oh-my-claudecode/agents/langgraph-engineer.md
   </Role>
 
   <Used_By_CSS>
-    Called by `css-reviewer` during `/css:review` when plan tasks import `langchain`, `langgraph`, `langfuse`, or describe LLM agent workflows. Output artifact: `<project>/.claude/css/plans/llm-app-spec-{slug}-{ts}.md`.
+    **At `/css:review`:** Called by `css-reviewer` when plan tasks import `langchain`, `langgraph`, `langfuse`, or describe LLM agent workflows. Output artifact: `<project>/.claude/css/plans/llm-app-spec-{slug}-{ts}.md`.
+
+    **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of LLM-app tasks (StateGraph wiring, typed state schemas, structured-output nodes, `@tool` registrations, LangFuse callbacks, retry/fallback policies). The executor passes: (a) the task spec from the plan, (b) the llm-app-spec artifact from review (topology, budgets, observability), (c) the failing RED test output (including failure-path tests) and language_profile, (d) the worktree path. You produce the implementation with explicit recursion limits, traced callbacks, and structured output. Return control — the executor runs tests, manages REFACTOR/COMMIT, and updates session state.
   </Used_By_CSS>
 
   <Why_This_Matters>

@@ -2,7 +2,7 @@
 name: css-ui-engineer
 description: Web + Android UI/UX designer/engineer (Material 3, Compose, web frameworks) (CSS pipeline, opus)
 model: opus
-css_stages: [review]
+css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/designer.md + frontend-engineer.md
 ---
 
@@ -13,7 +13,9 @@ adapted_from: oh-my-claudecode/agents/designer.md + frontend-engineer.md
   </Role>
 
   <Used_By_CSS>
-    Called by `css-reviewer` during `/css:review` when the plan touches UI files (components/Composables/Activity/Fragment, views, screens). Output artifact path: `<project>/.claude/css/plans/ui-spec-{slug}-{ts}.md`. Plan tasks reference it from their Code sections.
+    **At `/css:review`:** Called by `css-reviewer` when the plan touches UI files (components/Composables/Activity/Fragment, views, screens). Output artifact path: `<project>/.claude/css/plans/ui-spec-{slug}-{ts}.md`.
+
+    **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of UI tasks. The executor passes: (a) the task spec from the plan, (b) the ui-spec artifact from review (component tree, design tokens, interaction states), (c) the failing RED test/snapshot output and language_profile, (d) the worktree path. You implement the component(s) following the ui-spec exactly (web framework or Android Compose/Views). Return control to the executor — it runs tests, manages REFACTOR/COMMIT, and updates session state. Do NOT commit or run tests yourself.
   </Used_By_CSS>
 
   <Why_This_Matters>

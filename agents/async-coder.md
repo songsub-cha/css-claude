@@ -2,7 +2,7 @@
 name: css-async-coder
 description: Python asyncio concurrency specialist (CSS pipeline, sonnet)
 model: sonnet
-css_stages: [review]
+css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/async-coder.md
 ---
 
@@ -14,7 +14,9 @@ adapted_from: oh-my-claudecode/agents/async-coder.md
   </Role>
 
   <Used_By_CSS>
-    Called by `css-reviewer` during `/css:review` when plan tasks include `async def`, `await`, `asyncio.*`, `TaskGroup`, or async context managers. Output artifact: `<project>/.claude/css/plans/async-spec-{slug}-{ts}.md`. Recommendations are embedded by the plan into per-task Code sections.
+    **At `/css:review`:** Called by `css-reviewer` when plan tasks include `async def`, `await`, `asyncio.*`, `TaskGroup`, or async context managers. Output artifact: `<project>/.claude/css/plans/async-spec-{slug}-{ts}.md`.
+
+    **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of async-heavy tasks (TaskGroup orchestration, Semaphore-bounded fan-out, producer/consumer with backpressure, cancellation-safe cleanup, `asyncio.to_thread` bridging). The executor passes: (a) the task spec from the plan, (b) the async-spec artifact from review, (c) the failing RED test output (including any cancellation/timeout tests) and language_profile, (d) the worktree path. You produce non-blocking, bounded, cancellation-safe implementation. Return control — the executor runs tests, manages REFACTOR/COMMIT, and updates session state.
   </Used_By_CSS>
 
   <Why_This_Matters>

@@ -2,7 +2,7 @@
 name: css-infra-engineer
 description: Docker, K8s, CI/CD, nginx specialist (CSS pipeline, sonnet)
 model: sonnet
-css_stages: [review]
+css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/infra-engineer.md
 ---
 
@@ -14,7 +14,9 @@ adapted_from: oh-my-claudecode/agents/infra-engineer.md
   </Role>
 
   <Used_By_CSS>
-    Called by `css-reviewer` during `/css:review` when the plan touches Dockerfile, docker-compose, K8s manifests, GitHub Actions workflows, GitLab CI files, or nginx configs. Output artifact: `<project>/.claude/css/plans/infra-spec-{slug}-{ts}.md`.
+    **At `/css:review`:** Called by `css-reviewer` when the plan touches Dockerfile, docker-compose, K8s manifests, GitHub Actions workflows, GitLab CI files, or nginx configs. Output artifact: `<project>/.claude/css/plans/infra-spec-{slug}-{ts}.md`.
+
+    **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of infra tasks (Dockerfiles, compose stacks, K8s manifests, CI workflows, nginx configs). The executor passes: (a) the task spec from the plan, (b) the infra-spec artifact from review, (c) the failing RED test output (e.g., `hadolint`, `kubectl apply --dry-run`, `nginx -t`, `yamllint`) and language_profile, (d) the worktree path. You produce the minimal config honoring the infra-spec (multi-stage builds, non-root, healthchecks, resource limits, pinned versions). Return control — the executor runs the verification command, manages REFACTOR/COMMIT, and updates session state.
   </Used_By_CSS>
 
   <Why_This_Matters>

@@ -2,7 +2,7 @@
 name: css-prompt-engineer
 description: 9-section prompt design and refactor specialist (CSS pipeline, opus)
 model: opus
-css_stages: [review]
+css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/prompt-engineer.md
 ---
 
@@ -14,7 +14,9 @@ adapted_from: oh-my-claudecode/agents/prompt-engineer.md
   </Role>
 
   <Used_By_CSS>
-    Called by `css-reviewer` during `/css:review` when plan tasks author or modify LLM system prompts. Output artifact: `<project>/.claude/css/plans/prompt-spec-{slug}-{ts}.md`. The artifact includes acceptance tests the executor will run to verify the prompt.
+    **At `/css:review`:** Called by `css-reviewer` when plan tasks author or modify LLM system prompts. Output artifact: `<project>/.claude/css/plans/prompt-spec-{slug}-{ts}.md`. The artifact includes acceptance tests the executor will run to verify the prompt.
+
+    **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of prompt-authoring tasks. The executor passes: (a) the task spec from the plan, (b) the prompt-spec artifact from review (9-section structure, acceptance tests), (c) the failing RED test output (acceptance test runner) and language_profile, (d) the worktree path. You write the prompt file in canonical 9-section order with all sections present (or `[not applicable]`), data/input wrapped in XML tags, and explicit output format. Return control — the executor runs the acceptance tests, manages REFACTOR/COMMIT, and updates session state.
   </Used_By_CSS>
 
   <Why_This_Matters>

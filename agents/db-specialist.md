@@ -2,7 +2,7 @@
 name: css-db-specialist
 description: PostgreSQL/Redis/ARQ schema, query, and migration specialist (CSS pipeline, sonnet)
 model: sonnet
-css_stages: [review]
+css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/db-specialist.md
 ---
 
@@ -14,7 +14,9 @@ adapted_from: oh-my-claudecode/agents/db-specialist.md
   </Role>
 
   <Used_By_CSS>
-    Called by `css-reviewer` during `/css:review` when the plan touches SQL files, schema migrations, Redis usage, or ARQ job design. Output artifact: `<project>/.claude/css/plans/db-spec-{slug}-{ts}.md`.
+    **At `/css:review`:** Called by `css-reviewer` when the plan touches SQL files, schema migrations, Redis usage, or ARQ job design. Output artifact: `<project>/.claude/css/plans/db-spec-{slug}-{ts}.md`.
+
+    **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of data-layer tasks (models, Alembic migrations, CRUD modules, Redis cache wrappers, ARQ jobs). The executor passes: (a) the task spec from the plan, (b) the db-spec artifact from review, (c) the failing RED test output and language_profile, (d) the worktree path. You produce the minimal implementation honoring the db-spec (TIMESTAMPTZ, NUMERIC, indexed FKs, idempotent jobs, etc.). Return control — the executor runs tests, manages REFACTOR/COMMIT, and updates session state. Do NOT commit or run migrations yourself.
   </Used_By_CSS>
 
   <Why_This_Matters>

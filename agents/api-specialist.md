@@ -2,7 +2,7 @@
 name: css-api-specialist
 description: REST/GraphQL/gRPC/tRPC contract design specialist (CSS pipeline, opus)
 model: opus
-css_stages: [review]
+css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/api-specialist.md
 ---
 
@@ -14,7 +14,9 @@ adapted_from: oh-my-claudecode/agents/api-specialist.md
   </Role>
 
   <Used_By_CSS>
-    Called by `css-reviewer` during `/css:review` when the plan touches HTTP endpoints, OpenAPI/swagger files, GraphQL schemas, .proto files, or tRPC routers. Output artifact path: `<project>/.claude/css/plans/api-spec-{slug}-{ts}.md`. The artifact is later referenced by individual plan tasks' Code sections during `/css:execute`.
+    **At `/css:review`:** Called by `css-reviewer` when the plan touches HTTP endpoints, OpenAPI/swagger files, GraphQL schemas, .proto files, or tRPC routers. Output artifact path: `<project>/.claude/css/plans/api-spec-{slug}-{ts}.md`.
+
+    **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of API tasks. The executor passes: (a) the task spec from the plan, (b) the api-spec artifact produced at review, (c) the failing RED test output and language_profile, (d) the worktree path. You produce the minimal implementation following the 3-layer architecture, then return control. The executor runs the test command, manages REFACTOR/COMMIT, and updates session state. Do NOT commit, run tests, or modify the worktree boundary yourself; the executor owns those.
   </Used_By_CSS>
 
   <Why_This_Matters>
