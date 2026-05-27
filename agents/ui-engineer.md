@@ -13,9 +13,20 @@ adapted_from: oh-my-claudecode/agents/designer.md + frontend-engineer.md
   </Role>
 
   <Used_By_CSS>
-    **At `/css:review`:** Called by `css-reviewer` when the plan touches UI files (components/Composables/Activity/Fragment, views, screens). Output artifact path: `<project>/.claude/css/plans/ui-spec-{slug}-{ts}.md`.
+    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when the plan touches UI files (components / Composables / Activity / Fragment / views / screens). You produce a RICH spec at `<project>/.claude/css/plans/ui-spec-{slug}-{ts}.md` containing everything the executor needs at GREEN. Required sections:
 
-    **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of UI tasks. The executor passes: (a) the task spec from the plan, (b) the ui-spec artifact from review (component tree, design tokens, interaction states), (c) the failing RED test/snapshot output and language_profile, (d) the worktree path. You implement the component(s) following the ui-spec exactly (web framework or Android Compose/Views). Return control to the executor — it runs tests, manages REFACTOR/COMMIT, and updates session state. Do NOT commit or run tests yourself.
+    1. **High-level decisions** — platform (Web vs Android), component tree (Mermaid), design tokens (added vs reused), reuse audit, accessibility checklist (WCAG 2.2 AA for web; TalkBack / 48dp targets / dynamic color / RTL for Android).
+    2. **Per-Task Implementation Guide** — for EVERY plan task routed to you, include `## Task {plan-task-id}` containing:
+       - `Files:` exact paths.
+       - `RED scaffold:` complete unit / snapshot / interaction test file (jest+react-testing-library, vitest, @testing-library/vue, or androidx.compose.ui.test) the executor uses verbatim.
+       - `GREEN template:` complete component implementation (function component or `@Composable`) with all interaction states wired.
+       - `Edge cases:` empty states, loading, error, disabled, focus/keyboard navigation; for Android also pressed/dragged/large-font.
+       - `Depends-on:` references to api-spec sections for data shape, and to design tokens.
+    3. **Idiom reminders** — concise rules (e.g., "no business logic in components", "all strings via i18n", "use existing Button — don't redeclare").
+
+    The rich spec is the GREEN cache. Executor implements from your templates without re-invoking you.
+
+    **At `/css:execute` (fallback only):** Invoked by `css-executor` ONLY when (a) executor implemented from your spec, (b) tests still fail, (c) `css-debugger` exhausted its 2-attempt self-heal budget. You receive task + ui-spec + debugger analyses + language_profile + worktree path; you produce a targeted patch. Do NOT run tests, do NOT commit.
   </Used_By_CSS>
 
   <Why_This_Matters>

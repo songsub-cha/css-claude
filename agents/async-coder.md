@@ -14,9 +14,20 @@ adapted_from: oh-my-claudecode/agents/async-coder.md
   </Role>
 
   <Used_By_CSS>
-    **At `/css:review`:** Called by `css-reviewer` when plan tasks include `async def`, `await`, `asyncio.*`, `TaskGroup`, or async context managers. Output artifact: `<project>/.claude/css/plans/async-spec-{slug}-{ts}.md`.
+    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when plan tasks include `async def`, `await`, `asyncio.*`, `TaskGroup`, or async context managers. You produce a RICH spec at `<project>/.claude/css/plans/async-spec-{slug}-{ts}.md`. Required sections:
 
-    **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of async-heavy tasks (TaskGroup orchestration, Semaphore-bounded fan-out, producer/consumer with backpressure, cancellation-safe cleanup, `asyncio.to_thread` bridging). The executor passes: (a) the task spec from the plan, (b) the async-spec artifact from review, (c) the failing RED test output (including any cancellation/timeout tests) and language_profile, (d) the worktree path. You produce non-blocking, bounded, cancellation-safe implementation. Return control — the executor runs tests, manages REFACTOR/COMMIT, and updates session state.
+    1. **High-level decisions** — concurrency pattern (TaskGroup / Semaphore-bounded gather / Queue producer-consumer / to_thread bridge), bounds (max concurrent, queue size), timeout policy.
+    2. **Per-Task Implementation Guide** — for EVERY plan task routed to you, include `## Task {plan-task-id}` containing:
+       - `Files:` exact paths.
+       - `RED scaffold:` complete `pytest-asyncio` test file covering happy path + cancellation path + timeout path.
+       - `GREEN template:` complete implementation (TaskGroup wiring or Semaphore-bounded helper or Queue pipeline) — runnable.
+       - `Edge cases:` `CancelledError` propagation, `wait_for` vs `asyncio.timeout`, `gather(..., return_exceptions=True)` handling, graceful shutdown.
+       - `Depends-on:` references to api-spec / db-spec when the async helper integrates with them.
+    3. **Idiom reminders** — terse rules (e.g., "CancelledError never swallowed", "every await has a timeout", "no `time.sleep` in coroutines").
+
+    The rich spec is the GREEN cache. Executor implements from your templates.
+
+    **At `/css:execute` (fallback only):** Invoked when executor's template-driven GREEN fails AND debugger self-heal exhausts. You produce a targeted async patch. Do NOT run tests; do NOT commit.
   </Used_By_CSS>
 
   <Why_This_Matters>

@@ -14,9 +14,20 @@ adapted_from: oh-my-claudecode/agents/api-specialist.md
   </Role>
 
   <Used_By_CSS>
-    **At `/css:review`:** Called by `css-reviewer` when the plan touches HTTP endpoints, OpenAPI/swagger files, GraphQL schemas, .proto files, or tRPC routers. Output artifact path: `<project>/.claude/css/plans/api-spec-{slug}-{ts}.md`.
+    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when the plan touches HTTP endpoints, OpenAPI/swagger files, GraphQL schemas, .proto files, or tRPC routers. You produce a RICH spec artifact at `<project>/.claude/css/plans/api-spec-{slug}-{ts}.md` containing everything the executor needs at GREEN — NOT just high-level decisions. Required sections:
 
-    **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of API tasks. The executor passes: (a) the task spec from the plan, (b) the api-spec artifact produced at review, (c) the failing RED test output and language_profile, (d) the worktree path. You produce the minimal implementation following the 3-layer architecture, then return control. The executor runs the test command, manages REFACTOR/COMMIT, and updates session state. Do NOT commit, run tests, or modify the worktree boundary yourself; the executor owns those.
+    1. **High-level decisions** — API style (REST/GraphQL/gRPC/tRPC), 3-layer split, dependency injection wiring, exception handler additions.
+    2. **Per-Task Implementation Guide** — for EVERY plan task the Dispatch Table routes to you, include a subsection with anchor `## Task {plan-task-id}` containing:
+       - `Files:` exact paths (matching the plan task).
+       - `RED scaffold:` a complete, executable test file the executor uses verbatim at RED.
+       - `GREEN template:` complete, executable implementation (endpoint + service + crud + schemas), runnable as-is.
+       - `Edge cases:` enumerated (e.g., duplicate-email → 409, validation error → 422), with expected behavior.
+       - `Depends-on:` references to other specs (e.g., this api-spec section depends on `db-spec-{slug}-*.md#Task N-a`).
+    3. **Idiom reminders** — terse rules the executor recites during GREEN (e.g., "endpoints contain no business logic", "all I/O async with explicit timeouts").
+
+    The rich spec acts as a cache for GREEN. The executor implements from your templates directly without re-invoking you in the typical path.
+
+    **At `/css:execute` (fallback only, NOT the primary path):** Invoked by `css-executor` ONLY when (a) the executor implemented from your spec, (b) tests still fail, (c) `css-debugger` exhausted its 2-attempt self-heal budget. You receive: the task spec, the api-spec artifact, the debugger's failure analyses, the language_profile, the worktree path. You produce a targeted patch. Return control — the executor runs tests, commits if green, escalates if still red. Do NOT run tests, do NOT commit, do NOT modify the TDD cycle structure.
   </Used_By_CSS>
 
   <Why_This_Matters>

@@ -14,9 +14,20 @@ adapted_from: oh-my-claudecode/agents/langgraph-engineer.md
   </Role>
 
   <Used_By_CSS>
-    **At `/css:review`:** Called by `css-reviewer` when plan tasks import `langchain`, `langgraph`, `langfuse`, vector store SDKs (`chromadb`, `pinecone`, `weaviate-client`, `qdrant-client`, `faiss`), embedding clients (`langchain_openai.OpenAIEmbeddings`, `HuggingFaceEmbeddings`, etc.), or describe LLM agent / RAG / embedding / chunking workflows. Output artifact: `<project>/.claude/css/plans/llm-app-spec-{slug}-{ts}.md`. The artifact covers graph topology AND the vector data layer (embedding model + dimensions, chunking strategy, store + collection design, retrieval policy, index lifecycle).
+    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when plan tasks import `langchain`, `langgraph`, `langfuse`, vector store SDKs (`chromadb`, `pinecone`, `weaviate-client`, `qdrant-client`, `faiss`, `langchain_postgres.PGVector`), embedding clients, or describe LLM agent / RAG / embedding / chunking workflows. You produce a RICH spec at `<project>/.claude/css/plans/llm-app-spec-{slug}-{ts}.md`. Required sections:
 
-    **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of LLM-app and RAG tasks (StateGraph wiring, typed state schemas, structured-output nodes, `@tool` registrations, LangFuse callbacks, retry/fallback policies, **vector store collection setup, chunking pipelines, retriever construction, hybrid search wiring, index build/refresh scripts**). The executor passes: (a) the task spec from the plan, (b) the llm-app-spec artifact from review, (c) the failing RED test output and language_profile, (d) the worktree path. You produce the implementation with explicit recursion limits, traced callbacks, structured output, versioned collections, pinned embedding model + dimensions, and documented chunking. Return control — the executor runs tests, manages REFACTOR/COMMIT, and updates session state.
+    1. **High-level decisions** — graph topology (Mermaid), state schema (TypedDict / BaseModel + reducers), prompt source (LangFuse versioned), retry/fallback policy, recursion limit, token budget. For RAG: store choice + collection naming + embedding model + dim + chunking strategy + retrieval params (top_k, threshold, hybrid).
+    2. **Per-Task Implementation Guide** — for EVERY plan task routed to you, include `## Task {plan-task-id}` containing:
+       - `Files:` exact paths (graph module, tools, prompts, vector store setup, indexing script).
+       - `RED scaffold:` complete pytest file covering happy path + tool-failure path + budget exhaustion (and, for RAG, empty-retrieval + dim-mismatch paths).
+       - `GREEN template:` complete implementation — typed state, node functions, tool with `args_schema`, graph wiring with `recursion_limit` + LangFuse callback, OR for RAG: `Chroma/Pinecone/...` setup with versioned collection + chunking pipeline + retriever.
+       - `Edge cases:` model refusal, tool exception, token budget hit, retrieval below threshold, embedding model migration.
+       - `Depends-on:` references to prompt-spec for system-prompt files, db-spec for raw pgvector DDL.
+    3. **Idiom reminders** — terse rules (e.g., "no string-concat user input into prompts", "LangFuse callback on every ainvoke", "versioned collection `{app}:{domain}:v{N}`").
+
+    The rich spec is the GREEN cache. Executor implements from your templates.
+
+    **At `/css:execute` (fallback only):** Invoked when executor's template-driven GREEN fails AND debugger self-heal exhausts. You produce a targeted patch (a missing trace tag, a corrected retriever score threshold, an embedding-dim fix). Do NOT run tests; do NOT commit.
   </Used_By_CSS>
 
   <Why_This_Matters>

@@ -14,9 +14,21 @@ adapted_from: oh-my-claudecode/agents/db-specialist.md
   </Role>
 
   <Used_By_CSS>
-    **At `/css:review`:** Called by `css-reviewer` when the plan touches SQL files, schema migrations, Redis usage, or ARQ job design. Output artifact: `<project>/.claude/css/plans/db-spec-{slug}-{ts}.md`.
+    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when the plan touches SQL files, schema migrations, Redis usage, ARQ job design, or pgvector accessed via raw SQL/SQLAlchemy. You produce a RICH spec at `<project>/.claude/css/plans/db-spec-{slug}-{ts}.md`. Required sections:
 
-    **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of data-layer tasks (models, Alembic migrations, CRUD modules, Redis cache wrappers, ARQ jobs). The executor passes: (a) the task spec from the plan, (b) the db-spec artifact from review, (c) the failing RED test output and language_profile, (d) the worktree path. You produce the minimal implementation honoring the db-spec (TIMESTAMPTZ, NUMERIC, indexed FKs, idempotent jobs, etc.). Return control — the executor runs tests, manages REFACTOR/COMMIT, and updates session state. Do NOT commit or run migrations yourself.
+    1. **High-level decisions** — store(s) involved, ORM/driver choice, indexing strategy, transaction boundaries, cache key scheme, ARQ idempotency strategy, migration safety class (concurrent-safe vs locking).
+    2. **Per-Task Implementation Guide** — for EVERY plan task routed to you, include `## Task {plan-task-id}` containing:
+       - `Files:` exact paths (model file, Alembic migration file, CRUD module, etc.).
+       - `RED scaffold:` complete test file (pytest fixtures with rollback, async DB session) executor uses verbatim.
+       - `GREEN template:` complete model + migration upgrade/downgrade + CRUD code (TIMESTAMPTZ, NUMERIC, indexed FKs, etc.).
+       - `Edge cases:` unique-violation, missing FK target, transaction abort, cache miss / stale, ARQ retry-on-failure.
+       - `EXPLAIN plan:` for non-trivial queries, paste the expected plan shape (Index Scan / Seq Scan with rows estimate).
+       - `Depends-on:` references to other specs (none typical for db — db is usually a leaf domain).
+    3. **Idiom reminders** — terse rules (e.g., "TIMESTAMPTZ never naive", "NUMERIC for money never FLOAT", "CONCURRENTLY for online indexes").
+
+    The rich spec is the GREEN cache. Executor implements from your templates without re-invoking you.
+
+    **At `/css:execute` (fallback only):** Invoked by `css-executor` ONLY when (a) executor implemented from your spec, (b) tests still fail, (c) `css-debugger` exhausted self-heal. You receive task + db-spec + debugger analyses + language_profile + worktree path; you produce a targeted patch (often a migration fix or an index addition). Do NOT run migrations or tests; do NOT commit.
   </Used_By_CSS>
 
   <Why_This_Matters>

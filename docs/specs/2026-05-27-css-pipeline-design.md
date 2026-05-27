@@ -95,7 +95,7 @@ CSS (Claude Super System) is a personal, global software-development automation 
 - **Single source of truth**: per-stage artifacts live under `<project>/.claude/css/`. The per-slug session file (`sessions/{slug}.json`) points to them.
 - **Three approval gates only** in `/css:ship`: after interview, before execute, before PR.
 - **English policy + Korean response**: agent system prompts use English (precision); user-visible output text is Korean.
-- **Domain delegation (review + execute)**: API, DB, UI, infra, async, LLM-app, and prompt-engineering work each dispatches to the matching specialist twice — once during `/css:review` to produce a spec artifact, and again during `/css:execute` (GREEN phase) to implement the task. The executor keeps RED/REFACTOR/COMMIT for itself.
+- **Domain delegation (cache-first)**: API, DB, UI, infra, async, LLM-app, and prompt-engineering work each dispatch to the matching specialist ONCE at `/css:review` to produce a rich spec containing per-task RED scaffolds + GREEN templates. At `/css:execute` the executor reads the spec and applies templates directly — no specialist re-invocation in the typical path. Specialists are re-invoked only as a bounded fallback when `css-debugger` self-heal exhausts. Expected ~40–50% LLM cost reduction vs the naive double-invocation design.
 
 ## Directory Structure
 
@@ -244,22 +244,27 @@ All eight commands follow the same skeleton:
 
 ### `/css:execute [--plan <plan-path>]`
 
-- **Agent**: `css-executor` (with on-demand calls to debugger, code-simplifier, test-engineer, **and domain specialists at GREEN**)
+- **Agent**: `css-executor` (uses rich-spec artifacts produced at `/css:review` as a GREEN-phase cache; specialists are invoked only as fallback)
 - **Behavior**:
   1. Create `git worktree add ../{repo}-css-{slug} -b css/{slug}`.
-  2. Locate all `*-spec-{slug}-*.md` artifacts produced during `/css:review` (api-spec, ui-spec, db-spec, infra-spec, async-spec, llm-app-spec, prompt-spec).
-  3. Group plan tasks into batches by dependency graph. For each task, match its `Files:` and code against the **Domain Dispatch Table** to pre-assign a specialist (or "executor-direct" if no match).
-  4. **Batch checkpoint**: before each batch, announce intent (including specialist assignments) and request user confirmation. These per-batch micro-checkpoints are **separate from and additional to** the three master `/css:ship` gates (post-interview, pre-execute, pre-PR). They only appear during execute and do not block standalone `/css:execute` use beyond a single combined "start execute?" prompt.
-  5. For each task, enforce TDD:
-     - **RED** (executor-owned): write tests, run, must fail. If exit code 0 → abort task and escalate.
-     - **GREEN** (delegated when a specialist matches):
-       - Specialist match → dispatch via `Task(subagent_type="<specialist>")` with `{task_spec, spec_artifact_path, red_test_failure_log, language_profile, worktree_path}`. The specialist writes implementation files inside the worktree and returns; the executor then runs the test command.
-       - No match → executor implements directly.
-       - On test failure: up to 2 self-heal cycles via `css-debugger`; if still failing, escalate.
-     - **REFACTOR** (executor-owned): call `css-code-simplifier` for read-only suggestions; tests must remain green.
-  6. Per-task commit on the css branch (executor-owned). Commit trailer: `CSS-Specialist: <name>` when a specialist was used.
+  2. **Index the rich-spec artifacts**: locate all `*-spec-{slug}-*.md` artifacts produced during `/css:review` (api-spec, ui-spec, db-spec, infra-spec, async-spec, llm-app-spec, prompt-spec) and parse their `## Task {id}` anchors into a lookup map.
+  3. Group plan tasks into batches by dependency graph. For each task, match its `Files:` and code against the **Domain Dispatch Table** to pre-resolve which spec artifact will supply its RED scaffold + GREEN template (or "executor-direct" if no match).
+  4. **Batch checkpoint**: before each batch, announce intent (including which spec artifact each task draws from) and request user confirmation. These per-batch micro-checkpoints are **separate from and additional to** the three master `/css:ship` gates (post-interview, pre-execute, pre-PR).
+  5. For each task, enforce TDD using the rich spec as a cache:
+     - **RED** (executor-owned, spec-driven): copy the `RED scaffold:` block from the matching `## Task {id}` section of the spec into the worktree; run; must fail. If exit 0 → abort and escalate.
+     - **GREEN** (executor-owned, spec-driven, with bounded fallback):
+       - Copy the `GREEN template:` block from the same `## Task {id}` section into the worktree. **Specialist is NOT re-invoked by default.**
+       - No spec match → executor implements directly per the plan task.
+       - Run tests. On failure:
+         1. `css-debugger` attempt 1 → patch → rerun.
+         2. `css-debugger` attempt 2 → patch → rerun.
+         3. If still failing AND a specialist matched: invoke the specialist as **execute-stage fallback** (1 invocation max) with the full failure trail.
+         4. Still failing → abort and escalate.
+     - **REFACTOR** (executor-owned): call `css-code-simplifier`; tests must stay green.
+  6. Per-task commit on the css branch (executor-owned). Trailers: `CSS-Slug`, `CSS-Task`, `CSS-Specialist-Spec` (when GREEN drew from a spec), `CSS-Specialist-Fallback` (only when the fallback was triggered — used to audit cache-miss frequency).
   7. Per-batch coverage measurement. If <85%, call `css-test-engineer` for up to 2 additional test-author cycles.
-- **Output**: `css/{slug}` branch in `../{repo}-css-{slug}` worktree + `.claude/css/executions/exec-log-{slug}-{ts}.md`.
+- **Output**: `css/{slug}` branch in `../{repo}-css-{slug}` worktree + `.claude/css/executions/exec-log-{slug}-{ts}.md` (includes `cache_miss_count` per slug).
+- **Cost model**: typical run = N specialist invocations at `/css:review` + ~0–0.2N fallback invocations at execute. Naive (no caching) would be 2N. Expected ~40–50% LLM cost reduction.
 
 #### Domain Dispatch Table (used at GREEN)
 
@@ -277,7 +282,22 @@ First match wins (top-to-bottom). When a task matches multiple rows, the dominan
 
 #### Delegation Boundary
 
-`css-executor` ALWAYS owns RED, REFACTOR orchestration, `git commit`, worktree-boundary enforcement, coverage measurement, self-heal accounting, VERDICT emission, and session updates. Specialists ONLY write production implementation files at GREEN — they do not run tests, commit, or modify the TDD cycle structure. Read-only/advisory agents (`css-architect`, `css-security-reviewer`, `css-code-reviewer`, `css-code-simplifier`) never write implementation code at GREEN.
+`css-executor` ALWAYS owns RED scaffold application, GREEN template application (it's a copy operation from the cached spec, not a delegation), REFACTOR orchestration, `git commit`, worktree-boundary enforcement, coverage measurement, self-heal accounting, VERDICT emission, and session updates. At the execute stage, implementation specialists are invoked ONLY as a bounded fallback (1 call max per task, after `css-debugger` has exhausted its 2-attempt budget) to produce a targeted patch. Read-only/advisory agents (`css-architect`, `css-security-reviewer`, `css-code-reviewer`, `css-code-simplifier`) never write implementation code at GREEN.
+
+#### Rich Spec Output Format (produced by every implementation specialist at `/css:review`)
+
+Each `*-spec-{slug}-*.md` artifact MUST contain three sections so the executor can run GREEN from disk:
+
+1. **High-level decisions** — domain-level patterns, idioms, library choices, architectural rules.
+2. **Per-Task Implementation Guide** — one `## Task {plan-task-id}` block per plan task the Dispatch Table routes to this specialist, containing:
+   - `Files:` exact paths matching the plan task.
+   - `RED scaffold:` complete, executable test code the executor uses verbatim.
+   - `GREEN template:` complete, executable implementation code.
+   - `Edge cases:` enumerated with expected behavior.
+   - `Depends-on:` references to other specs (e.g., `db-spec-{slug}-*.md#Task N-a`).
+3. **Idiom reminders** — terse rules for the executor to recite during GREEN (e.g., "TIMESTAMPTZ never naive", "no business logic in endpoints").
+
+If a specialist's rich spec lacks the per-task block for a task that the Dispatch Table routes to it, `css-reviewer` flags it as a finding and triggers `LOOPBACK_TO_PLAN` — never let the executor run without a cache to hit.
 
 ### `/css:verify [--exec-log <log-path>]`
 
@@ -353,13 +373,13 @@ Specialists fall into two groups by behavior:
 
 | Agent | Model | Domain | Stages | Dispatched From |
 |-------|-------|--------|--------|-----------------|
-| `css-api-specialist` | sonnet | REST/GraphQL/gRPC/tRPC contract design + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
-| `css-ui-engineer` | sonnet | Web + Android UI/UX (Material 3, Compose, web frameworks) + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
-| `css-db-specialist` | sonnet | PostgreSQL, Redis, ARQ, migrations + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
-| `css-infra-engineer` | sonnet | Docker, K8s, CI/CD, nginx + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
-| `css-async-coder` | sonnet | Python asyncio concurrency + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
-| `css-langgraph-engineer` | sonnet | LangChain/LangGraph/LangFuse + vector DB / RAG (Chroma, Pinecone, Weaviate, Qdrant, FAISS, pgvector-via-LangChain) + impl | review, execute | css-reviewer (review), css-executor (execute GREEN) |
-| `css-prompt-engineer` | opus | 9-section prompt design + authoring | review, execute | css-reviewer (review), css-executor (execute GREEN) |
+| `css-api-specialist` | sonnet | REST/GraphQL/gRPC/tRPC contract design + impl | review, execute | css-reviewer (review, produces rich spec), css-executor (execute fallback only — after debugger self-heal exhausts) |
+| `css-ui-engineer` | sonnet | Web + Android UI/UX (Material 3, Compose, web frameworks) + impl | review, execute | css-reviewer (review, produces rich spec), css-executor (execute fallback only) |
+| `css-db-specialist` | sonnet | PostgreSQL, Redis, ARQ, migrations + impl | review, execute | css-reviewer (review, produces rich spec), css-executor (execute fallback only) |
+| `css-infra-engineer` | sonnet | Docker, K8s, CI/CD, nginx + impl | review, execute | css-reviewer (review, produces rich spec), css-executor (execute fallback only) |
+| `css-async-coder` | sonnet | Python asyncio concurrency + impl | review, execute | css-reviewer (review, produces rich spec), css-executor (execute fallback only) |
+| `css-langgraph-engineer` | sonnet | LangChain/LangGraph/LangFuse + vector DB / RAG (Chroma, Pinecone, Weaviate, Qdrant, FAISS, pgvector-via-LangChain) + impl | review, execute | css-reviewer (review, produces rich spec), css-executor (execute fallback only) |
+| `css-prompt-engineer` | opus | 9-section prompt design + authoring | review, execute | css-reviewer (review, produces rich spec), css-executor (execute fallback only) |
 | `css-architect` | opus (read-only) | System architecture, module boundaries | review | css-reviewer (advisory) |
 | `css-security-reviewer` | opus (read-only) | OWASP, secrets, dependency audit | verify, review | css-verifier (always), css-reviewer (on demand) |
 | `css-test-engineer` | sonnet | Test design, coverage gap closure | execute | css-executor (when coverage <85%) |

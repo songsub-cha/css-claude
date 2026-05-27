@@ -14,9 +14,20 @@ adapted_from: oh-my-claudecode/agents/infra-engineer.md
   </Role>
 
   <Used_By_CSS>
-    **At `/css:review`:** Called by `css-reviewer` when the plan touches Dockerfile, docker-compose, K8s manifests, GitHub Actions workflows, GitLab CI files, or nginx configs. Output artifact: `<project>/.claude/css/plans/infra-spec-{slug}-{ts}.md`.
+    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when the plan touches Dockerfile, docker-compose, K8s manifests, GitHub/GitLab CI workflows, or nginx configs. You produce a RICH spec at `<project>/.claude/css/plans/infra-spec-{slug}-{ts}.md`. Required sections:
 
-    **At `/css:execute`:** Called by `css-executor` to implement the GREEN phase of infra tasks (Dockerfiles, compose stacks, K8s manifests, CI workflows, nginx configs). The executor passes: (a) the task spec from the plan, (b) the infra-spec artifact from review, (c) the failing RED test output (e.g., `hadolint`, `kubectl apply --dry-run`, `nginx -t`, `yamllint`) and language_profile, (d) the worktree path. You produce the minimal config honoring the infra-spec (multi-stage builds, non-root, healthchecks, resource limits, pinned versions). Return control — the executor runs the verification command, manages REFACTOR/COMMIT, and updates session state.
+    1. **High-level decisions** — runtime base image + digest, deployment target (compose / K8s flavor / serverless), secret management, observability stack, rollback path.
+    2. **Per-Task Implementation Guide** — for EVERY plan task routed to you, include `## Task {plan-task-id}` containing:
+       - `Files:` exact paths.
+       - `RED scaffold:` the lint/dry-run command and expected initial FAIL output (e.g., `hadolint Dockerfile` → DL3007, `kubectl apply --dry-run=server` → missing field, `nginx -t` → directive not allowed).
+       - `GREEN template:` complete config (Dockerfile / compose service / K8s Deployment+Service+Ingress / nginx server block / GitHub Actions workflow) ready to drop in.
+       - `Edge cases:` multi-arch builds, secret rotation, rolling-update strategy, PDB for HA, resource-limit headroom.
+       - `Depends-on:` ports/health endpoints from api-spec; storage requirements from db-spec.
+    3. **Idiom reminders** — concise (e.g., "non-root USER 1000", "pin digests not :latest", "requests AND limits", "liveness + readiness").
+
+    The rich spec is the GREEN cache. Executor applies your templates without re-invoking you.
+
+    **At `/css:execute` (fallback only):** Invoked when executor's template-driven GREEN fails AND debugger self-heal exhausts. You produce a targeted patch (a missing label, a corrected probe path, a hadolint exception). Do NOT run kubectl/docker; do NOT commit.
   </Used_By_CSS>
 
   <Why_This_Matters>
