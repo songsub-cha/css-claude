@@ -20,7 +20,8 @@ Eight slash commands under the `/css:` namespace that walk a feature from idea t
 - **TDD enforced** with ≥85% coverage in the execute stage
 - **18 specialized sub-agents** for plan review, code-quality review, API, DB, UI (web + Android), infra, security, testing, debugging, refactoring, async, LLM apps, and prompt engineering
 - **Auto language detection**: JS/TS, Python, Go, Rust, Java (Maven), Java/Kotlin (Gradle, including Android Jetpack Compose)
-- **Stateful & resumable** via `<project>/.claude/css/session.json`
+- **Stateful & resumable** via `<project>/.claude/css/sessions/{slug}.json`
+- **Multi-session concurrency**: run `/css:ship` for feature A in one terminal and feature B in another against the same project — sessions are isolated by slug
 - **Bounded automatic loopback** between stages, with user escalation when limits are hit
 - **OMC-independent** — depends only on Claude Code's `superpowers` plugin and `gh` CLI
 

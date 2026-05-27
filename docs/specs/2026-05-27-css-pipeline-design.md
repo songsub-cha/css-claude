@@ -24,10 +24,13 @@ CSS (Claude Super System) is a personal, global software-development automation 
 
 ### Non-Goals (v1)
 
-- Multi-session concurrency in the same project (1 active session per project for v1).
 - Auto-merging PRs.
 - Cross-language monorepo orchestration beyond per-package detection (basic monorepo handling only).
 - Distribution as a Claude Code plugin package (deferred to stage 3 deployment).
+
+### In Scope (v1)
+
+- **Multi-session concurrency in the same project**: multiple terminals running `/css:ship` (or any `/css:*`) for different features at once. Sessions are isolated by slug — separate session files, separate worktrees, separate branches. Same-slug collisions are explicitly rejected.
 
 ## Decisions Summary
 
@@ -75,7 +78,8 @@ CSS (Claude Super System) is a personal, global software-development automation 
                        │ read/write
 ┌──────────────────────▼──────────────────────────────────┐
 │  State Layer  (<project>/.claude/css/)                  │
-│  session.json   (current phase, locks, gates)           │
+│  sessions/{slug}.json   (one file per active session)   │
+│  sessions/_active.json  (pointer to most-recent session)│
 │  specs/         (interview output via brainstorming)    │
 │  plans/         (writing-plans output + spec extensions)│
 │  reviews/       (review verdicts + findings)            │
@@ -88,7 +92,7 @@ CSS (Claude Super System) is a personal, global software-development automation 
 ### Core Principles
 
 - **Independent execution**: each `/css:*` command can be invoked alone. Missing prior artifacts surface as user-friendly guidance, not crashes.
-- **Single source of truth**: per-stage artifacts live under `<project>/.claude/css/`. session.json points to them.
+- **Single source of truth**: per-stage artifacts live under `<project>/.claude/css/`. The per-slug session file (`sessions/{slug}.json`) points to them.
 - **Three approval gates only** in `/css:ship`: after interview, before execute, before PR.
 - **English policy + Korean response**: agent system prompts use English (precision); user-visible output text is Korean.
 - **Domain delegation**: API, DB, UI, infra, async, LLM-app, prompt-engineering work each dispatches to the matching specialist agent before execution.
@@ -137,7 +141,9 @@ CSS (Claude Super System) is a personal, global software-development automation 
 
 ```
 <project>/.claude/css/
-├── session.json
+├── sessions/
+│   ├── {slug}.json                       # one per active or completed session
+│   └── _active.json                      # {"latest_slug": "user-auth-jwt"} — pointer for standalone commands
 ├── specs/
 │   └── interview-{slug}-{ts}.md          # from superpowers:brainstorming
 ├── plans/
@@ -177,7 +183,7 @@ CSS (Claude Super System) is a personal, global software-development automation 
 - `{slug}`: kebab-case identifier derived during interview (e.g. `user-auth-jwt`).
 - `{ts}`: ISO-8601 timestamp with safe separator (e.g. `2026-05-27T14-30`).
 - **All artifact filenames include `-{ts}`** without exception (interview spec, plan, domain specs, reviews, exec logs, verifies, document staging).
-- Re-running a stage with the same slug creates a new timestamped artifact (history preserved). session.json points to the latest.
+- Re-running a stage with the same slug creates a new timestamped artifact (history preserved). The session file points to the latest.
 - Final user-facing documentation (`<project>/docs/{slug}/*.md`) does **not** use timestamps in filenames — those are the merged-product canonical docs.
 
 ## Command Specifications
@@ -185,25 +191,26 @@ CSS (Claude Super System) is a personal, global software-development automation 
 All eight commands follow the same skeleton:
 
 ```
-1. Parse arguments and flags.
-2. Load session.json (or initialize).
-3. Acquire phase lock.
-4. Detect language profile if missing.
-5. Gate (AskUserQuestion) when required.
-6. Dispatch to skill or sub-agent.
-7. Persist artifact path, update session.json.
-8. Release lock.
-9. Announce next step (and, for /css:ship, auto-advance).
+1. Parse arguments and flags (including `--slug`).
+2. Resolve target session via `--slug`, idea-derived new slug (for `/css:ship`), or `_active.json` pointer.
+3. Load `sessions/{slug}.json` (or initialize for new ship).
+4. Acquire per-slug phase lock.
+5. Detect language profile if missing.
+6. Gate (AskUserQuestion) when required.
+7. Dispatch to skill or sub-agent.
+8. Persist artifact path, update `sessions/{slug}.json`, refresh `_active.json.latest_slug`.
+9. Release lock.
+10. Announce next step (and, for `/css:ship`, auto-advance).
 ```
 
 ### `/css:interview <idea>`
 
 - **Skill**: `superpowers:brainstorming`
 - **Behavior**:
-  1. Initialize session.json with a generated slug (extracted from brainstorming's design filename).
+  1. Initialize `sessions/{slug}.json` with a generated slug (extracted from brainstorming's design filename); update `_active.json.latest_slug`.
   2. `Skill("superpowers:brainstorming")` runs the full Socratic flow (context discovery → clarifying questions → 2-3 approaches → section-by-section design → spec write → spec self-review → user review).
   3. **Override**: skip brainstorming's terminal `writing-plans` invocation. CSS calls `/css:plan` separately so each command remains independently runnable.
-  4. Record `phases.interview.artifact` in session.json (path to brainstorming's spec file).
+  4. Record `phases.interview.artifact` in the session file (path to brainstorming's spec file).
 - **Output**: `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` (brainstorming default location, kept as single source of truth).
 - **Gate** (in master flow): the user-review step inside brainstorming serves as Gate 1.
 
@@ -211,9 +218,9 @@ All eight commands follow the same skeleton:
 
 - **Skill**: `superpowers:writing-plans`
 - **Behavior**:
-  1. Resolve spec path (argument > session.json > prompt user).
+  1. Resolve spec path (argument > resolved session file > prompt user).
   2. `Skill("superpowers:writing-plans")` produces a structured plan.
-  3. Persist plan path in session.json.
+  3. Persist plan path in the session file.
 - **Output**: writing-plans default location (e.g. `docs/superpowers/plans/...`). CSS only records the path.
 
 ### `/css:review [--plan <plan-path>]`
@@ -298,7 +305,7 @@ All eight commands follow the same skeleton:
 
 - Orchestrates `/css:interview` → `/css:plan` → `/css:review` (auto-loopback) → **Gate 2** → `/css:execute` → `/css:verify` (auto-loopback) → `/css:document` → **Gate 3** → `/css:pr`.
 - Gate 1 is implicit (the brainstorming user-review step).
-- Resumable: on Ctrl+C, session.json is preserved; re-running prompts to resume or restart.
+- Resumable: on Ctrl+C, `sessions/{slug}.json` is preserved; re-running with the same slug prompts to resume or restart.
 
 ## Agent Specifications
 
@@ -358,7 +365,7 @@ For Android specifically: Material 3, Jetpack Compose preferred (Kotlin), 48dp t
 
 ## Data Flow and State Management
 
-### session.json Schema
+### Session File Schema (`sessions/{slug}.json`)
 
 ```json
 {
@@ -395,22 +402,51 @@ For Android specifically: Material 3, Jetpack Compose preferred (Kotlin), 48dp t
 }
 ```
 
+### Session Resolution (which session does a command act on?)
+
+| Invocation | Resolution |
+|------------|-----------|
+| `/css:ship "<idea>"` | New slug generated; new `sessions/{slug}.json` created; `_active.json.latest_slug` updated. |
+| `/css:ship` with existing slug arg or matching idea | Resume if a matching `sessions/{slug}.json` exists and the user confirms. |
+| Any standalone `/css:*` with `--slug <name>` | Operate on `sessions/<name>.json` (error if missing). |
+| Any standalone `/css:*` without `--slug` | Read `_active.json.latest_slug`; if present, operate on that session and show the slug at the top of the response. Error with guidance if `_active.json` missing. |
+
 ### Resume Scenarios
 
 | Scenario | Behavior |
 |----------|----------|
-| `/css:ship` interrupted | session.json preserved; re-run prompts: resume / restart |
-| `/css:execute` standalone with no session | Requires `--plan <path>` |
-| Same slug re-run | Backup session as `.bak.{ts}`, start fresh; artifacts accumulate |
-| Worktree already exists | Prompt: reuse / recreate / cancel |
+| `/css:ship` interrupted | `sessions/{slug}.json` preserved; re-run with same slug prompts: resume / restart |
+| `/css:execute` standalone with no session | Requires `--plan <path>` or `--slug <name>` |
+| Same slug re-run | Backup as `sessions/{slug}.json.bak.{ts}`, start fresh; artifact files accumulate (each has its own `-{ts}`) |
+| Worktree already exists for slug | Prompt: reuse / recreate / cancel |
 
-### Concurrency Lock
+### Concurrency Model
 
-- `session.lock` field gates phase entry.
-- If same phase + <30 min → reject.
-- If different phase + <30 min → warn user.
-- If stale (>30 min) → force release with warning.
-- v1 limitation: 1 active session per project.
+Concurrency is **per-slug**, not per-project. Multiple `/css:*` invocations can run in parallel against different slugs.
+
+- Each `sessions/{slug}.json` carries its own `lock` field (`{phase, started_at}`).
+- **Same-slug collision** (e.g. two terminals try to run `/css:execute --slug user-auth-jwt` simultaneously):
+  - Same phase + <30 min → reject the second.
+  - Different phase + <30 min → warn user (likely user error since one session shouldn't be in two phases at once).
+  - Stale (>30 min) → force release with warning.
+- **Different-slug** invocations: no interaction. Both proceed. Each creates its own worktree (`../{repo}-css-{slug}`) and branch (`css/{slug}`).
+- The only shared state across slugs is `~/.claude/css/config.json` (read-only) and `.git/objects/` (git is thread-safe for concurrent reads/writes from separate worktrees).
+
+#### Worked example — two simultaneous `/css:ship` invocations in the same project
+
+```
+Terminal 1:                              Terminal 2:
+$ /css:ship "JWT auth middleware"        $ /css:ship "PDF export module"
+  → slug = jwt-auth-middleware             → slug = pdf-export-module
+  → sessions/jwt-auth-middleware.json      → sessions/pdf-export-module.json
+  → worktree ../proj-css-jwt-auth-mw       → worktree ../proj-css-pdf-export-mod
+  → branch css/jwt-auth-middleware         → branch css/pdf-export-module
+  → independently progresses               → independently progresses
+  → independent gates / loopbacks          → independent gates / loopbacks
+  → independent PR                         → independent PR
+```
+
+The two sessions never touch each other's files. Main working tree is untouched by both.
 
 ### Language Detection Logic
 
@@ -502,13 +538,13 @@ REFACTOR:
 
 | Class | Example | Handling |
 |-------|---------|----------|
-| Validation | corrupt session.json | abort pre-check + recovery guidance |
+| Validation | corrupt session file (`sessions/{slug}.json`) | abort pre-check + recovery guidance |
 | Tool | gh missing, worktree create fails | report + suggest alternatives |
 | Agent | sub-agent Task failure | mark phase failed, preserve session |
 | Policy violation | RED did not fail, write outside worktree | immediate abort, never silent |
 | Loopback (normal) | review/verify within counters | automatic retry |
 
-**Principle**: no silent failure. Every abnormal end records `last_error` in session.json and surfaces to user.
+**Principle**: no silent failure. Every abnormal end records `last_error` in the session file and surfaces to user.
 
 ## Master Flow (`/css:ship`)
 
@@ -516,9 +552,14 @@ REFACTOR:
 USER: /css:ship "<idea>"
 
 [ship.md]
-1. Check session.json.
-   Existing? → AskUserQuestion: resume / new session / cancel.
-   New?      → generate slug, init session.json, acquire lock.
+1. Resolve session.
+   `--slug` provided + sessions/{slug}.json exists → AskUserQuestion: resume / restart / cancel.
+   `--slug` provided + no file                       → init that slug.
+   No --slug                                          → generate slug from idea (kebab-case),
+                                                        ensure no collision with existing
+                                                        sessions, init sessions/{slug}.json,
+                                                        acquire per-slug lock,
+                                                        update _active.json.latest_slug.
 
 2. /css:interview <idea>
    → superpowers:brainstorming runs
@@ -572,8 +613,10 @@ USER: /css:ship "<idea>"
 When a single `/css:*` is invoked outside of `/css:ship`:
 
 - No gate prompts are added — the user is presumed to know what they want.
-- Missing prior artifacts surface as friendly guidance ("Run `/css:plan` first or pass `--plan <path>`").
-- session.json still tracks progress so that switching to `/css:ship` later can resume.
+- Session resolution follows the rules in [Session Resolution](#session-resolution-which-session-does-a-command-act-on).
+- The command echoes which slug it operates on at the top of its output (e.g. `[css:plan @ slug=user-auth-jwt]`) so the user is never ambiguous about which session is being updated.
+- Missing prior artifacts surface as friendly guidance ("Run `/css:plan --slug <name>` first or pass `--plan <path>`").
+- The session file still tracks progress so that switching to `/css:ship --slug <name>` later can resume.
 
 ## Skill Dependencies
 
@@ -639,7 +682,7 @@ Each command `.md` ends with:
 ```markdown
 <self_check>
 - [ ] Artifact written to correct path
-- [ ] session.json phase status updated
+- [ ] session file (`sessions/{slug}.json`) phase status updated
 - [ ] Last line contains VERDICT=... or NEXT=...
 - [ ] No policy violations
 </self_check>
@@ -845,7 +888,7 @@ FORCE="${FORCE:-0}"
 
 - Pull from private repo or re-run install script.
 - In-flight sessions are not affected; artifacts are file-based.
-- Schema-version mismatch in session.json triggers migration guidance.
+- Schema-version mismatch in any session file triggers migration guidance.
 
 ### Removal
 
@@ -859,12 +902,11 @@ FORCE="${FORCE:-0}"
 
 ## Open Questions / Future Work
 
-- **Multi-session per project**: array-of-sessions support in session.json; deferred.
 - **Stage 3 plugin packaging**: bundle commands + agents into a single installable Claude Code plugin.
 - **Telemetry**: opt-in metrics export to evaluate prompt drift over time.
 - **Ralph-style persistence loop**: integration with `/css:ship` for ambient self-correction (deferred).
 - **Cross-language monorepo orchestration** beyond per-package detection.
-- **Cloud sync of session.json**: optional GitHub-based sync to resume sessions across machines.
+- **Cloud sync of session files**: optional GitHub-based sync to resume sessions across machines.
 
 ## Risks and Mitigations
 
