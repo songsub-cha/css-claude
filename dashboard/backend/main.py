@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 from backend.config import Settings
 from backend.routers import projects as projects_router
+from backend.routers import sessions as sessions_router
 
 log = structlog.get_logger()
 settings = Settings()
@@ -52,3 +53,4 @@ async def health():
 
 
 app.include_router(projects_router.router)
+app.include_router(sessions_router.router)
