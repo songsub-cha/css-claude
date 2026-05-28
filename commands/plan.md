@@ -1,6 +1,6 @@
 ---
 description: Turn the spec into a structured plan via superpowers:writing-plans (CSS pipeline stage 2)
-argument-hint: "[--slug <name>] [--from <spec-path>]"
+argument-hint: "[--session <name>] [--from <spec-path>]"
 ---
 
 # /css:plan
@@ -9,12 +9,12 @@ Translate the spec into a step-by-step plan. Wraps `superpowers:writing-plans`.
 
 ## Steps
 
-1. **Parse arguments**: extract `--slug` and `--from`.
+1. **Parse arguments**: extract `--session` and `--from`.
 
 2. **Resolve session**:
-   - `--slug` → load `<project>/.claude/css/sessions/<slug>.json`.
-   - No `--slug` → read `<project>/.claude/css/sessions/_active.json` for `latest_slug`.
-   - If neither resolves → ask: "어떤 슬러그의 plan을 작성할까요? `/css:plan --slug <name>` 또는 `--from <spec path>` 로 다시 시도해주세요." and exit.
+   - `--session` → load `<project>/.claude/css/sessions/<slug>.json`.
+   - No `--session` → read `<project>/.claude/css/sessions/_active.json` for `latest_slug`.
+   - If neither resolves → ask: "어떤 슬러그의 plan을 작성할까요? `/css:plan --session <name>` 또는 `--from <spec path>` 로 다시 시도해주세요." and exit.
 
 3. **Resolve spec path**:
    - `--from <path>` if provided.
@@ -38,7 +38,7 @@ Translate the spec into a step-by-step plan. Wraps `superpowers:writing-plans`.
    - Update session: `phases.plan.status = completed`, `phases.plan.artifact = <plan path>`, `phases.plan.task_count = <int>`, `phases.plan.completed_at = <ISO>`.
 
 9. **Release lock** and announce:
-   "Plan 작성 완료: `<plan path>`. 다음 단계: `/css:review` 또는 `/css:ship --slug <slug>`로 진행."
+   "Plan 작성 완료: `<plan path>`. 다음 단계: `/css:review` 또는 `/css:ship --session <slug>`로 진행."
 
 <self_check>
 - [ ] Plan file exists at the path recorded in session

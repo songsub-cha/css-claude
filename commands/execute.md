@@ -1,6 +1,6 @@
 ---
 description: Implement the plan in an isolated worktree with strict TDD, cache-first from rich specs (CSS pipeline stage 4)
-argument-hint: "[--slug <name>] [--plan <plan-path>] [--resume]"
+argument-hint: "[--session <name>] [--plan <plan-path>] [--resume]"
 ---
 
 # /css:execute
@@ -9,9 +9,9 @@ Create or attach to a git worktree, then drive the executor through batches with
 
 ## Steps
 
-1. **Parse arguments**: `--slug`, `--plan`, `--resume`.
+1. **Parse arguments**: `--session`, `--plan`, `--resume`.
 
-2. **Resolve session**. Default `--slug` from `_active.json` if missing.
+2. **Resolve session**. Default `--session` from `_active.json` if missing.
 
 3. **Resolve plan path** (same rules as `/css:review`).
 

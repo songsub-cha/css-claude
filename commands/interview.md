@@ -1,6 +1,6 @@
 ---
 description: Brainstorm an idea into a spec via superpowers:brainstorming (CSS pipeline stage 1)
-argument-hint: "[--slug <name>] <idea>"
+argument-hint: "[--session <name>] <idea>"
 ---
 
 # /css:interview
@@ -9,10 +9,10 @@ Run a deep, Socratic brainstorming session to turn an idea into a CSS spec. Wrap
 
 ## Steps
 
-1. **Parse arguments**: extract `--slug` if present; the remainder is the idea text.
+1. **Parse arguments**: extract `--session` if present; the remainder is the idea text.
 
 2. **Resolve session**:
-   - If `--slug <name>` provided and `<project>/.claude/css/sessions/<name>.json` exists → resume.
+   - If `--session <name>` provided and `<project>/.claude/css/sessions/<name>.json` exists → resume.
    - Else generate a new kebab-case slug from the idea (e.g. "JWT auth middleware" → `jwt-auth-middleware`). If the generated slug collides with an existing session file, append a numeric suffix.
    - Initialize `<project>/.claude/css/sessions/<slug>.json` if new, or load it if resuming.
    - Update `<project>/.claude/css/sessions/_active.json` with `{"latest_slug": "<slug>"}`.
@@ -34,7 +34,7 @@ Run a deep, Socratic brainstorming session to turn an idea into a CSS spec. Wrap
    - Refresh `_active.json`.
 
 7. **Release lock** and announce next step:
-   "Spec 작성 완료: `<spec path>`. 다음 단계: `/css:plan` 또는 `/css:ship --slug <slug>`로 진행."
+   "Spec 작성 완료: `<spec path>`. 다음 단계: `/css:plan` 또는 `/css:ship --session <slug>`로 진행."
 
 <self_check>
 - [ ] Artifact written by brainstorming (spec markdown file exists)

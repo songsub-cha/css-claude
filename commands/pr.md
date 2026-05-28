@@ -1,6 +1,6 @@
 ---
 description: Push css/<slug> and open a PR via gh (CSS pipeline stage 7)
-argument-hint: "[--slug <name>] [--draft]"
+argument-hint: "[--session <name>] [--draft]"
 ---
 
 # /css:pr
@@ -9,7 +9,7 @@ Push the worktree branch and create a PR. Wraps `css-pr-creator`.
 
 ## Steps
 
-1. **Parse arguments**: `--slug`, `--draft`.
+1. **Parse arguments**: `--session`, `--draft`.
 
 2. **Resolve session**.
 

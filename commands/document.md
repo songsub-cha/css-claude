@@ -1,6 +1,6 @@
 ---
 description: Generate <project>/docs/<slug>/ markdown documentation (CSS pipeline stage 6)
-argument-hint: "[--slug <name>]"
+argument-hint: "[--session <name>]"
 ---
 
 # /css:document
@@ -9,7 +9,7 @@ Generate user-facing markdown documentation for the implemented feature. Wraps `
 
 ## Steps
 
-1. **Parse arguments**: `--slug`.
+1. **Parse arguments**: `--session`.
 
 2. **Resolve session**.
 
