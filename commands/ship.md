@@ -76,8 +76,38 @@ Run the full CSS pipeline. Three approval gates: Gate 1 is implicit (brainstormi
 
 10. **Stage 6 — document**: invoke `/css:document --session <slug>`.
 
-11. **Gate 3 — pre-pr**:
-    - AskUserQuestion: "구현 + 문서 완료. 브랜치 `css/<slug>` 를 origin 에 push 하고 PR 을 생성합니다. 진행할까요? [Yes / Draft PR / Cancel]".
+11. **Gate 3 — pre-pr** (cross-path):
+
+    ```
+    is_resume = ($CSS_DASHBOARD_RESUME == "1")
+    gate = session.gates.gate3_pre_pr
+    state = gate.state if gate else null
+
+    if state == "approved": proceed to step 12; return
+
+    if not is_resume and config.dashboard_enabled:
+        banner = "구현 + 문서 완료. 브랜치 'css/<session>'를 origin에 push하고 PR 생성."
+        if state == "pending": banner += " (대시보드 승인 대기 중 — 여기서 승인해도 됩니다)"
+        answer = AskUserQuestion(banner, options=["Yes (PR 생성)", "Draft PR (대시보드에서 드래그 후 PR draft 모드)", "Cancel"])
+        if answer == "Yes (PR 생성)":
+            session.gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", reached_at: gate.reached_at or now(), approved_at: now(), approved_by:"terminal"}
+            save_session(); proceed to step 12
+        elif answer startswith "Draft PR":
+            session.gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", reached_at: gate.reached_at or now(), approved_at: now(), approved_by:"terminal", draft: true}
+            save_session(); proceed to step 12
+        else: release_lock(); exit 0
+    elif not is_resume and not config.dashboard_enabled:
+        answer = AskUserQuestion(banner, options=["Yes (PR 생성)", "Draft PR", "Cancel"])
+        if answer startswith "Yes" or answer startswith "Draft PR":
+            session.gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", approved_at:now(), draft: answer startswith "Draft PR"}
+            save_session(); proceed
+        else: release_lock(); exit 0
+    else:  # is_resume — daemon-bridge spawned us
+        if state != "approved":
+            session.gates.gate3_pre_pr = {state:"pending", reached_at:now()}
+            save_session()
+        release_lock(); exit 0
+    ```
 
 12. **Stage 7 — pr**: invoke `/css:pr --session <slug>` (with `--draft` if user chose). The `master_flow` flag tells `/css:pr` not to ask Gate 3 again.
 
