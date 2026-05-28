@@ -14,6 +14,7 @@ from backend.routers import projects as projects_router
 from backend.routers import sessions as sessions_router
 from backend.routers import sse_router
 from backend.routers import gates as gates_router
+from backend.routers import internal as internal_router
 from backend.watcher import SessionWatcher
 
 log = structlog.get_logger()
@@ -73,3 +74,4 @@ app.include_router(sessions_router.router)
 app.include_router(artifacts_router.router)
 app.include_router(sse_router.router)
 app.include_router(gates_router.router)
+app.include_router(internal_router.router)
