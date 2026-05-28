@@ -77,3 +77,11 @@ app.include_router(sse_router.router)
 app.include_router(gates_router.router)
 app.include_router(internal_router.router)
 app.include_router(history_router.router)
+
+# T7.1: serve React static build when present (docker / production)
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path as _P
+
+_static = _P(__file__).parent.parent / "static"
+if _static.exists():
+    app.mount("/", StaticFiles(directory=str(_static), html=True), name="ui")
