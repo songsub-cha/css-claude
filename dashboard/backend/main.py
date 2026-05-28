@@ -1,4 +1,6 @@
-"""T4.2 — FastAPI app skeleton with health, CORS, and CSRF origin guard (F3)."""
+"""T4.2 — FastAPI app skeleton with health, CORS, and CSRF origin guard (F3).
+T4.13 — lifespan wires in SessionWatcher start/stop.
+"""
 from contextlib import asynccontextmanager
 
 import structlog
@@ -12,6 +14,7 @@ from backend.routers import projects as projects_router
 from backend.routers import sessions as sessions_router
 from backend.routers import sse_router
 from backend.routers import gates as gates_router
+from backend.watcher import SessionWatcher
 
 log = structlog.get_logger()
 settings = Settings()
@@ -20,9 +23,19 @@ settings = Settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     log.info("dashboard.startup", port=settings.dashboard_port)
-    # placeholder: watcher start/stop hooks wired in T4.13
+    # T4.13: start watcher only when watch_root exists to avoid errors in tests
+    # that trigger lifespan (e.g. via ASGITransport with lifespan="on").
+    watch_root = settings.host_claude_dir.parent
+    watcher = None
+    if watch_root.exists():
+        watcher = SessionWatcher(watch_root=watch_root)
+        watcher.start()
+    else:
+        log.info("watcher.skipped", reason="watch_root_not_found", path=str(watch_root))
     yield
     log.info("dashboard.shutdown")
+    if watcher is not None:
+        watcher.stop()
 
 
 app = FastAPI(title="CSS Pipeline Dashboard", version="0.1.0", lifespan=lifespan)
