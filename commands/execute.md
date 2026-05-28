@@ -29,8 +29,13 @@ Create or attach to a git worktree, then drive the executor through batches with
    - On new: `git worktree add <path> -b css/<slug>` (base = current branch).
    - Record `phases.execute.worktree = <path>` and `phases.execute.branch = css/<slug>` in the session.
 
-7. **AskUserQuestion (master-flow Gate 2)** ONLY if invoked as part of `/css:ship` (i.e., `session.master_flow == true`):
-   "Plan 검증 완료. worktree '`<path>`' 생성 후 execute 를 시작합니다. 배치 N개, 작업 M개. 진행할까요? [Yes / Show plan / Cancel]"
+7. **Master-flow guard** + **Gate 2 check**:
+   - **Master-flow guard** (NEW):
+     - If `session.master_flow == true` and `session.gates.gate2_pre_execute.state != "approved"`, abort:
+       "Gate 2가 승인되지 않았습니다. `/css:ship --session <name>`을 통해 진행하세요."
+     - If `master_flow == true` and approved, proceed without prompting.
+   - **AskUserQuestion (master-flow Gate 2)** ONLY if invoked as part of `/css:ship` (i.e., `session.master_flow == true`) AND gate2_pre_execute.state is not already "approved":
+     "Plan 검증 완료. worktree '`<path>`' 생성 후 execute 를 시작합니다. 배치 N개, 작업 M개. 진행할까요? [Yes / Show plan / Cancel]"
 
 8. **Echo header**: `[css:execute @ slug={slug}]`.
 
