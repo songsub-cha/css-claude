@@ -10,6 +10,7 @@ from backend.config import Settings
 from backend.routers import artifacts as artifacts_router
 from backend.routers import projects as projects_router
 from backend.routers import sessions as sessions_router
+from backend.routers import sse_router
 
 log = structlog.get_logger()
 settings = Settings()
@@ -56,3 +57,4 @@ async def health():
 app.include_router(projects_router.router)
 app.include_router(sessions_router.router)
 app.include_router(artifacts_router.router)
+app.include_router(sse_router.router)
