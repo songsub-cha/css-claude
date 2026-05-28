@@ -20,6 +20,13 @@ Run a deep, Socratic brainstorming session to turn an idea into a CSS spec. Wrap
      - `repo_name = basename(repo_root)`
      - Write to session JSON: `session.repo_root`, `session.repo_name`.
      - If `git rev-parse` fails (not a git repo), use `repo_root = <project>`, `repo_name = basename(<project>)` and continue.
+   - **Register project in dashboard** (NEW, if dashboard enabled):
+     - Read `~/.claude/css-dashboard/config.json`; if missing or `dashboard_enabled != true`, skip.
+     - `projects_file = ~/.claude/css-dashboard/projects.json` (create `{"projects": []}` if missing).
+     - Acquire advisory lock via `flock -x <projects_file>` for the read-modify-write window.
+     - If no entry with `repo_root == <captured repo_root>` exists, append `{repo_root, repo_name, registered_at: <ISO now>, color: null}`.
+     - Write atomically (write `projects.json.tmp`, then `mv` over).
+     - Release lock. On failure, log and continue (best-effort; pipeline must not block).
    - Update `<project>/.claude/css/sessions/_active.json` with `{"latest_slug": "<slug>"}`.
    - Acquire phase lock.
 
