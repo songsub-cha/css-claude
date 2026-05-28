@@ -1,0 +1,13 @@
+[Unit]
+Description=CSS Pipeline Dashboard Bridge
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/.claude/css-dashboard/bin/bridge.py
+Restart=on-failure
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

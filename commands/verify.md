@@ -1,6 +1,6 @@
 ---
 description: Test + coverage + code review + security review (CSS pipeline stage 5)
-argument-hint: "[--slug <name>] [--exec-log <path>]"
+argument-hint: "[--session <name>] [--exec-log <path>]"
 ---
 
 # /css:verify
@@ -9,7 +9,7 @@ Run the test suite, coverage, criteria mapping, code-quality review, and securit
 
 ## Steps
 
-1. **Parse arguments**: `--slug`, `--exec-log`.
+1. **Parse arguments**: `--session`, `--exec-log`.
 
 2. **Resolve session**.
 
@@ -47,7 +47,7 @@ Run the test suite, coverage, criteria mapping, code-quality review, and securit
 
 7. **Parse verdict**:
    - `PASS` → next.
-   - `LOOPBACK_TO_EXECUTE` → increment counter. If `< 3`, automatically invoke `/css:execute --slug <slug> --resume` then re-run verify. If `>= 3`, escalate.
+   - `LOOPBACK_TO_EXECUTE` → increment counter. If `< 3`, automatically invoke `/css:execute --session <slug> --resume` then re-run verify. If `>= 3`, escalate.
    - `ESCALATE` → stop.
 
 8. **Release lock**.

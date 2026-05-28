@@ -1,6 +1,6 @@
 ---
 description: Audit the plan, enforce Single-Specialist Task Rule, dispatch domain specialists to author rich specs (CSS pipeline stage 3)
-argument-hint: "[--slug <name>] [--plan <plan-path>]"
+argument-hint: "[--session <name>] [--plan <plan-path>]"
 ---
 
 # /css:review
@@ -9,7 +9,7 @@ Audit the plan against the spec, dispatch domain specialists to produce RICH spe
 
 ## Steps
 
-1. **Parse arguments**: `--slug`, `--plan`.
+1. **Parse arguments**: `--session`, `--plan`.
 
 2. **Resolve session** (same rules as `/css:plan`).
 
@@ -48,8 +48,8 @@ Audit the plan against the spec, dispatch domain specialists to produce RICH spe
 
 8. **Parse verdict from the agent's final line**:
    - `PASS` → update session: `phases.review.status = completed`, `phases.review.verdict = PASS`; increment nothing. Announce next step.
-   - `LOOPBACK_TO_PLAN` → increment `retry_counters.review`. If `< 2`, automatically invoke `/css:plan --slug <slug>` then re-run `/css:review`. If `>= 2`, escalate to user.
-   - `LOOPBACK_TO_INTERVIEW` → ask user "interview 단계로 되돌아가시겠습니까?". On confirm, invoke `/css:interview --slug <slug>` then `/css:plan` then `/css:review`.
+   - `LOOPBACK_TO_PLAN` → increment `retry_counters.review`. If `< 2`, automatically invoke `/css:plan --session <slug>` then re-run `/css:review`. If `>= 2`, escalate to user.
+   - `LOOPBACK_TO_INTERVIEW` → ask user "interview 단계로 되돌아가시겠습니까?". On confirm, invoke `/css:interview --session <slug>` then `/css:plan` then `/css:review`.
    - `ESCALATE` → stop and surface to user.
 
 9. **Release lock**.
