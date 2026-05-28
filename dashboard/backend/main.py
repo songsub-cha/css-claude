@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from backend.config import Settings
+from backend.routers import projects as projects_router
 
 log = structlog.get_logger()
 settings = Settings()
@@ -48,3 +49,6 @@ async def origin_guard(request: Request, call_next):
 @app.get("/api/health")
 async def health():
     return {"status": "ok"}
+
+
+app.include_router(projects_router.router)

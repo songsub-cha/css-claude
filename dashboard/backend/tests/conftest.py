@@ -9,7 +9,7 @@ import concurrent.futures
 import pytest
 import pytest_asyncio
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, async_sessionmaker
 from alembic.config import Config
 from alembic import command
 
@@ -97,10 +97,37 @@ async def pg_engine(pg_async_url: str) -> AsyncEngine:
 
     Resets the public schema and runs Alembic upgrade head before yielding.
     Disposes the engine after the module's tests complete.
+
+    Also overrides FastAPI's get_db_session dependency so router tests use
+    the same engine (and thus same transactions/schema) as direct ORM tests.
     """
     await reset_schema(pg_async_url)
     run_alembic_upgrade(pg_async_url)
 
     engine = create_async_engine(pg_async_url, pool_pre_ping=True)
+
+    # Override get_db_session so HTTP router tests connect to the test DB.
+    try:
+        from backend.main import app
+        from backend.deps import get_db_session
+
+        async def _override_get_db_session():
+            sm = async_sessionmaker(engine, expire_on_commit=False)
+            async with sm() as s:
+                yield s
+
+        app.dependency_overrides[get_db_session] = _override_get_db_session
+    except Exception:
+        pass  # tests that don't use the app won't need this
+
     yield engine
+
+    # Clean up dependency override
+    try:
+        from backend.main import app
+        from backend.deps import get_db_session
+        app.dependency_overrides.pop(get_db_session, None)
+    except Exception:
+        pass
+
     await engine.dispose()
