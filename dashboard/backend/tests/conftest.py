@@ -9,6 +9,21 @@ import concurrent.futures
 import pytest
 import pytest_asyncio
 
+# Ensure module-level `Settings()` in backend.main imports cleanly during test
+# collection even when DATABASE_URL is not exported in the shell. When
+# TEST_DATABASE_URL is set, derive DATABASE_URL (asyncpg form) from it so any
+# endpoint that resolves a session outside the dependency override still targets
+# the real test database. Otherwise fall back to an importable placeholder.
+_test_url = os.environ.get("TEST_DATABASE_URL")
+if _test_url:
+    os.environ.setdefault(
+        "DATABASE_URL", _test_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    )
+else:
+    os.environ.setdefault(
+        "DATABASE_URL", "postgresql+asyncpg://localhost:5432/placeholder"
+    )
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, async_sessionmaker
 from alembic.config import Config
 from alembic import command
