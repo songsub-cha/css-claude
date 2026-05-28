@@ -42,3 +42,6 @@ out/
 .claude/css/
 *.tmp
 *.bak
+
+# dashboard local config
+dashboard/.env
