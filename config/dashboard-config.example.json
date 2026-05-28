@@ -1,0 +1,8 @@
+{
+  "dashboard_enabled": true,
+  "dashboard_url": "http://localhost:7421",
+  "database_url": "postgresql+asyncpg://css:CHANGEME@localhost:5432/css_dashboard",
+  "claude_cli": "claude",
+  "queue_dir": "~/.claude/css-dashboard/queue",
+  "default_palette": ["#22c55e", "#a855f7", "#3b82f6", "#f59e0b", "#ef4444", "#06b6d4", "#ec4899"]
+}
