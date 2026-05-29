@@ -1,0 +1,17 @@
+{
+  "slug": "epic-phase-pipeline",
+  "kind": "epic",
+  "idea": "example epic",
+  "phases": {
+    "interview": {"status": "completed", "artifact": "docs/superpowers/specs/x.md"},
+    "plan": {"status": "completed", "level": "skeleton", "task_count": 47, "batch_count": 7},
+    "phasing": {"status": "completed", "artifact": ".claude/css/plans/phase-manifest-epic-phase-pipeline.json"},
+    "review": {"status": "completed", "level": "architecture", "verdict": "PASS"}
+  },
+  "phase_manifest": [
+    {"idx": 1, "label": "DB + bridge foundation", "batches": [1, 2], "depends_on": []},
+    {"idx": 2, "label": "API layer",              "batches": [3, 4], "depends_on": [1]},
+    {"idx": 3, "label": "UI",                     "batches": [5, 6], "depends_on": [2]}
+  ],
+  "child_slugs": ["epic-phase-pipeline-p1", "epic-phase-pipeline-p2", "epic-phase-pipeline-p3"]
+}

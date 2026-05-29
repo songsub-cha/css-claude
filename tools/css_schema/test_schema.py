@@ -66,5 +66,26 @@ class TestSession(unittest.TestCase):
         with self.assertRaises(SchemaError):
             validate_session({"kind": "epic", "phases": {}})
 
+import json, pathlib
+from css_schema.schema import validate_active
+
+FX = pathlib.Path(__file__).parent / "fixtures"
+
+class TestActiveAndFixtures(unittest.TestCase):
+    def test_active_minimal(self):
+        validate_active({"latest_slug": "e"})
+
+    def test_active_with_epic_and_phase(self):
+        validate_active({"latest_slug": "e-p1", "active_epic": "e", "active_phase": 1})
+
+    def test_active_requires_latest_slug(self):
+        with self.assertRaises(SchemaError):
+            validate_active({})
+
+    def test_fixtures_are_valid(self):
+        validate_manifest(json.loads((FX / "valid_manifest.json").read_text(encoding="utf-8")))
+        validate_session(json.loads((FX / "epic_session.json").read_text(encoding="utf-8")))
+        validate_session(json.loads((FX / "phase_session.json").read_text(encoding="utf-8")))
+
 if __name__ == "__main__":
     unittest.main()

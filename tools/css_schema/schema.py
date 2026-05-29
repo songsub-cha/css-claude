@@ -57,3 +57,10 @@ def validate_session(obj: dict) -> None:
             raise SchemaError("phase_index must be int >= 1")
         if not isinstance(obj.get("depends_on", []), list):
             raise SchemaError("depends_on must be a list")
+
+
+def validate_active(obj: dict) -> None:
+    if not isinstance(obj, dict) or not obj.get("latest_slug"):
+        raise SchemaError("_active.json requires a non-empty latest_slug")
+    if "active_phase" in obj and not isinstance(obj["active_phase"], int):
+        raise SchemaError("active_phase must be an int when present")

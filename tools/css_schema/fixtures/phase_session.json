@@ -1,0 +1,17 @@
+{
+  "slug": "epic-phase-pipeline-p2",
+  "kind": "phase",
+  "parent_slug": "epic-phase-pipeline",
+  "phase_index": 2,
+  "phase_label": "API layer",
+  "depends_on": [1],
+  "base_branch": "css/epic-phase-pipeline/p1",
+  "phases": {
+    "plan": {"status": "completed", "level": "detailed", "artifact": "docs/superpowers/plans/epic-phase-pipeline-p2.md", "task_count": 9},
+    "review": {"status": "completed", "level": "rich-spec", "verdict": "PASS", "rich_specs": [".claude/css/plans/epic-phase-pipeline-p2-T01.md"]},
+    "execute": {"status": "pending", "worktree": "../repo-css-epic-phase-pipeline-p2", "branch": "css/epic-phase-pipeline/p2"},
+    "verify": {"status": "pending"},
+    "document": {"status": "pending", "artifact": "docs/epic-phase-pipeline/p2/README.md"},
+    "pr": {"status": "pending"}
+  }
+}
