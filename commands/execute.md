@@ -9,7 +9,7 @@ Create or attach to a git worktree, then drive the executor through batches with
 
 ## Steps
 
-1. **Parse arguments**: `--session`, `--plan`, `--resume`.
+1. **Parse arguments**: `--session`, `--plan`, `--resume`, `--phase <n>` (optional; when the resolved session is `kind:"phase"`, infer `n` from `phase_index`).
 
 2. **Resolve session**. Default `--session` from `_active.json` if missing.
 
@@ -18,16 +18,18 @@ Create or attach to a git worktree, then drive the executor through batches with
 4. **Detect language profile** if `session.language_profile` is unset. Run the detection logic from the spec (Section: Language Detection Logic). Write the resolved profile into the session.
 
 5. **Pre-flight: rich-spec readiness check**:
-   - List `<project>/.claude/css/plans/*-spec-{slug}-*.md`.
-   - For every plan task routed to a specialist, confirm the corresponding artifact has a `## Task {id}` section with `RED scaffold:` + `GREEN template:`.
+   - For `kind:"phase"` sessions: list `<project>/.claude/css/plans/{parent_slug}-p{phase_index}-T*.md`.
+   - For legacy sessions: list `<project>/.claude/css/plans/*-spec-{slug}-*.md`.
+   - For every plan task routed to a specialist, confirm the corresponding artifact has a `## Task {id}` section with `RED scaffold:` + `GREEN template:` and is tagged `Phase: {phase_index}`.
    - If anything is missing → abort with "rich-spec 누락. `/css:review` 를 먼저 통과시켜주세요 (verdict=PASS)."
 
 6. **Worktree setup** (if not `--resume`):
    - Compute repo name: `basename $(git rev-parse --show-toplevel)`.
-   - Worktree path: `../{repo}-css-{slug}` (or `worktree_parent` from config if set).
+   - For `kind:"phase"` sessions: worktree path = `../{repo}-css-{parent_slug}-p{phase_index}`; branch = `css/{parent_slug}/p{phase_index}`; created from `base_branch` read from the Phase session.
+   - For legacy sessions: worktree path = `../{repo}-css-{slug}`; branch = `css/{slug}`; base = current branch.
    - If the path already exists: ask user "기존 worktree 가 있습니다. [재사용 / 새로 만들기 / 취소]".
-   - On new: `git worktree add <path> -b css/<slug>` (base = current branch).
-   - Record `phases.execute.worktree = <path>` and `phases.execute.branch = css/<slug>` in the session.
+   - On new: `git worktree add <path> -b <branch> <base_branch>`.
+   - Record `phases.execute.worktree = <path>`, `phases.execute.branch = <branch>`, `phases.execute.base_branch = <base_branch>` in the session.
 
 7. **Master-flow guard** + **Gate 2 check**:
    - **Master-flow guard** (NEW):
@@ -49,7 +51,9 @@ Create or attach to a git worktree, then drive the executor through batches with
      <inputs>
      plan: {plan path}
      worktree: {worktree path}
-     branch: css/{slug}
+     branch: {branch}
+     base_branch: {base_branch}
+     phase_index: {phase_index or null}
      language_profile: {profile object}
      session: <project>/.claude/css/sessions/{slug}.json
      rich_specs_dir: <project>/.claude/css/plans/
@@ -70,13 +74,15 @@ Create or attach to a git worktree, then drive the executor through batches with
      Index all rich-spec artifacts under rich_specs_dir before starting (build task_id → (spec_path, anchor) map).
      </task>
      <output_contract>
-     Write exec log to: <project>/.claude/css/executions/exec-log-{slug}-{ts}.md
+     Write exec log to: <project>/.claude/css/executions/exec-log-{slug}-{ts}.md (for kind:"phase", use exec-log-{parent_slug}-p{phase_index}-{ts}.md)
      Log MUST record cache_miss_count per slug.
      Final line: VERDICT=PASS | VERDICT=ESCALATE | VERDICT=PAUSE
      </output_contract>
      """
    )
    ```
+
+9b. **Lock and active tracking**: lock key = `locks/{slug}-execute.lock` (for `kind:"phase"`, `slug` is the child slug — distinct per sibling Phase, no collision). When updating `_active.json`, also set `active_epic` (`parent_slug` or self) and `active_phase` (`phase_index` or null).
 
 10. **Parse verdict**:
     - `PASS` → session: `phases.execute.status = completed`. Announce next.

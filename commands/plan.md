@@ -27,18 +27,22 @@ Translate the spec into a step-by-step plan. Wraps `superpowers:writing-plans`.
 
 6. **Verify superpowers** (same check as `/css:interview`).
 
-7. **Invoke writing-plans**:
+7. **Determine plan level** from session `kind`:
+   - `kind == "epic"` (or absent, legacy) → **skeleton plan**: coarse task titles grouped into batches with rough file targets. **No per-step code**. Output to `docs/superpowers/plans/YYYY-MM-DD-<slug>.md`. Record `phases.plan.level = "skeleton"`, `task_count`, `batch_count`.
+   - `kind == "phase"` → **detailed plan**: full bite-sized TDD steps (complete code) for **only this Phase's batches** (from `phase_index`). Output to `docs/superpowers/plans/{parent_slug}-p{phase_index}.md`. Record `phases.plan.level = "detailed"`.
+
+8. **Invoke writing-plans**:
    ```
    Skill("superpowers:writing-plans")
    ```
-   Pass the spec path as context. Remind writing-plans that the next CSS stage (`/css:review`) will audit each task for the Single-Specialist Task Rule: every task should map to exactly one domain specialist (or executor-direct glue). Multi-domain tasks will trigger `LOOPBACK_TO_PLAN` — better to decompose pre-emptively.
+   Pass the spec path and level as context. Remind writing-plans that the next CSS stage (`/css:review`) will audit each task for the Single-Specialist Task Rule: every task should map to exactly one domain specialist (or executor-direct glue). Multi-domain tasks will trigger `LOOPBACK_TO_PLAN` — better to decompose pre-emptively.
 
-8. **On writing-plans completion**:
-   - Locate the plan file (typically `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`).
-   - Update session: `phases.plan.status = completed`, `phases.plan.artifact = <plan path>`, `phases.plan.task_count = <int>`, `phases.plan.completed_at = <ISO>`.
+9. **On writing-plans completion**:
+   - Locate the plan file.
+   - Update session: `phases.plan.status = completed`, `phases.plan.artifact = <plan path>`, `phases.plan.level = <"skeleton"|"detailed">`, `phases.plan.task_count = <int>`, `phases.plan.batch_count = <int>`, `phases.plan.completed_at = <ISO>`.
 
-9. **Release lock** and announce:
-   "Plan 작성 완료: `<plan path>`. 다음 단계: `/css:review` 또는 `/css:ship --session <slug>`로 진행."
+10. **Release lock** and announce:
+    "Plan 작성 완료 (level={level}): `<plan path>`. 다음 단계: `/css:review` 또는 `/css:ship --session <slug>`로 진행."
 
 <self_check>
 - [ ] Plan file exists at the path recorded in session

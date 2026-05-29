@@ -21,7 +21,11 @@ Audit the plan against the spec, dispatch domain specialists to produce RICH spe
 
 6. **Echo header**: `[css:review @ slug={slug}, attempt={n+1}/2]`.
 
-7. **Dispatch the reviewer**:
+7. **Determine review level** from session `kind`:
+   - `kind == "epic"` (or absent) → **architecture review**: audit the skeleton plan vs spec; build coverage matrix with a **Phase column** (tag every skeleton task with its `phase_index` from `phase_manifest`); decide coarse Single-Specialist routing per Phase. **Produce NO rich-specs.** Write report to `.claude/css/reviews/review-{slug}-arch-{ts}.md`.
+   - `kind == "phase"` → **rich-spec dispatch** (existing behavior): dispatch domain specialists to produce per-task RED scaffolds + GREEN templates for **this Phase's tasks only**, written to `.claude/css/plans/{parent_slug}-p{phase_index}-T*.md`; each block carries a `Phase: {phase_index}` line.
+
+8. **Dispatch the reviewer**:
 
    ```
    Task(
@@ -33,13 +37,18 @@ Audit the plan against the spec, dispatch domain specialists to produce RICH spe
      plan: {plan path}
      session: <project>/.claude/css/sessions/{slug}.json
      project_root: <cwd>
+     review_level: {architecture | rich-spec}
+     phase_index: {phase_index or null}
      </inputs>
      <task>
-     Audit the plan against the spec. Build the coverage matrix. Run the Single-Specialist Task Rule audit per task (each task must map to exactly one Dispatch Table row or executor-direct; multi-domain tasks trigger LOOPBACK_TO_PLAN with a concrete decomposition proposal). Detect domains and dispatch matching specialists in parallel via Task — each specialist MUST produce a RICH spec artifact containing per-task RED scaffolds + GREEN templates so /css:execute can run cache-first without re-invoking them. Emit the final verdict.
+     Audit the plan against the spec. Build the coverage matrix.
+     - architecture level (kind=epic): add Phase column tagging each task with its phase_index from phase_manifest. Coarse Single-Specialist routing per Phase. NO rich-specs. Report to .claude/css/reviews/review-{slug}-arch-{ts}.md.
+     - rich-spec level (kind=phase): run the Single-Specialist Task Rule audit per task (multi-domain → LOOPBACK_TO_PLAN). Detect domains and dispatch matching specialists in parallel via Task — each specialist MUST produce a RICH spec artifact with per-task RED scaffolds + GREEN templates tagged with Phase: {phase_index}.
+     Emit the final verdict.
      </task>
      <output_contract>
      Write the report to: <project>/.claude/css/reviews/review-{slug}-{ts}.md
-     Sections in order: Verdict, Coverage Matrix, Single-Specialist Audit table, Findings, Domain Specialist Dispatch summary (with rich-spec artifact paths), Retry Counter.
+     Sections in order: Verdict, Coverage Matrix (with Phase column for architecture reviews), Single-Specialist Audit table, Findings, Domain Specialist Dispatch summary (with rich-spec artifact paths), Retry Counter.
      Final line: VERDICT=PASS | VERDICT=LOOPBACK_TO_PLAN | VERDICT=LOOPBACK_TO_INTERVIEW
      </output_contract>
      """

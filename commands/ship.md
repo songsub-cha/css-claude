@@ -23,16 +23,22 @@ Run the full CSS pipeline. Three approval gates: Gate 1 is implicit (brainstormi
    - Invoke `/css:interview <idea>` (or resume) inheriting the slug.
    - Gate 1 is implicit: brainstorming's own "user reviews spec" step.
 
-5. **Stage 2 — plan**:
+5. **Stage 2 — plan (skeleton)**:
    - Invoke `/css:plan --session <slug>`.
 
-6. **Stage 3 — review (loop)**:
+5b. **Stage 2.5 — phasing**:
+   - Invoke `/css:phase --session <slug>` (creates child Phase sessions from the approved manifest).
+   - If the Epic stays single-Phase (sub-threshold), continue exactly as the legacy linear flow (one session, one PR) via steps 6–12.
+   - If multi-Phase: run the Epic **architecture review** once (`/css:review --session <epic>`, kind=epic → coarse, no rich-specs), then run the per-child loop in step 13.
+
+6. **Stage 3 — review (loop)** *(single-Phase / legacy path)*:
    - Invoke `/css:review --session <slug>`.
    - On `LOOPBACK_TO_PLAN`, the review command itself loops back to plan up to 2 attempts.
    - On `LOOPBACK_TO_INTERVIEW`, ask user to confirm before re-entering interview.
    - On `ESCALATE`, stop and surface options.
+   - *Multi-Phase Epics: the Epic architecture review was already run in step 5b. Skip to step 13 (per-Phase loop).*
 
-7. **Gate 2 — pre-execute** (cross-path):
+7. **Gate 2 — pre-execute (cross-path)** *(single-Phase / legacy path)*:
 
    ```
    is_resume = ($CSS_DASHBOARD_RESUME == "1")
@@ -67,16 +73,16 @@ Run the full CSS pipeline. Three approval gates: Gate 1 is implicit (brainstormi
        release_lock(); exit 0
    ```
 
-8. **Stage 4 — execute**: invoke `/css:execute --session <slug>`. The `master_flow` flag tells `/css:execute` not to ask Gate 2 again (it inherits the answer from this step).
+8. **Stage 4 — execute** *(single-Phase / legacy path)*: invoke `/css:execute --session <slug>`. The `master_flow` flag tells `/css:execute` not to ask Gate 2 again (it inherits the answer from this step).
 
-9. **Stage 5 — verify (loop)**:
+9. **Stage 5 — verify (loop)** *(single-Phase / legacy path)*:
    - Invoke `/css:verify --session <slug>`.
    - On `LOOPBACK_TO_EXECUTE`, the verify command itself loops back to execute up to 3 attempts.
    - On `ESCALATE`, stop with options.
 
-10. **Stage 6 — document**: invoke `/css:document --session <slug>`.
+10. **Stage 6 — document** *(single-Phase / legacy path)*: invoke `/css:document --session <slug>`.
 
-11. **Gate 3 — pre-pr** (cross-path):
+11. **Gate 3 — pre-pr (cross-path)** *(single-Phase / legacy path)*:
 
     ```
     is_resume = ($CSS_DASHBOARD_RESUME == "1")
@@ -109,9 +115,18 @@ Run the full CSS pipeline. Three approval gates: Gate 1 is implicit (brainstormi
         release_lock(); exit 0
     ```
 
-12. **Stage 7 — pr**: invoke `/css:pr --session <slug>` (with `--draft` if user chose). The `master_flow` flag tells `/css:pr` not to ask Gate 3 again.
+12. **Stage 7 — pr** *(single-Phase / legacy path)*: invoke `/css:pr --session <slug>` (with `--draft` if user chose). The `master_flow` flag tells `/css:pr` not to ask Gate 3 again.
 
-13. **Finalize**: mark all phases completed, release lock, print summary:
+13. **Stages plan→pr per Phase** *(multi-Phase Epics)*:
+   For each child slug in topological order (by `phase_index`, respecting `depends_on`):
+   a. `/css:plan --session <child>` (kind=phase → detailed) → `/css:review --session <child>` (kind=phase → rich-specs for this Phase).
+   b. **Gate 2 (per Phase)** — AskUserQuestion: "Phase {idx} '{label}' execute 시작. base=`{base_branch}`. [Yes / Show / Skip / Cancel]".
+   c. `/css:execute --session <child>` → `/css:verify --session <child>` → `/css:document --session <child>`.
+   d. **Gate 3 (per Phase)** — AskUserQuestion: "Phase {idx} PR 생성 (base=`{base_branch}`). [Yes / Draft / Cancel]".
+   e. `/css:pr --session <child> --base <base_branch>`.
+   Independent Phases (disjoint `depends_on`) MAY be dispatched in separate sessions for parallel runs.
+
+14. **Finalize**: mark all phases completed, release lock, print summary:
     "Pipeline 완료. PR: `<URL>`. 산출물: `<paths>`."
 
 <self_check>

@@ -77,13 +77,21 @@ adapted_from: oh-my-claudecode/agents/code-reviewer.md
     - Echo the session slug at the top of the response when invoked standalone: `[css:review @ slug={slug}]`.
   </Constraints>
 
+  <Review_Level_Gate>
+    Before starting the investigation, read `session.kind` (default: "epic" when absent — D9 legacy compat):
+    - `kind == "epic"`: run **architecture review** — produce the coverage matrix with a Phase column (tag every skeleton task with its `phase_index` from `session.phase_manifest`); decide coarse Single-Specialist routing per Phase. **Do NOT dispatch specialists and do NOT produce rich-spec artifacts.** Write the architecture report to `.claude/css/reviews/review-{slug}-arch-{ts}.md`. Final verdict: `PASS` | `LOOPBACK_TO_PLAN` | `LOOPBACK_TO_INTERVIEW`.
+    - `kind == "phase"`: run the full **rich-spec review** (Investigation_Protocol steps 1–7 below). Specialist artifacts are scoped to this Phase's tasks only; each block carries `Phase: {phase_index}`. Output paths: `.claude/css/plans/{parent_slug}-p{phase_index}-T*.md`.
+    - Single-Phase Epic (legacy, `kind` absent): behaves as `kind == "phase"` — one full rich-spec pass. All tasks tagged `Phase: 1`.
+  </Review_Level_Gate>
+
   <Investigation_Protocol>
+    *(Applies only when `kind == "phase"` or legacy single-Phase.)*
     1) Read inputs (parallel): the spec path, the plan path, and the latest session file (`sessions/{slug}.json`).
     2) Build the coverage matrix: list every acceptance criterion in the spec; map each to the plan task IDs that implement it. Flag unmapped criteria.
     3) Per task in the plan, check: file paths look real (Glob/Grep against the project root), depends-on references exist, code snippets are complete, test snippets are runnable.
     4) Detect domains by pattern-matching plan tasks (HTTP routes → API; SQL/migration → DB; component/composable/Fragment/View → UI; Dockerfile/compose/CI → infra; `async def`/`await` → async; `langchain`/`langgraph`/`langfuse`/vector store SDKs → llm-app; system-prompt edits → prompt; module-boundary changes → architecture).
     5) **Single-specialist task check**: per task, count how many Dispatch Table rows match. If ≥ 2, this task violates the Single-Specialist Task Rule — record a finding with a concrete decomposition proposal (use the patterns in `<Single_Specialist_Task_Rule>`). Any single-specialist violation triggers `VERDICT=LOOPBACK_TO_PLAN`.
-    6) For each detected domain, check if the matching `*-spec-{slug}-*.md` artifact exists in `.claude/css/plans/`. If absent, dispatch the specialist agent via Task.
+    6) For each detected domain, check if the matching `*-spec-{slug}-*.md` artifact exists in `.claude/css/plans/`. If absent, dispatch the specialist agent via Task. (Gate: only when `kind == "phase"`.)
     7) Aggregate findings and decide the verdict.
   </Investigation_Protocol>
 
