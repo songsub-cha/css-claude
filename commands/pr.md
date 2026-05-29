@@ -9,7 +9,7 @@ Push the worktree branch and create a PR. Wraps `css-pr-creator`.
 
 ## Steps
 
-1. **Parse arguments**: `--slug`, `--draft`.
+1. **Parse arguments**: `--slug`, `--draft`, `--base <branch>` (default `main`). Pass `base_branch` to the PR creator.
 
 2. **Resolve session**.
 
@@ -34,11 +34,15 @@ Push the worktree branch and create a PR. Wraps `css-pr-creator`.
      prompt="""
      <inputs>
      worktree: {session.phases.execute.worktree}
-     branch: css/{slug}
+     branch: {session.phases.execute.branch}
+     base_branch: {--base arg, default main}
+     epic: {parent_slug or slug}
+     phase_index: {phase_index or null}
      spec: {session.phases.interview.artifact}
      plan: {session.phases.plan.artifact}
      verify: {session.phases.verify.artifact}
      docs: {session.phases.document.artifact}
+     sibling_pr_urls: {[child_session.phases.pr.artifact for completed sibling Phases]}
      coverage_percent: {from verify report}
      draft: {true if --draft else false}
      </inputs>
