@@ -1,6 +1,6 @@
 ---
 description: Push css/<slug> and open a PR via gh (CSS pipeline stage 7)
-argument-hint: "[--slug <name>] [--draft]"
+argument-hint: "[--session <name>] [--draft]"
 ---
 
 # /css:pr
@@ -9,11 +9,17 @@ Push the worktree branch and create a PR. Wraps `css-pr-creator`.
 
 ## Steps
 
-1. **Parse arguments**: `--slug`, `--draft`, `--base <branch>` (default `main`). Pass `base_branch` to the PR creator.
+1. **Parse arguments**: `--session`, `--draft`, `--base <branch>` (default `main`). Pass `base_branch` to the PR creator.
 
 2. **Resolve session**.
 
-3. **Pre-check**:
+3. **Master-flow gate guard** (NEW):
+   - If `session.master_flow == true` and `session.gates.gate3_pre_pr.state != "approved"`, abort:
+     "Gate 3가 승인되지 않았습니다. `/css:ship --session <name>`을 통해 진행하세요."
+   - If `session.master_flow == true` and `session.gates.gate3_pre_pr.draft == true`, set `--draft` automatically.
+   - If `master_flow == true` and gate3_pre_pr.state is "approved", skip the Gate 3 AskUserQuestion in step 4.
+
+4. **Pre-check**:
    - `session.phases.document.status` must be `completed`.
    - `gh auth status` must succeed.
    - Working directory must be inside the worktree OR allow the agent to `cd` into it.
