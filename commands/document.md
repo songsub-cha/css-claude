@@ -15,7 +15,7 @@ Generate user-facing markdown documentation for the implemented feature. Wraps `
 
 3. **Pre-check**: `session.phases.verify.verdict` must be `PASS`. If not, abort with: "verify 가 통과되지 않았습니다. `/css:verify` 를 먼저 통과시켜주세요."
 
-4. **Acquire lock**.
+4. **Acquire lock**. Lock key = `locks/{slug}-document.lock` (for `kind:"phase"`, `slug` is the child slug). Update `_active.json` with `active_epic` (`parent_slug` or self) and `active_phase` (`phase_index` or null).
 
 5. **Determine docs path**:
    - `kind:"phase"` session → output path = `docs/{epic}/p{phase_index}/README.md` (D3 per-Phase). No Epic-level aggregate README (deferred per D3 open question).

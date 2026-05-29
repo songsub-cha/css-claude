@@ -77,6 +77,8 @@ Create or attach to a git worktree, then drive the executor through batches with
    )
    ```
 
+9b. **Lock and active tracking**: lock key = `locks/{slug}-execute.lock` (for `kind:"phase"`, `slug` is the child slug — distinct per sibling Phase, no collision). When updating `_active.json`, also set `active_epic` (`parent_slug` or self) and `active_phase` (`phase_index` or null).
+
 10. **Parse verdict**:
     - `PASS` → session: `phases.execute.status = completed`. Announce next.
     - `ESCALATE` → surface reason to user with options [retry batch / accept and continue / abort].

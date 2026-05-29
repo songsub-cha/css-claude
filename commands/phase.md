@@ -34,7 +34,9 @@ Decide the Phase decomposition for an Epic. Runs between `/css:plan` and `/css:r
      `kind:"phase"`, `parent_slug`, `phase_index`, `phase_label`, `depends_on`,
      `base_branch = base_branch_for(manifest, idx, slug)`, and empty execute/verify/document/pr stages.
 
-7. **Release lock** and announce: "Phasing 완료: {N} Phases. 다음 단계: `/css:review --slug {slug}`. NEXT=review".
+7. **Lock naming**: use `locks/{child_slug}-phasing.lock` so sibling Phases never collide. Where `_active.json` is written, also set `active_epic` (`parent_slug` or self) and `active_phase` (`phase_index` or null).
+
+8. **Release lock** and announce: "Phasing 완료: {N} Phases. 다음 단계: `/css:review --slug {slug}`. NEXT=review".
 
 <self_check>
 - [ ] phase-manifest-{slug}.json exists and passes validate_manifest

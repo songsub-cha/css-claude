@@ -15,7 +15,7 @@ Run the test suite, coverage, criteria mapping, code-quality review, and securit
 
 3. **Retry counter**: if `session.retry_counters.verify >= 3`, escalate to user with options.
 
-4. **Acquire lock** on `verify`.
+4. **Acquire lock** on `verify`. Lock key = `locks/{slug}-verify.lock` (for `kind:"phase"`, `slug` is the child slug — distinct per sibling Phase). Update `_active.json` with `active_epic` and `active_phase`.
 
 5. **Echo header**: `[css:verify @ slug={slug}, attempt={n+1}/3]`.
 
