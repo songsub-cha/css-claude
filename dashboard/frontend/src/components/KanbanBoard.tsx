@@ -6,11 +6,13 @@ import { useUIStore } from "../stores/uiStore";
 import { approveGate } from "../api/client";
 import { Column } from "./Column";
 import { SessionCard } from "./SessionCard";
-import type { PhaseName, GateName } from "../types";
+import { EpicFlowView } from "./EpicFlowView";
+import { groupByEpic, toEpicFlow } from "../lib/epicFlow";
+import type { StageName, GateName } from "../types";
 
-const STAGES: PhaseName[] = ["interview","plan","review","execute","verify","document","pr"];
+const STAGES: StageName[] = ["interview","plan","review","execute","verify","document","pr"];
 
-const VALID_TRANSITIONS: Array<[PhaseName, PhaseName, GateName]> = [
+const VALID_TRANSITIONS: Array<[StageName, StageName, GateName]> = [
   ["review", "execute", "gate2_pre_execute"],
   ["document", "pr", "gate3_pre_pr"]
 ];
@@ -26,10 +28,10 @@ export function KanbanBoard() {
     const slug = String(e.active.id);
     const overId = String(e.over?.id ?? "");
     if (!overId.startsWith("col-")) return;
-    const toStage = overId.slice(4) as PhaseName;
+    const toStage = overId.slice(4) as StageName;
     const sess = sessions.find(s => s.slug === slug);
     if (!sess) return;
-    const transition = VALID_TRANSITIONS.find(([from, to]) => from === sess.currentPhase && to === toStage);
+    const transition = VALID_TRANSITIONS.find(([from, to]) => from === sess.currentStage && to === toStage);
     if (!transition) {
       pushToast("warn", "Gates 외 이동은 불가");
       return;
@@ -57,11 +59,25 @@ export function KanbanBoard() {
     return () => root.removeEventListener("test-drag", handler as any);
   });
 
+  // Epic swimlanes: one row per Epic that has child Phases (D1). Legacy/childless
+  // Epics fall through to the stage board below (D9 — no swimlane forced).
+  const epicGroups = Object.entries(groupByEpic(sessions))
+    .filter(([, g]) => g.phases.length > 0);
+
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      {epicGroups.length > 0 && (
+        <div className="px-4 pt-4">
+          {epicGroups.map(([slug, g]) => (
+            <div key={slug} data-testid="epic-swimlane">
+              <EpicFlowView flow={toEpicFlow(g)} />
+            </div>
+          ))}
+        </div>
+      )}
       <div data-testid="kanban-board" className="grid grid-cols-7 gap-2 p-4">
         {STAGES.map((stage) => {
-          const inCol = sessions.filter(s => s.currentPhase === stage);
+          const inCol = sessions.filter(s => s.currentStage === stage);
           const hasPendingGate = inCol.some(s =>
             (stage === "review" && (s.gates.gate2_pre_execute as any)?.state === "pending") ||
             (stage === "document" && (s.gates.gate3_pre_pr as any)?.state === "pending")

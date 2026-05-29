@@ -16,6 +16,8 @@ function elapsed(mtimeSec: number): string {
 }
 
 export function SessionCard({ session, color, isPendingGate, isFailed, onClick }: Props) {
+  const isPhase = session.kind === "phase";
+  const prUrl = (session.phases?.pr as any)?.artifact as string | undefined;
   return (
     <div
       role="article"
@@ -31,6 +33,15 @@ export function SessionCard({ session, color, isPendingGate, isFailed, onClick }
       <div className="px-2 py-1.5 flex-1">
         <div className="font-semibold text-sm">{session.slug}</div>
         <div className="text-xs text-slate-400">{session.repoName} · {elapsed(session.mtime)}</div>
+        {isPhase && session.phaseIndex != null && (
+          <div className="text-xs text-slate-300 mt-0.5 flex items-center gap-1 flex-wrap">
+            <span>p{session.phaseIndex} · {session.phaseLabel ?? "phase"}</span>
+            {session.dependsOn.length > 0 && (
+              <span data-testid="stacked-marker" className="text-amber-400" title={`stacked on p${session.dependsOn.join(", p")}`}>⏶ stacked</span>
+            )}
+            {prUrl && <a href={prUrl} onClick={(e) => e.stopPropagation()} className="text-blue-300 underline">PR</a>}
+          </div>
+        )}
         {isPendingGate && <div data-testid="pending-gate-marker" className="text-xs text-amber-400 mt-1">⚠ drag right to approve</div>}
       </div>
       {isFailed && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" data-testid="failed-marker" />}

@@ -1,13 +1,13 @@
 import { useDroppable } from "@dnd-kit/core";
-import type { PhaseName } from "../types";
+import type { StageName } from "../types";
 
-const GATE_AFTER: Partial<Record<PhaseName, string>> = {
+const GATE_AFTER: Partial<Record<StageName, string>> = {
   review: "Gate 2",
   document: "Gate 3"
 };
 
 interface Props {
-  stage: PhaseName;
+  stage: StageName;
   hasPendingGate: boolean;
   children: React.ReactNode;
 }

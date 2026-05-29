@@ -13,7 +13,7 @@ export class SSEManager {
       this.backoffMs = Math.min(this.backoffMs * 2, 8000);
     };
     this.es.onopen = () => { this.backoffMs = 1000; };
-    for (const name of ["session_updated", "gate_reached", "gate_approved", "resume_started", "resume_failed", "session_completed", "project_registered"]) {
+    for (const name of ["session_updated", "gate_reached", "gate_approved", "resume_started", "resume_failed", "session_completed", "project_registered", "phase_started", "phase_completed", "phase_pr_opened"]) {
       this.es.addEventListener(name, (e) => {
         const data = JSON.parse((e as MessageEvent).data);
         for (const cb of this.listeners.get(name) ?? []) cb(data);

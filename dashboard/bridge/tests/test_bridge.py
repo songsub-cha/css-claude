@@ -47,6 +47,34 @@ def test_process_event_invokes_command(tmp_path, monkeypatch):
     assert "resumed" in log_text
 
 
+def test_phase_session_id_round_trips_verbatim(tmp_path, monkeypatch):
+    """T10: a per-Phase session_id (with a -pN suffix) is carried through the
+    bridge callbacks verbatim — no truncation of the phase suffix."""
+    qdir = tmp_path / "queue"
+    pdir = qdir / "processed"
+    fdir = qdir / "failed"
+    rdir = tmp_path / "runs"
+    for d in (qdir, pdir, fdir, rdir):
+        d.mkdir(parents=True, exist_ok=True)
+    for n, v in [("QUEUE", qdir), ("PROCESSED", pdir), ("FAILED", fdir), ("RUNS", rdir)]:
+        monkeypatch.setattr(b, n, v)
+    cbs = []
+    monkeypatch.setattr(b, "_post_callback", lambda url, p: cbs.append(p))
+
+    phase_sid = "dashboard-epic-phase-view-p2"
+    ep = qdir / "evt-phase.json"
+    ep.write_text(json.dumps({
+        "id": "evt-phase",
+        "session_id": phase_sid,
+        "project_root": str(tmp_path),
+        "command": _get_command_echo_ok(),
+        "callback_url": "http://test/cb",
+    }))
+    b.process_event(ep)
+    assert cbs, "expected callbacks"
+    assert all(c["session_id"] == phase_sid for c in cbs)
+
+
 def test_failing_command_moves_to_failed(tmp_path, monkeypatch):
     qdir = tmp_path / "queue"
     pdir = qdir / "processed"
