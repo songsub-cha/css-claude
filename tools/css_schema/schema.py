@@ -31,3 +31,29 @@ def validate_manifest(manifest: object) -> None:
                 # must reference an already-seen, strictly-smaller idx -> acyclic
                 raise SchemaError(
                     f"phase {idx} depends_on {d}: must be an existing smaller idx")
+
+
+_VALID_KINDS = {"epic", "phase"}
+_PHASE_REQUIRED = ("parent_slug", "phase_index", "base_branch")
+
+
+def validate_session(obj: dict) -> None:
+    if not isinstance(obj, dict):
+        raise SchemaError("session must be an object")
+    if not obj.get("slug"):
+        raise SchemaError("session requires a non-empty slug")
+    kind = obj.get("kind", "epic")  # D9: legacy (no kind) -> epic
+    if kind not in _VALID_KINDS:
+        raise SchemaError(f"kind must be one of {_VALID_KINDS}, got {kind!r}")
+    if "phases" not in obj or not isinstance(obj["phases"], dict):
+        raise SchemaError("session requires a 'phases' object")
+    if "phase_manifest" in obj:
+        validate_manifest(obj["phase_manifest"])
+    if kind == "phase":
+        for f in _PHASE_REQUIRED:
+            if f not in obj:
+                raise SchemaError(f"phase session missing required field {f!r}")
+        if not isinstance(obj["phase_index"], int) or obj["phase_index"] < 1:
+            raise SchemaError("phase_index must be int >= 1")
+        if not isinstance(obj.get("depends_on", []), list):
+            raise SchemaError("depends_on must be a list")

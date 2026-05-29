@@ -37,5 +37,34 @@ class TestManifest(unittest.TestCase):
         with self.assertRaises(SchemaError):
             validate_manifest(bad)
 
+from css_schema.schema import validate_session
+
+class TestSession(unittest.TestCase):
+    def test_epic_session_ok(self):
+        validate_session({"slug": "e", "kind": "epic",
+                          "phases": {"interview": {"status": "completed"}}})
+
+    def test_phase_session_ok(self):
+        validate_session({"slug": "e-p1", "kind": "phase", "parent_slug": "e",
+                          "phase_index": 1, "depends_on": [], "base_branch": "main",
+                          "phases": {"execute": {"status": "pending"}}})
+
+    def test_legacy_session_without_kind_treated_as_epic(self):
+        # backward compat (D9): no 'kind' -> valid single-Phase epic
+        validate_session({"slug": "old", "phases": {"interview": {"status": "completed"}}})
+
+    def test_phase_session_missing_parent_rejected(self):
+        with self.assertRaises(SchemaError):
+            validate_session({"slug": "e-p1", "kind": "phase",
+                              "phase_index": 1, "base_branch": "main", "phases": {}})
+
+    def test_bad_kind_rejected(self):
+        with self.assertRaises(SchemaError):
+            validate_session({"slug": "e", "kind": "nonsense", "phases": {}})
+
+    def test_missing_slug_rejected(self):
+        with self.assertRaises(SchemaError):
+            validate_session({"kind": "epic", "phases": {}})
+
 if __name__ == "__main__":
     unittest.main()
