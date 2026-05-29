@@ -1,7 +1,7 @@
-import type { Session, ArtifactRef, PhaseName } from "../types";
+import type { Session, ArtifactRef, StageName } from "../types";
 import { ArtifactAccordion } from "./ArtifactAccordion";
 
-const PHASES: PhaseName[] = ["interview","plan","review","execute","verify","document","pr"];
+const STAGES: StageName[] = ["interview","plan","review","execute","verify","document","pr"];
 
 interface Props {
   session: Session;
@@ -22,7 +22,7 @@ export function DetailSlideOver({ session, color, artifacts, onClose, onRetry, i
       </div>
       <div className="flex gap-1 flex-wrap mb-3">
         <span className="bg-slate-800 text-xs px-2 py-0.5 rounded">{session.repoName}</span>
-        <span className="bg-blue-900 text-xs px-2 py-0.5 rounded">{session.currentPhase}</span>
+        <span className="bg-blue-900 text-xs px-2 py-0.5 rounded">{session.currentStage}</span>
       </div>
       <section className="mb-3">
         <div className="text-xs uppercase text-slate-400 mb-1">Idea</div>
@@ -31,10 +31,10 @@ export function DetailSlideOver({ session, color, artifacts, onClose, onRetry, i
       <section className="mb-3">
         <div className="text-xs uppercase text-slate-400 mb-1">Timeline</div>
         <ul className="text-xs space-y-1">
-          {PHASES.map((p) => {
-            const ph = session.phases[p];
+          {STAGES.map((st) => {
+            const ph = session.phases[st];
             const icon = ph?.status === "completed" ? "✓" : ph?.status === "in_progress" ? "●" : "—";
-            return <li key={p}><span className="inline-block w-4">{icon}</span> {p}</li>;
+            return <li key={st}><span className="inline-block w-4">{icon}</span> {st}</li>;
           })}
         </ul>
       </section>

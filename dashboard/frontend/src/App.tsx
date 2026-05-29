@@ -31,7 +31,7 @@ export default function App() {
     const off1 = mgr.on("session_updated", (d: any) =>
       upsertSession({
         slug: d.slug,
-        currentPhase: d.phase,
+        currentStage: d.phase,
         gates: d.gates,
         mtime: d.mtime
       } as any)
