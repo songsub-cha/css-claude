@@ -1,18 +1,49 @@
-"""T4.5 — GET /api/projects + PATCH /api/projects/{id} with hex validation + SSE F2."""
+"""T4.5 — GET /api/projects + PATCH /api/projects/{id} with hex validation + SSE F2.
+
+Phase 2 (dashboard-epic-phase-view-p2): GET /api/projects/epics groups each
+project's Epic -> Phase flow graphs (filesystem-backed; does not touch the DB).
+"""
 import re
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.config import Settings
 from backend.deps import get_db_session
 from backend.models import Project
+from backend.services.epic_flow import build_epic_flow
+from backend.services.project_registry import read_projects
+from backend.services.session_reader import (
+    group_sessions_by_epic,
+    list_sessions_for_project,
+)
 from backend.sse import SSEEvent, broker
 
 HEX_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
+
+
+@router.get("/epics")
+async def list_project_epics():
+    """Per-project Epic grouping with flow graphs (filesystem; no DB)."""
+    settings = Settings()
+    out = []
+    for proj in read_projects(settings.projects_json):
+        sessions = list_sessions_for_project(Path(proj.repo_root))
+        epics = [
+            {"slug": key, "flow": build_epic_flow(group)}
+            for key, group in group_sessions_by_epic(sessions).items()
+        ]
+        out.append({
+            "repo_name": proj.repo_name,
+            "repo_root": proj.repo_root,
+            "epics": epics,
+        })
+    return {"projects": out}
 
 
 class ProjectOut(BaseModel):
