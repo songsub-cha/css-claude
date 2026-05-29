@@ -24,6 +24,17 @@ export function DetailSlideOver({ session, color, artifacts, onClose, onRetry, i
         <span className="bg-slate-800 text-xs px-2 py-0.5 rounded">{session.repoName}</span>
         <span className="bg-blue-900 text-xs px-2 py-0.5 rounded">{session.currentStage}</span>
       </div>
+      {session.kind === "phase" && session.phaseIndex != null && (
+        <section className="mb-3 text-xs">
+          <div className="text-slate-200 font-medium">Phase {session.phaseIndex}: {session.phaseLabel ?? "—"}</div>
+          <div data-testid="phase-deps" className="text-slate-400 mt-0.5">
+            depends on: {session.dependsOn.length ? session.dependsOn.map(d => `p${d}`).join(", ") : "none"}
+          </div>
+          {session.dependsOn.length > 0 && (
+            <div className="text-amber-400 mt-0.5">⏶ stacked on p{session.dependsOn.join(", p")}</div>
+          )}
+        </section>
+      )}
       <section className="mb-3">
         <div className="text-xs uppercase text-slate-400 mb-1">Idea</div>
         <div className="text-sm">{session.idea}</div>

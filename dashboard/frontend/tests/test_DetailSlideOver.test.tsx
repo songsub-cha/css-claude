@@ -8,3 +8,14 @@ test("renders + closes", () => {
   screen.getByText("✕").click();
   expect(onClose).toHaveBeenCalled();
 });
+
+test("phase session shows index/label, deps, and stacked note", () => {
+  render(<DetailSlideOver session={{
+    slug:"epic-x-p2", idea:"api layer", repoName:"alpha", repoRoot:"/a", currentStage:"execute",
+    phases:{}, gates:{}, mtime:0,
+    kind:"phase", parentSlug:"epic-x", phaseIndex:2, phaseLabel:"API layer", dependsOn:[1],
+  } as any} color="#22c55e" artifacts={[]} onClose={()=>{}} onRetry={()=>{}}/>);
+  expect(screen.getByText(/Phase 2: API layer/)).toBeInTheDocument();
+  expect(screen.getByTestId("phase-deps")).toHaveTextContent("1");
+  expect(screen.getByText(/stacked/i)).toBeInTheDocument();
+});
