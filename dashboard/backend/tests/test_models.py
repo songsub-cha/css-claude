@@ -69,6 +69,25 @@ async def test_gate_audit_log_constraints(pg_engine: AsyncEngine):
         assert g.gate == "gate2_pre_execute"
 
 
+def test_session_history_hierarchy_columns_metadata():
+    """T2 (no DB): ORM metadata exposes the Epic/Phase hierarchy columns,
+    the kind CHECK constraint, and the (project_id, parent_slug) index."""
+    table = SessionHistory.__table__
+    cols = table.columns
+    for name in ("kind", "parent_slug", "phase_index", "phase_label", "depends_on"):
+        assert name in cols, f"missing column {name}"
+    assert cols["kind"].nullable is False
+    assert cols["parent_slug"].nullable is True
+    assert cols["phase_index"].nullable is True
+    assert cols["depends_on"].nullable is False
+
+    constraint_names = {c.name for c in table.constraints}
+    assert "ck_sessions_history_kind" in constraint_names
+
+    index_names = {i.name for i in table.indexes}
+    assert "idx_history_project_parent" in index_names
+
+
 async def test_daemon_run_model(pg_engine: AsyncEngine):
     sm = async_sessionmaker(pg_engine, expire_on_commit=False)
     async with sm() as s:

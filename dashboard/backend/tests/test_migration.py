@@ -84,6 +84,39 @@ def alembic_async_url():
             pytest.skip(f"Docker unavailable and TEST_DATABASE_URL not set: {exc}")
 
 
+def test_0002_revision_chains_onto_0001():
+    """T1 (no DB): the 0002 migration declares 0001 as its down_revision."""
+    from alembic.script import ScriptDirectory
+    cfg = Config()
+    cfg.set_main_option("script_location", "alembic")
+    sd = ScriptDirectory.from_config(cfg)
+    rev = sd.get_revision("0002")
+    assert rev.down_revision == "0001"
+
+
+def test_0002_upgrade_emits_hierarchy_ddl(monkeypatch):
+    """T1 (no DB): upgrade() emits ALTERs for all five hierarchy columns plus the
+    kind CHECK constraint and the parent index — captured via a stubbed op.execute."""
+    import importlib.util
+    import pathlib
+    import alembic.op as alop
+
+    captured: list[str] = []
+    monkeypatch.setattr(alop, "execute", lambda sql: captured.append(sql))
+
+    path = pathlib.Path("alembic/versions/0002_phase_hierarchy.py")
+    spec = importlib.util.spec_from_file_location("mig0002", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    mod.upgrade()
+
+    joined = "\n".join(captured)
+    for col in ("kind", "parent_slug", "phase_index", "phase_label", "depends_on"):
+        assert col in joined, f"upgrade missing column {col}"
+    assert "ck_sessions_history_kind" in joined
+    assert "idx_history_project_parent" in joined
+
+
 def test_initial_migration_creates_all_tables(alembic_async_url):
     """Alembic upgrade head must create exactly 4 app tables + alembic_version."""
     cfg = _make_alembic_cfg(alembic_async_url)
