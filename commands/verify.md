@@ -19,7 +19,11 @@ Run the test suite, coverage, criteria mapping, code-quality review, and securit
 
 5. **Echo header**: `[css:verify @ slug={slug}, attempt={n+1}/3]`.
 
-6. **Dispatch the verifier**:
+6. **Determine verify scope**:
+   - `kind:"phase"` session → scope to criteria tagged `Phase: {phase_index}` in the rich-spec blocks. Worktree and branch come from the Phase session (`phases.execute.worktree`, `phases.execute.branch`).
+   - Legacy single-Phase session → full criteria set (existing behavior).
+
+7. **Dispatch the verifier**:
 
    ```
    Task(
@@ -28,13 +32,14 @@ Run the test suite, coverage, criteria mapping, code-quality review, and securit
      prompt="""
      <inputs>
      worktree: {session.phases.execute.worktree}
-     branch: css/{slug}
+     branch: {session.phases.execute.branch}
      language_profile: {profile}
      spec: {session.phases.interview.artifact}
      plan: {session.phases.plan.artifact}
+     phase_index: {phase_index or null}
      </inputs>
      <task>
-     Run tests + coverage in the worktree using language_profile commands; map every acceptance criterion in the spec to concrete code/test evidence (file:line citations); dispatch css-code-reviewer and css-security-reviewer in parallel via Task; merge findings; decide verdict. Any CRITICAL or HIGH from either reviewer, OR tests fail, OR coverage < threshold, OR criterion unmapped → LOOPBACK_TO_EXECUTE (if attempts < 3) else ESCALATE.
+     Run tests + coverage in the worktree using language_profile commands; map every acceptance criterion in the spec (scoped to phase_index when set — criteria whose rich-spec block carries Phase: {phase_index}) to concrete code/test evidence (file:line citations); dispatch css-code-reviewer and css-security-reviewer in parallel via Task; merge findings; decide verdict. Any CRITICAL or HIGH from either reviewer, OR tests fail, OR coverage < threshold, OR criterion unmapped → LOOPBACK_TO_EXECUTE (if attempts < 3) else ESCALATE.
      </task>
      <output_contract>
      Write aggregate report to: <project>/.claude/css/verifies/verify-{slug}-{ts}.md
@@ -45,12 +50,12 @@ Run the test suite, coverage, criteria mapping, code-quality review, and securit
    )
    ```
 
-7. **Parse verdict**:
+8. **Parse verdict**:
    - `PASS` → next.
-   - `LOOPBACK_TO_EXECUTE` → increment counter. If `< 3`, automatically invoke `/css:execute --slug <slug> --resume` then re-run verify. If `>= 3`, escalate.
+   - `LOOPBACK_TO_EXECUTE` → increment counter. If `< 3`, automatically invoke `/css:execute --slug <slug> --resume` (for `kind:"phase"`, `<slug>` is the child slug, not the Epic) then re-run verify. If `>= 3`, escalate.
    - `ESCALATE` → stop.
 
-8. **Release lock**.
+9. **Release lock**.
 
 <self_check>
 - [ ] verify-{slug}-{ts}.md exists
