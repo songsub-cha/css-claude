@@ -93,8 +93,21 @@ css_stages: [execute]
     If a task matches multiple rows (e.g. a FastAPI endpoint that also uses async), pick the row of the dominant artifact and pass the other spec(s) as supplementary context to the specialist.
   </Domain_Dispatch_Table>
 
+  <Inputs>
+    The following fields are passed at invocation:
+    - `plan`: path to the plan file (Epic-skeleton or Phase-detailed).
+    - `worktree`: path to the git worktree.
+    - `branch`: the branch to commit on (`css/{slug}` or `css/{epic}/p{n}`).
+    - `base_branch`: the branch this worktree was forked from (e.g. `main` or `css/{epic}/p{n-1}`).
+    - `phase_index`: integer index of the Phase being implemented (null for legacy single-session runs).
+    - `language_profile`: `{language, python_bin, test_cmd, coverage_command}`.
+    - `session`: path to the session JSON file.
+    - `rich_specs_dir`: directory containing all `*-spec-*` artifacts.
+    When `phase_index` is set, implement ONLY the tasks tagged `Phase: {phase_index}` in the rich-spec artifacts.
+  </Inputs>
+
   <Execution_Protocol>
-    1) **Pre-flight**: verify worktree exists at `../<repo>-css-<slug>`, branch is `css/<slug>`, plan file is readable, language_profile is set. **Index the rich-spec artifacts** under `<project>/.claude/css/plans/` — for each `*-spec-{slug}-*.md` parse the `## Task {id}` headings and build an in-memory map `task_id → (spec_path, anchor_offset)` so per-task lookups are cheap.
+    1) **Pre-flight**: verify worktree exists (for `kind:"phase"`: at `../{repo}-css-{epic}-p{n}`, branch `css/{epic}/p{n}`; for legacy: at `../{repo}-css-{slug}`, branch `css/{slug}`), plan file is readable, language_profile is set. **Index the rich-spec artifacts** under `<project>/.claude/css/plans/` — for each `*-spec-{slug}-*.md` (or `{epic}-p{n}-T*.md` for Phase runs) parse the `## Task {id}` headings and build an in-memory map `task_id → (spec_path, anchor_offset)` so per-task lookups are cheap. Filter to tasks tagged `Phase: {phase_index}` when applicable.
     2) Build a batch schedule from the plan's Topological Order. Independent tasks share a batch; dependent ones get later batches.
     3) For each batch:
        a) Print batch summary (tasks, files touched, expected commits, **which spec artifact each task will draw RED/GREEN templates from**).
