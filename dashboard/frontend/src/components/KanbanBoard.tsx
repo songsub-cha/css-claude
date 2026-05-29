@@ -6,6 +6,8 @@ import { useUIStore } from "../stores/uiStore";
 import { approveGate } from "../api/client";
 import { Column } from "./Column";
 import { SessionCard } from "./SessionCard";
+import { EpicFlowView } from "./EpicFlowView";
+import { groupByEpic, toEpicFlow } from "../lib/epicFlow";
 import type { StageName, GateName } from "../types";
 
 const STAGES: StageName[] = ["interview","plan","review","execute","verify","document","pr"];
@@ -57,8 +59,22 @@ export function KanbanBoard() {
     return () => root.removeEventListener("test-drag", handler as any);
   });
 
+  // Epic swimlanes: one row per Epic that has child Phases (D1). Legacy/childless
+  // Epics fall through to the stage board below (D9 — no swimlane forced).
+  const epicGroups = Object.entries(groupByEpic(sessions))
+    .filter(([, g]) => g.phases.length > 0);
+
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      {epicGroups.length > 0 && (
+        <div className="px-4 pt-4">
+          {epicGroups.map(([slug, g]) => (
+            <div key={slug} data-testid="epic-swimlane">
+              <EpicFlowView flow={toEpicFlow(g)} />
+            </div>
+          ))}
+        </div>
+      )}
       <div data-testid="kanban-board" className="grid grid-cols-7 gap-2 p-4">
         {STAGES.map((stage) => {
           const inCol = sessions.filter(s => s.currentStage === stage);
