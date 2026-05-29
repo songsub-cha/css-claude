@@ -61,8 +61,12 @@ class SessionHistory(Base):
         CheckConstraint(
             "outcome IN ('completed','failed','aborted')", name="ck_sessions_history_outcome"
         ),
+        CheckConstraint(
+            "kind IN ('epic','phase')", name="ck_sessions_history_kind"
+        ),
         UniqueConstraint("project_id", "session_id", "archived_at", name="uq_sessions_history"),
         Index("idx_history_project_finished", "project_id", "finished_at"),
+        Index("idx_history_project_parent", "project_id", "parent_slug"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -84,6 +88,15 @@ class SessionHistory(Base):
     snapshot: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     archived_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
+    # Epic/Phase hierarchy (migration 0002). Legacy rows backfill to kind='epic',
+    # parent_slug=NULL, depends_on=[] via these server defaults (D9).
+    kind: Mapped[str] = mapped_column(Text, nullable=False, server_default="epic")
+    parent_slug: Mapped[str | None] = mapped_column(Text, nullable=True)
+    phase_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    phase_label: Mapped[str | None] = mapped_column(Text, nullable=True)
+    depends_on: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, server_default="[]"
     )
 
     project: Mapped[Project | None] = relationship("Project", back_populates="sessions")
