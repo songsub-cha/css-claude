@@ -1,3 +1,5 @@
+> **English** · [한국어](2026-05-28-pipeline-dashboard-design.ko.md)
+
 # CSS Pipeline Dashboard — Design Spec
 
 ## Metadata
@@ -795,5 +797,5 @@ A v0.1 implementation is considered complete when:
 ## References
 
 - Parent design: [`docs/specs/2026-05-27-css-pipeline-design.md`](../../specs/2026-05-27-css-pipeline-design.md)
-- Project README: [`README.md`](../../../README.md)
+- Project README: [`README.en.md`](../../../README.en.md)
 - Visual brainstorming mockups: `.superpowers/brainstorm/851-1779912821/content/dashboard-layout*.html` (local only)

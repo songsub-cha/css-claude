@@ -1,21 +1,23 @@
-# 설치
+> **English** · [한국어](installation.ko.md)
 
-## 사전 조건
+# Installation
 
-- Claude Code 설치 (데스크톱 앱 또는 CLI). 최소 한 번 실행해서 `~/.claude/` 디렉토리가 생성되어 있어야 합니다.
-- `superpowers` 플러그인 활성화 (`/plugin enable superpowers@claude-plugins-official`).
-- `gh` CLI 설치 및 인증 완료 (`gh auth status`).
+## Prerequisites
+
+- Claude Code installed (desktop app or CLI). Run it at least once so the `~/.claude/` directory is created.
+- The `superpowers` plugin enabled (`/plugin enable superpowers@claude-plugins-official`).
+- The `gh` CLI installed and authenticated (`gh auth status`).
 - `git` >= 2.5.
-- `ast-grep` (`sg`) — 구조적 코드 패턴 검색. 에이전트 다수가 사용합니다.
+- `ast-grep` (`sg`) — structural code-pattern search, used by many of the agents.
   ```bash
-  # npm (Node.js 필요, 크로스 플랫폼 권장)
+  # npm (requires Node.js, recommended for cross-platform)
   npm install -g @ast-grep/cli
 
-  # 또는 cargo (Rust 필요)
+  # or cargo (requires Rust)
   cargo install ast-grep --locked
   ```
-  설치 확인: `sg --version`
-- (Ubuntu 전용) 설정 파싱을 위해 `jq` 필요.
+  Verify the install: `sg --version`
+- (Ubuntu only) `jq` is required for config parsing.
 
 ## Windows
 
@@ -25,7 +27,7 @@ cd css-claude
 powershell -ExecutionPolicy Bypass -File scripts\install.ps1
 ```
 
-기존 개인 설정을 덮어쓰려면: `powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Force`
+To overwrite existing personal settings: `powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Force`
 
 ## Ubuntu 22.04
 
@@ -35,21 +37,21 @@ cd css-claude
 bash scripts/install.sh
 ```
 
-기존 개인 설정을 덮어쓰려면: `FORCE=1 bash scripts/install.sh`
+To overwrite existing personal settings: `FORCE=1 bash scripts/install.sh`
 
-## 설치 확인
+## Verifying the install
 
-설치 후, git을 사용하는 아무 프로젝트에서:
+After installing, from any git-backed project:
 
 ```
 /css:ship "add a hello-world function"
 ```
 
-brainstorming 흐름이 시작되면 정상입니다. `Ctrl+C`는 언제든 안전하며 세션 상태가 유지됩니다.
+If the brainstorming flow starts, you're set. `Ctrl+C` is always safe and session state is preserved.
 
-## 제거
+## Uninstall
 
 Windows: `powershell -ExecutionPolicy Bypass -File scripts\uninstall.ps1`
 Ubuntu:  `bash scripts/uninstall.sh`
 
-개인 설정(`~/.claude/css/config.json`)과 프로젝트 산출물(`<project>/.claude/css/`)은 제거되지 않습니다. 필요 없으면 수동으로 삭제하세요.
+Personal settings (`~/.claude/css/config.json`) and project artifacts (`<project>/.claude/css/`) are not removed. Delete them manually if you no longer need them.

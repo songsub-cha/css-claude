@@ -1,3 +1,5 @@
+> **English** · [한국어](2026-05-29-epic-phase-pipeline-design.ko.md)
+
 # CSS Pipeline — Epic / Phase Decomposition Design Spec
 
 ## Metadata

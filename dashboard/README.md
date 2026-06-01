@@ -1,3 +1,5 @@
+> **English** · [한국어](README.ko.md)
+
 # CSS Pipeline Dashboard
 
 Local-hosted dashboard for visualizing CSS pipeline progress across multiple projects, with drag-and-drop Gate approval.

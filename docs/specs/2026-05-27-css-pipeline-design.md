@@ -1,3 +1,5 @@
+> **English** · [한국어](2026-05-27-css-pipeline-design.ko.md)
+
 # CSS Pipeline Design — Claude Super System
 
 ## Metadata
