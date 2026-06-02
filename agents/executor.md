@@ -82,15 +82,25 @@ css_stages: [execute]
 
     | Pattern in task files / code | Specialist | Spec artifact (from review) |
     |------------------------------|------------|------------------------------|
-    | HTTP route, OpenAPI, GraphQL schema, .proto, tRPC router, FastAPI endpoint/service/CRUD | `css-api-specialist` | `api-spec-{slug}-*.md` |
-    | UI component, composable, Activity, Fragment, React/Vue/Svelte/Angular view, Compose `@Composable` | `css-ui-engineer` | `ui-spec-{slug}-*.md` |
-    | Alembic migration, SQLAlchemy model, raw SQL, Redis client, ARQ worker | `css-db-specialist` | `db-spec-{slug}-*.md` |
-    | Dockerfile, docker-compose*.yml, k8s manifest, GitHub/GitLab CI workflow, nginx config | `css-infra-engineer` | `infra-spec-{slug}-*.md` |
+    | FastAPI endpoint/service/CRUD, Pydantic schema, Python REST/GraphQL (Strawberry/Ariadne) | `css-api-specialist` | `api-spec-{slug}-*.md` |
+    | NestJS module/controller/provider/service, Express router, `*.controller.ts`/`*.service.ts`/`*.module.ts`, `@InjectRepository` wiring, class-validator DTO | `css-node-backend` | `node-spec-{slug}-*.md` |
+    | Spring `@RestController`/`@Service`/`@Configuration`/`@SpringBootApplication`, Spring Security, Bean Validation DTO, Spring Data `JpaRepository` interface declaration, `*.java`/`*.kt` Spring + `build.gradle(.kts)`/`pom.xml` Spring deps | `css-spring-backend` | `spring-spec-{slug}-*.md` |
+    | UI component, composable, Activity, Fragment, React/Vue/Svelte/Angular view, Compose `@Composable`, Next.js `app/**/page.tsx`/`route.ts`/`'use client'`/Server Action | `css-ui-engineer` | `ui-spec-{slug}-*.md` |
+    | All entities/schemas/migrations/complex queries — Alembic, SQLAlchemy model, raw SQL (Python), Redis client, ARQ worker, Beanie/Motor/pymongo (Python Mongo), JPA `@Entity`/`@Table`/QueryDSL/Flyway/Liquibase, TypeORM `@Entity`/migration/QueryBuilder, Mongoose `@Schema`/`SchemaFactory` | `css-db-specialist` | `db-spec-{slug}-*.md` |
+    | Dockerfile, docker-compose*.yml, k8s manifest, GitHub/GitLab CI workflow, nginx config, Terraform `*.tf`/HCL/module | `css-infra-engineer` | `infra-spec-{slug}-*.md` |
     | `async def` / `await` / `asyncio.*` / `TaskGroup` / async generator (Python only) | `css-async-coder` | `async-spec-{slug}-*.md` |
     | imports of `langchain`, `langgraph`, `langfuse`, or vector store SDKs (`chromadb`, `pinecone`, `weaviate-client`, `qdrant-client`, `faiss`, `langchain_postgres.PGVector`); StateGraph/`@tool` usage; RAG/embedding/chunking workflows | `css-langgraph-engineer` | `llm-app-spec-{slug}-*.md` |
+    | `import torch`/`sklearn`/`pandas`, Pandera schema, `.fit(`/`.predict(`/`.transform(`, mlflow, feature pipeline, inference wrapper (no langchain) | `css-ml-engineer` | `ml-spec-{slug}-*.md` |
     | LLM system-prompt file authoring (9-section template targets) | `css-prompt-engineer` | `prompt-spec-{slug}-*.md` |
 
-    If a task matches multiple rows (e.g. a FastAPI endpoint that also uses async), pick the row of the dominant artifact and pass the other spec(s) as supplementary context to the specialist.
+    **Routing notes (first-match-wins, language/ecosystem first):**
+    - Backends split by language: Python/FastAPI (row 1), Node/NestJS (row 2), Java-Kotlin/Spring (row 3). File signatures differ, so they never collide.
+    - **Backend↔data boundary:** controllers/services/repository-injection (and simple Spring Data interface declarations) → the backend row; entity mappings, complex/dynamic queries, and migrations → `css-db-specialist` (row 5), regardless of language. These are normally separate files; a task mixing both is decomposed at `/css:review`.
+    - Mongo: Python (Beanie/Motor) and Node (Mongoose) both resolve to `css-db-specialist`.
+    - `css-async-coder` is Python-only; Node async belongs to `css-node-backend`.
+    - LLM apps (langchain/langgraph, row 8) take precedence over plain ML (row 9): pure `torch`/`sklearn` with no langchain → `css-ml-engineer`.
+
+    If a task still matches multiple rows, pick the row of the dominant artifact and pass the other spec(s) as supplementary context to the specialist.
   </Domain_Dispatch_Table>
 
   <Inputs>

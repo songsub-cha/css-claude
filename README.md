@@ -38,7 +38,7 @@ flowchart TD
 
     subgraph S3["③ review"]
         R1["css-reviewer · css-architect"]
-        R2["도메인 전문가 dispatch\napi · db · ui · infra · async · llm · prompt"]
+        R2["도메인 전문가 dispatch\napi · node · spring · db · ui · infra · async · llm · ml · prompt"]
         R1 -->|Rich Spec 위임| R2
     end
 
@@ -94,18 +94,21 @@ flowchart TD
 | ⑥ | `/css:document` | `css-documenter` (sonnet) | `docs/{slug}/README.md` 외 (Phase 세션: `docs/{epic}/p{n}/README.md`) |
 | ⑦ | `/css:pr` | `css-pr-creator` (haiku) | GitHub PR (Phase 세션: `--base <base_branch>` 스택 PR) |
 
-### 도메인 전문가 에이전트 (18개 중 8개)
+### 도메인 전문가 에이전트 (21개 중 11개)
 
 review 단계에서 Rich Spec을 생성하고, execute 단계에서는 캐시 미스 시에만 fallback으로 호출됩니다 (비용 절감 ~40–50%).
 
 | 에이전트 | 전문 영역 | 모델 |
 |----------|-----------|:----:|
-| `css-api-specialist` | REST / GraphQL / gRPC / tRPC API 설계 | sonnet |
-| `css-db-specialist` | PostgreSQL / Redis / ARQ 스키마·쿼리·마이그레이션 | sonnet |
-| `css-ui-engineer` | Web + Android (Material 3, Jetpack Compose) UI | sonnet |
-| `css-infra-engineer` | Docker / Kubernetes / CI-CD / nginx | sonnet |
+| `css-api-specialist` | Python / FastAPI REST·GraphQL API 설계 | sonnet |
+| `css-node-backend` | Node.js / NestJS (3-layer + DI) 백엔드 | sonnet |
+| `css-spring-backend` | Java·Kotlin / Spring Boot (3-layer + DI) 백엔드 | sonnet |
+| `css-db-specialist` | PostgreSQL / Redis / ARQ + MongoDB + JPA·QueryDSL + TypeORM·Mongoose (polyglot 데이터) | sonnet |
+| `css-ui-engineer` | Web (React/Vue/Svelte/Angular + Next.js) + Android (Compose) UI | sonnet |
+| `css-infra-engineer` | Docker / Kubernetes / CI-CD / nginx + Terraform | sonnet |
 | `css-async-coder` | Python asyncio 동시성 | sonnet |
 | `css-langgraph-engineer` | LangChain / LangGraph / LangFuse + 벡터 DB / RAG | sonnet |
+| `css-ml-engineer` | scikit-learn / PyTorch 피처·추론·평가 (테스트 가능 코드) | sonnet |
 | `css-prompt-engineer` | 9-섹션 프롬프트 설계 및 리팩토링 | opus |
 | `css-architect` | 아키텍처 자문 (read-only, review 단계 advisory) | opus |
 
