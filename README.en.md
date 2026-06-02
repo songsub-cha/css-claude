@@ -38,7 +38,7 @@ flowchart TD
 
     subgraph S3["③ review"]
         R1["css-reviewer · css-architect"]
-        R2["domain specialist dispatch\napi · db · ui · infra · async · llm · prompt"]
+        R2["domain specialist dispatch\napi · node · spring · db · ui · infra · async · llm · ml · prompt"]
         R1 -->|delegate Rich Spec| R2
     end
 
@@ -94,18 +94,21 @@ flowchart TD
 | ⑥ | `/css:document` | `css-documenter` (sonnet) | `docs/{slug}/README.md` and more (Phase sessions: `docs/{epic}/p{n}/README.md`) |
 | ⑦ | `/css:pr` | `css-pr-creator` (haiku) | GitHub PR (Phase sessions: `--base <base_branch>` stacked PR) |
 
-### Domain-specialist agents (8 of 18)
+### Domain-specialist agents (11 of 21)
 
 They author Rich Specs in the review stage and are only called as a fallback on a cache miss during execute (~40–50% cost savings).
 
 | Agent | Specialty | Model |
 |----------|-----------|:----:|
-| `css-api-specialist` | REST / GraphQL / gRPC / tRPC API design | sonnet |
-| `css-db-specialist` | PostgreSQL / Redis / ARQ schema, queries, migrations | sonnet |
-| `css-ui-engineer` | Web + Android (Material 3, Jetpack Compose) UI | sonnet |
-| `css-infra-engineer` | Docker / Kubernetes / CI-CD / nginx | sonnet |
+| `css-api-specialist` | Python / FastAPI REST·GraphQL API design | sonnet |
+| `css-node-backend` | Node.js / NestJS (3-layer + DI) backend | sonnet |
+| `css-spring-backend` | Java·Kotlin / Spring Boot (3-layer + DI) backend | sonnet |
+| `css-db-specialist` | PostgreSQL / Redis / ARQ + MongoDB + JPA·QueryDSL + TypeORM·Mongoose (polyglot data) | sonnet |
+| `css-ui-engineer` | Web (React/Vue/Svelte/Angular + Next.js) + Android (Compose) UI | sonnet |
+| `css-infra-engineer` | Docker / Kubernetes / CI-CD / nginx + Terraform | sonnet |
 | `css-async-coder` | Python asyncio concurrency | sonnet |
 | `css-langgraph-engineer` | LangChain / LangGraph / LangFuse + vector DB / RAG | sonnet |
+| `css-ml-engineer` | scikit-learn / PyTorch features·inference·eval (testable code) | sonnet |
 | `css-prompt-engineer` | 9-section prompt design and refactoring | opus |
 | `css-architect` | architecture advisory (read-only, review-stage advisory) | opus |
 
