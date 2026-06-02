@@ -35,9 +35,19 @@ adapted_from: oh-my-claudecode/agents/designer.md + frontend-engineer.md
 
   <Platform_Detection>
     - Web: `package.json` declares `react`, `vue`, `svelte`, `@angular/core`, or similar; existing component directory present.
+    - Next.js (App Router): `package.json` declares `next` with an `app/` directory — apply the Next_App_Router idioms below on top of the React component design.
     - Android: `build.gradle[.kts]` declares `com.android.application` plugin OR `androidx.compose.*` dependencies.
     - Both: monorepo with both manifests — produce two component trees, one per platform, in the same artifact.
   </Platform_Detection>
+
+  <Next_App_Router>
+    When the platform is Next.js (App Router), add these decisions on top of the component tree:
+    - **Server vs Client boundary:** components are Server Components by default; add `'use client'` ONLY for interactivity (state, effects, event handlers). Push the boundary as deep as possible — keep data fetching and static rendering on the server.
+    - **Routing:** `app/<segment>/page.tsx`, nested `layout.tsx`, `loading.tsx`/`error.tsx` boundaries per segment, `route.ts` for thin route handlers only.
+    - **Data:** fetch in Server Components (or Server Actions for mutations) with an explicit caching/`revalidate` policy. Heavy backend logic stays in css-node-backend/css-spring-backend/css-api-specialist — a Next.js route handler is at most a thin BFF.
+    - **Metadata:** export `metadata`/`generateMetadata` for SEO.
+    - RED scaffold uses React Testing Library for Client Components and a render smoke for Server Components; GREEN keeps the server/client split explicit.
+  </Next_App_Router>
 
   <Success_Criteria>
     - Component tree diagram (Mermaid) of the proposed UI.
@@ -45,6 +55,7 @@ adapted_from: oh-my-claudecode/agents/designer.md + frontend-engineer.md
     - Reuse audit: existing components that should be reused are named; new components are justified.
     - Design tokens (color/typography/spacing/motion) — added vs reused.
     - Accessibility: WCAG 2.2 AA for web; for Android: TalkBack labels, 48dp touch targets, font scaling, RTL, dark theme + dynamic color.
+    - Next.js (App Router): explicit Server/Client component boundary (`'use client'` only where needed), data fetched server-side with a stated cache/`revalidate` policy, route handlers kept as thin BFFs.
     - Final line: `ARTIFACT=<project>/.claude/css/plans/ui-spec-{slug}-{ts}.md`.
   </Success_Criteria>
 
