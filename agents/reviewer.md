@@ -60,6 +60,26 @@ adapted_from: oh-my-claudecode/agents/code-reviewer.md
       Task N-b (langgraph-engineer): graph node that loads the prompt and produces structured output
                                      depends-on: N-a
       ```
+    - **Backend + data (ALL languages split the same way)** — entity/schema/migration always
+      goes to db-specialist; the backend owns controller/service/repo-injection:
+      ```
+      Spring endpoint + new entity / QueryDSL query:
+        Task N-a (db-specialist):  @Entity mapping + QueryDSL query + Flyway migration
+        Task N-b (spring-backend): @RestController + @Service + JpaRepository interface
+                                   depends-on: N-a
+      NestJS endpoint + Mongo / TypeORM:
+        Task N-a (db-specialist):  Mongoose @Schema (or TypeORM @Entity + migration) + indexes
+        Task N-b (node-backend):   controller + service + DTO + @InjectRepository wiring
+                                   depends-on: N-a
+      ```
+    - **API + ML inference** (e.g., "endpoint that serves a model prediction"):
+      ```
+      Task N-a (ml-engineer):    pure inference wrapper predict(model, frame) + Pandera validation
+      Task N-b (api-specialist): POST /predict endpoint that calls the wrapper
+                                 depends-on: N-a
+      ```
+    - **Next.js page + endpoint**: same shape as UI + API — ui-engineer owns the page/components,
+      the matching backend (api / node / spring) owns the endpoint, executor-direct wires the fetch.
 
     **Glue tasks** (executor-direct): wiring between specialist outputs. Typical glue:
     - Dependency-injection wiring (`Depends(get_user_service)`)
@@ -89,7 +109,7 @@ adapted_from: oh-my-claudecode/agents/code-reviewer.md
     1) Read inputs (parallel): the spec path, the plan path, and the latest session file (`sessions/{slug}.json`).
     2) Build the coverage matrix: list every acceptance criterion in the spec; map each to the plan task IDs that implement it. Flag unmapped criteria.
     3) Per task in the plan, check: file paths look real (Glob/Grep against the project root), depends-on references exist, code snippets are complete, test snippets are runnable.
-    4) Detect domains by pattern-matching plan tasks (HTTP routes → API; SQL/migration → DB; component/composable/Fragment/View → UI; Dockerfile/compose/CI → infra; `async def`/`await` → async; `langchain`/`langgraph`/`langfuse`/vector store SDKs → llm-app; system-prompt edits → prompt; module-boundary changes → architecture).
+    4) Detect domains by pattern-matching plan tasks (Python HTTP/FastAPI → api; Node HTTP/NestJS·Express → node-backend; Java-Kotlin HTTP/Spring `@RestController` → spring-backend; ALL entities/schemas/migrations/complex queries — SQLAlchemy/Alembic/JPA/QueryDSL/Flyway/TypeORM/Mongoose/Beanie → db; component/composable/Fragment/View/Next.js → ui; Dockerfile/compose/CI/Terraform → infra; `async def`/`await` (Python) → async; `langchain`/`langgraph`/`langfuse`/vector store SDKs → llm-app; `torch`/`sklearn`/`pandas`/Pandera (no langchain) → ml; system-prompt edits → prompt; module-boundary changes → architecture).
     5) **Single-specialist task check**: per task, count how many Dispatch Table rows match. If ≥ 2, this task violates the Single-Specialist Task Rule — record a finding with a concrete decomposition proposal (use the patterns in `<Single_Specialist_Task_Rule>`). Any single-specialist violation triggers `VERDICT=LOOPBACK_TO_PLAN`.
     6) For each detected domain, check if the matching `*-spec-{slug}-*.md` artifact exists in `.claude/css/plans/`. If absent, dispatch the specialist agent via Task. (Gate: only when `kind == "phase"`.)
     7) Aggregate findings and decide the verdict.
