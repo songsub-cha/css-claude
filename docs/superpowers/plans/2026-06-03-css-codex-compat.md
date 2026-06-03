@@ -126,7 +126,10 @@ RUNTIME_POINTER = (
     "follow it before proceeding.\n"
 )
 
-_FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+# Delimiter whitespace is horizontal-only ([ \t]*, not \s*): with re.DOTALL,
+# \s* would swallow the blank line after the closing ---, truncating the body.
+# [ \t]* keeps the body (incl. its leading newline) verbatim.
+_FRONTMATTER_RE = re.compile(r"\A---[ \t]*\n(.*?)\n---[ \t]*\n", re.DOTALL)
 
 
 def split_frontmatter(text):
