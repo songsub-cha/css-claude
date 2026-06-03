@@ -55,3 +55,24 @@ Windows: `powershell -ExecutionPolicy Bypass -File scripts\uninstall.ps1`
 Ubuntu:  `bash scripts/uninstall.sh`
 
 Personal settings (`~/.claude/css/config.json`) and project artifacts (`<project>/.claude/css/`) are not removed. Delete them manually if you no longer need them.
+
+## Codex CLI (experimental)
+
+CSS also runs on OpenAI Codex CLI. The same `commands/` and `agents/` sources are transformed into Codex prompts + agent data files under `~/.codex`; your Claude Code install is untouched.
+
+```bash
+bash scripts/install-codex.sh
+# Windows:
+powershell -ExecutionPolicy Bypass -File scripts\install-codex.ps1
+```
+
+Then invoke stages as `/css-ship`, `/css-interview`, … (Codex uses a `css-` prefix instead of the `css:` namespace).
+
+Optional — enable parallel specialists by adding to `~/.codex/config.toml`:
+
+```toml
+[features]
+multi_agent = true
+```
+
+Without it, specialists run sequentially in one agent (no parallelism, same result). Session state is shared with Claude Code at `<project>/.claude/css/`, so a session started in either tool resumes in the other. Execution behavior is governed by `~/.codex/css/RUNTIME.md`. Prerequisites: Python 3 (install-time), plus `codex`, `git`, and optionally `gh` at runtime.
