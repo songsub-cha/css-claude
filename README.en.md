@@ -133,13 +133,38 @@ Detailed design: [`docs/superpowers/specs/2026-05-29-epic-phase-pipeline-design.
 
 ## Quick start
 
-After installing:
+After installing, both environments run the **same pipeline** — the only difference is the command namespace (`css:` ↔ `css-`).
+
+### Claude Code
+
+Full pipeline (driven through all 3 approval gates):
 
 ```
 /css:ship "<idea>"
 ```
 
-See [`docs/usage.md`](docs/usage.md) for the full command reference.
+Or run it stage by stage:
+
+```
+/css:interview → /css:plan → /css:phase → /css:review → /css:execute → /css:verify → /css:document → /css:pr
+```
+
+### Codex CLI
+
+Install first: `bash scripts/install-codex.sh` (Windows: `scripts\install-codex.ps1`). Codex has no `:` namespace, so it uses the **`css-` prefix**:
+
+```
+/css-ship "<idea>"
+```
+
+Stage by stage: `/css-interview → /css-plan → /css-phase → /css-review → /css-execute → /css-verify → /css-document → /css-pr`
+
+- **Parallel specialists** (optional): add `multi_agent = true` under `[features]` in `~/.codex/config.toml`. Without it, specialists run sequentially in one agent (same result).
+- **Approval gates**: presented as plain-text questions (no structured UI) that wait for your reply.
+- **Shared sessions**: state lives in `<project>/.claude/css/`, so a session started in Claude Code resumes in Codex (and vice versa).
+- Execution behavior is governed by `~/.codex/css/RUNTIME.md`.
+
+See [`docs/usage.md`](docs/usage.md) for the full command reference, and the Codex CLI section of [`docs/installation.md`](docs/installation.md) for install/usage.
 
 ## Dashboard (Optional)
 
