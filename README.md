@@ -179,6 +179,7 @@ bash scripts/install-dashboard.sh
 
 - Windows: `powershell -ExecutionPolicy Bypass -File scripts\install.ps1`
 - Ubuntu 22.04: `bash scripts/install.sh`
+- Codex CLI (실험적): `bash scripts/install-codex.sh` — [`docs/installation.ko.md`](docs/installation.ko.md)의 Codex CLI 섹션 참고
 
 자세한 내용은 [`docs/installation.ko.md`](docs/installation.ko.md)를 참고하세요.
 

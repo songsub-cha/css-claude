@@ -179,6 +179,7 @@ Install via the platform script:
 
 - Windows: `powershell -ExecutionPolicy Bypass -File scripts\install.ps1`
 - Ubuntu 22.04: `bash scripts/install.sh`
+- Codex CLI (experimental): `bash scripts/install-codex.sh` — see the Codex CLI section in [`docs/installation.md`](docs/installation.md)
 
 See [`docs/installation.md`](docs/installation.md) for details.
 
