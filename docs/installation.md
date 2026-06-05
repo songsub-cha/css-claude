@@ -56,9 +56,9 @@ Ubuntu:  `bash scripts/uninstall.sh`
 
 Personal settings (`~/.claude/css/config.json`) and project artifacts (`<project>/.claude/css/`) are not removed. Delete them manually if you no longer need them.
 
-## Codex CLI (experimental)
+## Codex App / CLI (experimental)
 
-CSS also runs on OpenAI Codex CLI. The same `commands/` and `agents/` sources are transformed into Codex prompts + agent data files under `~/.codex`; your Claude Code install is untouched.
+CSS also runs on OpenAI Codex App and CLI. The same `commands/` and `agents/` sources are transformed into Codex skills under `~/.agents/skills` plus runtime/agent data under `~/.codex/css`; your Claude Code install is untouched.
 
 ```bash
 bash scripts/install-codex.sh
@@ -66,7 +66,15 @@ bash scripts/install-codex.sh
 powershell -ExecutionPolicy Bypass -File scripts\install-codex.ps1
 ```
 
-Then invoke stages as `/css-ship`, `/css-interview`, … (Codex uses a `css-` prefix instead of the `css:` namespace).
+Then select skills such as `css-ship` from the App/CLI skill menu, or mention them directly:
+
+```
+$css-ship "add a hello-world function"
+```
+
+Some Codex surfaces also show enabled skills in the slash menu; choose the same `css-*` skill there when available.
+
+Stage skills are `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, and `$css-pr`.
 
 Optional — enable parallel specialists by adding to `~/.codex/config.toml`:
 

@@ -48,6 +48,20 @@ A new CSS version expects a newer session schema. Either:
 - Finish the current session under the old version, then upgrade.
 - Or back up `<project>/.claude/css/sessions/<slug>.json.bak.<ts>` and restart the session with the new CSS version.
 
+## Old Codex `/css-*` prompts still appear
+
+Older CSS Codex installs generated custom prompt files under `~/.codex/prompts/css-*.md`. Current installs use Codex skills under `~/.agents/skills/css-*/SKILL.md` and do not remove legacy prompt files automatically. If the old prompt entries are confusing, delete only the generated CSS prompt files:
+
+```bash
+rm ~/.codex/prompts/css-*.md
+```
+
+On Windows PowerShell:
+
+```powershell
+Remove-Item "$env:USERPROFILE\.codex\prompts\css-*.md"
+```
+
 ## Cleaning up failed sessions
 
 ```bash
