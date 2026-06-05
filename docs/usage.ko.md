@@ -28,6 +28,17 @@ git 프로젝트 어디서든:
 
 `--slug`는 생략 가능합니다. 생략하면 CSS가 `<project>/.claude/css/sessions/_active.json`에서 가장 최근 세션을 자동으로 찾습니다.
 
+## Codex App / CLI 대응 skill
+
+`scripts/install-codex.*` 설치 후 Codex에서는 같은 단계를 설치된 `css-*` skills로 사용합니다. App/CLI의 skill 메뉴에서 선택하거나 직접 mention합니다:
+
+```
+$css-ship "<아이디어>"
+$css-review --slug <slug>
+```
+
+전체 목록은 `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, `$css-pr`입니다. Skill invocation 뒤의 텍스트는 커맨드의 `$ARGUMENTS`로 해석하며, 실행 동작은 `~/.codex/css/RUNTIME.md`가 규정합니다.
+
 ## 멀티 세션 동시 실행
 
 같은 프로젝트에서 터미널을 두 개 열어 동시에 작업할 수 있습니다:

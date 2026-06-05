@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install-codex.sh — install CSS into OpenAI Codex CLI (~/.codex).
+# install-codex.sh -- install CSS into OpenAI Codex runtime + skills.
 # Single source = this repo's commands/ + agents/. The Claude Code install is
 # untouched (use scripts/install.sh for that).
 #
@@ -10,6 +10,7 @@ set -euo pipefail
 
 SOURCE_PATH="${SOURCE_PATH:-$(cd "$(dirname "$0")/.." && pwd)}"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
+CODEX_SKILLS_DIR="${CODEX_SKILLS_DIR:-$HOME/.agents/skills}"
 FORCE="${FORCE:-0}"
 
 section() { echo; echo "=== $1 ==="; }
@@ -35,11 +36,11 @@ command -v gh    >/dev/null 2>&1 && echo "  [OK] gh"          || echo "  [WARN] 
 section "Installing CSS Codex artifacts"
 force_flag=""
 [ "$FORCE" = "1" ] && force_flag="--force"
-( cd "$SOURCE_PATH/tools" && "$PYTHON" -m codex_install --source "$SOURCE_PATH" --dest "$CODEX_HOME" $force_flag )
+( cd "$SOURCE_PATH/tools" && "$PYTHON" -m codex_install --source "$SOURCE_PATH" --dest "$CODEX_HOME" --skills-dir "$CODEX_SKILLS_DIR" $force_flag )
 
 section "Done"
 echo "Optional — enable parallel specialists in $CODEX_HOME/config.toml:"
 echo "  [features]"
 echo "  multi_agent = true"
 echo
-echo "Try: /css-ship \"<small idea>\" in a Codex CLI session."
+echo "Try: \$css-ship \"<small idea>\" in a new Codex App or CLI session."

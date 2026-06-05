@@ -56,9 +56,9 @@ Ubuntu:  `bash scripts/uninstall.sh`
 
 개인 설정(`~/.claude/css/config.json`)과 프로젝트 산출물(`<project>/.claude/css/`)은 제거되지 않습니다. 필요 없으면 수동으로 삭제하세요.
 
-## Codex CLI (실험적)
+## Codex App / CLI (실험적)
 
-CSS는 OpenAI Codex CLI에서도 동작합니다. 동일한 `commands/`·`agents/` 소스를 `~/.codex` 아래 Codex 프롬프트 + 에이전트 데이터 파일로 변환하며, Claude Code 설치는 건드리지 않습니다.
+CSS는 OpenAI Codex App/CLI에서도 동작합니다. 동일한 `commands/`·`agents/` 소스를 `~/.agents/skills` 아래 Codex skills와 `~/.codex/css` 아래 런타임/에이전트 데이터 파일로 변환하며, Claude Code 설치는 건드리지 않습니다.
 
 ```bash
 bash scripts/install-codex.sh
@@ -66,7 +66,15 @@ bash scripts/install-codex.sh
 powershell -ExecutionPolicy Bypass -File scripts\install-codex.ps1
 ```
 
-이후 `/css-ship`, `/css-interview` … 로 호출합니다 (Codex는 `css:` 네임스페이스 대신 `css-` 프리픽스 사용).
+이후 App/CLI의 skill 메뉴에서 `css-ship` 같은 skill을 선택하거나 직접 mention합니다:
+
+```
+$css-ship "add a hello-world function"
+```
+
+일부 Codex 표면에서는 활성화된 skills가 slash 메뉴에도 보일 수 있으므로, 표시될 때는 같은 `css-*` skill을 선택하면 됩니다.
+
+단계별 skill은 `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, `$css-pr`입니다.
 
 선택 — 병렬 전문가를 켜려면 `~/.codex/config.toml`에 추가:
 
