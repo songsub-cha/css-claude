@@ -103,3 +103,79 @@ def check_consistency(repo_root) -> list[str]:
     for name in sorted(readme_en - all_names):
         errors.append(f"README.en.md references {name!r} which has no agents/*.md file")
     return errors
+
+
+def check_semantic_contracts(repo_root) -> list[str]:
+    """Return prompt-contract drift that name-only registry checks cannot catch."""
+    root = Path(repo_root)
+    agents = parse_agent_files(root / "agents")
+    domain = domain_specialists(agents)
+    errors: list[str] = []
+
+    specialist_markers = (
+        "<CSS_Rich_Spec_Contract>",
+        "artifact_paths",
+        "Phase:",
+        "RED command:",
+        "GREEN command:",
+        "Cross_Domain_Notes:",
+        "ARTIFACT=<exact assigned path>",
+        "write only inside the supplied worktree",
+    )
+    forbidden_runtime_refs = (
+        "oh-my-claudecode:",
+        "/team",
+        "document-specialist",
+        "frontend-engineer",
+        "consult writer",
+    )
+    for name in sorted(agents):
+        path = Path(agents[name]["path"])
+        body = _FRONTMATTER_RE.sub(
+            "", path.read_text(encoding="utf-8"), count=1)
+        for forbidden in forbidden_runtime_refs:
+            if forbidden in body:
+                errors.append(f"{name} has unavailable runtime reference {forbidden!r}")
+
+    for name in sorted(domain):
+        path = Path(agents[name]["path"])
+        text = path.read_text(encoding="utf-8")
+        body = _FRONTMATTER_RE.sub("", text, count=1)
+        for marker in specialist_markers:
+            if marker not in body:
+                errors.append(f"{name} missing Rich Spec contract marker {marker!r}")
+        if body.count("<CSS_Rich_Spec_Contract>") != 1 or body.count(
+            "</CSS_Rich_Spec_Contract>"
+        ) != 1:
+            errors.append(f"{name} must contain one balanced CSS_Rich_Spec_Contract")
+        if body.count("<Domain_Notes_Reference>") != body.count(
+            "</Domain_Notes_Reference>"
+        ):
+            errors.append(f"{name} has unbalanced Domain_Notes_Reference tags")
+
+    required_by_file = {
+        "commands/phase.md": ("--session", "single_phase:true", "parent_session"),
+        "commands/interview.md": ('kind:"epic"', "single_phase:false"),
+        "commands/plan.md": ("single_phase == true", "parent_session"),
+        "commands/review.md": ("artifact_paths", "rich_specs", "advisories"),
+        "commands/execute.md": ("rich_specs", "RED command", "GREEN command", "go.mod"),
+        "commands/verify.md": ("rich_specs", "GREEN command"),
+        "commands/pr.md": ("parent_session", "session.base_branch"),
+        "commands/ship.md": ("/css:phase --session", ".claude/css/"),
+        "agents/reviewer.md": ("artifact_paths", "advisory", "RED command:"),
+        "agents/executor.md": ("rich_specs", "RED command", "GREEN command"),
+        "agents/verifier.md": ("rich_specs", "GREEN command"),
+    }
+    for rel, markers in required_by_file.items():
+        text = (root / rel).read_text(encoding="utf-8")
+        for marker in markers:
+            if marker not in text:
+                errors.append(f"{rel} missing pipeline contract marker {marker!r}")
+
+    phase = (root / "commands" / "phase.md").read_text(encoding="utf-8")
+    execute = (root / "commands" / "execute.md").read_text(encoding="utf-8")
+    if "tools/css_schema" in phase:
+        errors.append("commands/phase.md has unresolved repo-local tools/css_schema dependency")
+    if "Language Detection Logic" in execute:
+        errors.append("commands/execute.md has unresolved Language Detection Logic dependency")
+    return errors
