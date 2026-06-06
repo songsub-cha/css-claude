@@ -25,10 +25,19 @@ REQUIRED_FIELDS = (
 
 
 def validate_rich_spec(
-    text: str, *, expected_task_id: str, expected_phase: int
+    text: str,
+    *,
+    expected_task_id: str,
+    expected_phase: int,
+    expected_artifact: str | None = None,
 ) -> dict[str, str]:
     """Validate one task-scoped artifact and return its core identity fields."""
-    if "advisory-" in text.lower():
+    artifact = re.search(r"^ARTIFACT=(\S+)\s*$", text, re.MULTILINE)
+    # Advisory reports live under .claude/css/reviews/; executable Rich Specs
+    # live under .claude/css/plans/. Key off the artifact directory, not an
+    # arbitrary substring, so a legitimate spec whose slug contains "advisory"
+    # (e.g. an "advisory-dashboard" feature) is not misread as an advisory.
+    if artifact and "/css/reviews/" in artifact.group(1):
         raise RichSpecError("advisory reports are not executable Rich Specs")
     heading = f"## Task {expected_task_id}"
     if text.count(heading) != 1:
@@ -39,11 +48,13 @@ def validate_rich_spec(
     phase = re.search(r"^Phase:\s*(\d+)\s*$", text, re.MULTILINE)
     if not phase or int(phase.group(1)) != expected_phase:
         raise RichSpecError(f"expected Phase: {expected_phase}")
-    artifact = re.search(r"^ARTIFACT=(\S+)\s*$", text, re.MULTILINE)
     if not artifact:
         raise RichSpecError("missing final ARTIFACT=<path>")
     if text.rstrip().splitlines()[-1] != f"ARTIFACT={artifact.group(1)}":
         raise RichSpecError("ARTIFACT line must be final")
+    if expected_artifact is not None and artifact.group(1) != expected_artifact:
+        raise RichSpecError(
+            f"ARTIFACT must equal the assigned path {expected_artifact!r}")
     specialist = re.search(r"^Specialist:\s*(\S+)\s*$", text, re.MULTILINE)
     if not specialist:
         raise RichSpecError("Specialist must name one agent")
@@ -56,10 +67,15 @@ def validate_rich_spec(
 
 
 def validate_rich_spec_file(
-    path: str | Path, *, expected_task_id: str, expected_phase: int
+    path: str | Path,
+    *,
+    expected_task_id: str,
+    expected_phase: int,
+    expected_artifact: str | None = None,
 ) -> dict[str, str]:
     return validate_rich_spec(
         Path(path).read_text(encoding="utf-8"),
         expected_task_id=expected_task_id,
         expected_phase=expected_phase,
+        expected_artifact=expected_artifact,
     )

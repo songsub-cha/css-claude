@@ -60,6 +60,35 @@ class RichSpecTests(unittest.TestCase):
                 expected_phase=1,
             )
 
+    def test_executable_spec_with_advisory_in_slug_accepted(self):
+        # Regression: a legitimate plans/ artifact whose slug contains "advisory"
+        # (e.g. an "advisory-dashboard" feature) must NOT be misread as an
+        # advisory report. Advisory detection keys off the reviews/ directory.
+        text = (FX / "valid_single_rich_spec.md").read_text(encoding="utf-8").replace(
+            "ARTIFACT=.claude/css/plans/small-idea-T01.md",
+            "ARTIFACT=.claude/css/plans/advisory-dashboard-T01.md",
+        )
+        result = validate_rich_spec(text, expected_task_id="01", expected_phase=1)
+        self.assertEqual(
+            result["artifact"], ".claude/css/plans/advisory-dashboard-T01.md")
+
+    def test_expected_artifact_match_accepted(self):
+        validate_rich_spec(
+            (FX / "valid_phase_rich_spec.md").read_text(encoding="utf-8"),
+            expected_task_id="02",
+            expected_phase=2,
+            expected_artifact=".claude/css/plans/epic-p2-T02.md",
+        )
+
+    def test_expected_artifact_mismatch_rejected(self):
+        with self.assertRaises(RichSpecError):
+            validate_rich_spec(
+                (FX / "valid_phase_rich_spec.md").read_text(encoding="utf-8"),
+                expected_task_id="02",
+                expected_phase=2,
+                expected_artifact=".claude/css/plans/wrong-path.md",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

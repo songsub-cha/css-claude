@@ -1,6 +1,6 @@
 ---
 name: css-code-reviewer
-description: Code-quality reviewer for the verify stage (CSS pipeline, opus, read-only)
+description: Code-quality reviewer for the verify stage (CSS pipeline, opus, report-only)
 model: opus
 css_stages: [verify]
 adapted_from: oh-my-claudecode/agents/code-reviewer.md
@@ -27,7 +27,7 @@ adapted_from: oh-my-claudecode/agents/code-reviewer.md
   </Success_Criteria>
 
   <Constraints>
-    - Read-only.
+    - Read-only on product code; writes only its own review report (see Write_Boundary).
     - Review only the diff between `css/<slug>` and the worktree's base branch (use `git diff <base>...HEAD --name-only`).
     - All user-facing prose Korean. Severity labels stay English.
   </Constraints>
