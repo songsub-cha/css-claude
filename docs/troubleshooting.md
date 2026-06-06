@@ -36,7 +36,7 @@ The Red phase needs the test to fail before the implementation exists. Either:
 - The plan's test is wrong (asserts something already true).
 - An earlier task already added the implementation.
 
-Run `/css:review --slug <slug>` to re-audit the plan.
+Run `/css:review --session <slug>` to re-audit the plan.
 
 ## "Coverage below 85% after self-heal"
 

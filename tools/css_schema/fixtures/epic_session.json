@@ -1,6 +1,7 @@
 {
   "slug": "epic-phase-pipeline",
   "kind": "epic",
+  "single_phase": false,
   "idea": "example epic",
   "phases": {
     "interview": {"status": "completed", "artifact": "docs/superpowers/specs/x.md"},

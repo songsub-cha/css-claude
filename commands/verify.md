@@ -5,63 +5,24 @@ argument-hint: "[--session <name>] [--exec-log <path>]"
 
 # /css:verify
 
-Run the test suite, coverage, criteria mapping, code-quality review, and security review; merge into one verdict. Wraps `css-verifier`.
+Independently verify task commands, full tests, coverage, acceptance criteria, code quality, and security.
 
 ## Steps
 
-1. **Parse arguments**: `--session`, `--exec-log`.
-
-2. **Resolve session**.
-
-3. **Retry counter**: if `session.retry_counters.verify >= 3`, escalate to user with options.
-
-4. **Acquire lock** on `verify`. Lock key = `locks/{slug}-verify.lock` (for `kind:"phase"`, `slug` is the child slug — distinct per sibling Phase). Update `_active.json` with `active_epic` and `active_phase`.
-
-5. **Echo header**: `[css:verify @ slug={slug}, attempt={n+1}/3]`.
-
-6. **Determine verify scope**:
-   - `kind:"phase"` session → scope to criteria tagged `Phase: {phase_index}` in the rich-spec blocks. Worktree and branch come from the Phase session (`phases.execute.worktree`, `phases.execute.branch`).
-   - Legacy single-Phase session → full criteria set (existing behavior).
-
-7. **Dispatch the verifier**:
-
-   ```
-   Task(
-     subagent_type="css-verifier",
-     description="css verify: {slug}",
-     prompt="""
-     <inputs>
-     worktree: {session.phases.execute.worktree}
-     branch: {session.phases.execute.branch}
-     language_profile: {profile}
-     spec: {session.phases.interview.artifact}
-     plan: {session.phases.plan.artifact}
-     phase_index: {phase_index or null}
-     </inputs>
-     <task>
-     Run tests + coverage in the worktree using language_profile commands; map every acceptance criterion in the spec (scoped to phase_index when set — criteria whose rich-spec block carries Phase: {phase_index}) to concrete code/test evidence (file:line citations); dispatch css-code-reviewer and css-security-reviewer in parallel via Task; merge findings; decide verdict. Any CRITICAL or HIGH from either reviewer, OR tests fail, OR coverage < threshold, OR criterion unmapped → LOOPBACK_TO_EXECUTE (if attempts < 3) else ESCALATE.
-     </task>
-     <output_contract>
-     Write aggregate report to: <project>/.claude/css/verifies/verify-{slug}-{ts}.md
-     Sections: Verdict, Test Summary, Coverage Table, Acceptance Criteria Matrix, Code-quality Findings (link), Security Findings (link), Loopback Recommendation, Retry Counter.
-     Final line: VERDICT=PASS | VERDICT=LOOPBACK_TO_EXECUTE | VERDICT=ESCALATE
-     </output_contract>
-     """
-   )
-   ```
-
-8. **Parse verdict**:
-   - `PASS` → next.
-   - `LOOPBACK_TO_EXECUTE` → increment counter. If `< 3`, automatically invoke `/css:execute --session <slug> --resume` (for `kind:"phase"`, `<slug>` is the child slug, not the Epic) then re-run verify. If `>= 3`, escalate.
-   - `ESCALATE` → stop.
-
-9. **Release lock**.
+1. Parse arguments, resolve the session, enforce the three-attempt counter, acquire the verify lock, and update `_active.json` (`latest_slug`, `active_epic`, `active_phase`).
+2. Resolve the spec from the session or parent_session. Resolve executable Rich Specs from `session.phases.review.rich_specs`; use legacy path fallback only when the field is absent.
+3. Scope a child Phase to artifacts tagged `Phase: {phase_index}`. Treat single-Phase and kind-less legacy sessions as `Phase: 1`.
+4. Dispatch `css-verifier` with worktree, branch, language_profile, spec, plan, phase_index, and exact `rich_specs`.
+5. In the worktree, rerun every Rich Spec `GREEN command`, then run full `language_profile.test_command` and `coverage_command`.
+6. Map every in-scope acceptance criterion to concrete code and test evidence. Dispatch `css-code-reviewer` and `css-security-reviewer` in parallel.
+7. Any GREEN command failure, full-test failure, coverage below threshold, unmapped criterion, or CRITICAL/HIGH finding causes `LOOPBACK_TO_EXECUTE` until the retry limit, then `ESCALATE`.
+8. Record the aggregate report and verdict; release the lock.
 
 <self_check>
-- [ ] verify-{slug}-{ts}.md exists
-- [ ] code-review-{slug}-{ts}.md exists
-- [ ] security-review-{slug}-{ts}.md exists
-- [ ] retry_counters.verify updated on loopback
+- [ ] Every task GREEN command was rerun
+- [ ] Full tests and coverage ran in the worktree
+- [ ] Code and security review reports exist
+- [ ] Retry counter is updated on loopback
 </self_check>
 
 $ARGUMENTS

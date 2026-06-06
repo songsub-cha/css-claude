@@ -1,139 +1,30 @@
 ---
-description: Master pipeline — runs interview → plan → review → execute → verify → document → pr with three approval gates
+description: Master pipeline - runs interview, plan, phase, review, execute, verify, document, and pr with three approval gates
 argument-hint: "[--session <name>] <idea>"
 ---
 
 # /css:ship
 
-Run the full CSS pipeline. Three approval gates: Gate 1 is implicit (brainstorming's own user-review step); Gates 2 (pre-execute) and 3 (pre-pr) use AskUserQuestion.
+Run the full CSS pipeline while preserving approval gates and Phase dependencies.
+All pipeline state and task artifacts live under `<project>/.claude/css/`.
 
-## Steps
+## Flow
 
-1. **Parse arguments**: extract `--session` if present; remainder is the idea.
-
-2. **Resolve or initialize session**:
-   - `--session` provided + existing `<project>/.claude/css/sessions/<slug>.json` → AskUserQuestion: "기존 세션 발견 (phase=`<current>`). 어떻게 진행할까요? [Resume / Restart / Cancel]".
-   - `--session` provided + no file → init.
-   - No `--session` → derive slug from idea (kebab-case, collision-suffixed if needed), init session, update `_active.json`.
-   - Set `session.master_flow = true`.
-
-3. **Acquire lock**.
-
-4. **Stage 1 — interview**:
-   - Invoke `/css:interview <idea>` (or resume) inheriting the slug.
-   - Gate 1 is implicit: brainstorming's own "user reviews spec" step.
-
-5. **Stage 2 — plan (skeleton)**:
-   - Invoke `/css:plan --session <slug>`.
-
-5b. **Stage 2.5 — phasing**:
-   - Invoke `/css:phase --session <slug>` (creates child Phase sessions from the approved manifest).
-   - If the Epic stays single-Phase (sub-threshold), continue exactly as the legacy linear flow (one session, one PR) via steps 6–12.
-   - If multi-Phase: run the Epic **architecture review** once (`/css:review --session <epic>`, kind=epic → coarse, no rich-specs), then run the per-child loop in step 13.
-
-6. **Stage 3 — review (loop)** *(single-Phase / legacy path)*:
-   - Invoke `/css:review --session <slug>`.
-   - On `LOOPBACK_TO_PLAN`, the review command itself loops back to plan up to 2 attempts.
-   - On `LOOPBACK_TO_INTERVIEW`, ask user to confirm before re-entering interview.
-   - On `ESCALATE`, stop and surface options.
-   - *Multi-Phase Epics: the Epic architecture review was already run in step 5b. Skip to step 13 (per-Phase loop).*
-
-7. **Gate 2 — pre-execute (cross-path)** *(single-Phase / legacy path)*:
-
-   ```
-   is_resume = ($CSS_DASHBOARD_RESUME == "1")
-   gate = session.gates.gate2_pre_execute
-   state = gate.state if gate else null
-
-   if state == "approved": proceed to step 8; return
-
-   if not is_resume and config.dashboard_enabled:
-       banner = "Plan 검증 완료. worktree '../<repo>-css-<session>' 생성 후 execute 시작."
-       if state == "pending": banner += " (대시보드 승인 대기 중 — 여기서 승인해도 됩니다)"
-       answer = AskUserQuestion(banner, options=["Yes (여기서 승인)", "Wait for dashboard (대시보드에서 드래그)", "Cancel"])
-       if answer == "Yes (여기서 승인)":
-           session.gates.gate2_pre_execute = {state:"approved", source:"terminal_ask", reached_at: gate.reached_at or now(), approved_at: now(), approved_by:"terminal"}
-           save_session(); proceed to step 8
-       elif answer startswith "Wait for dashboard":
-           if state != "pending":
-               session.gates.gate2_pre_execute = {state:"pending", reached_at: now(), source:null, approved_at:null, approved_by:null}
-               save_session()
-           release_lock(); exit 0
-       else: release_lock(); exit 0
-   elif not is_resume and not config.dashboard_enabled:
-       answer = AskUserQuestion(banner, options=["Yes", "Cancel"])
-       if answer == "Yes":
-           session.gates.gate2_pre_execute = {state:"approved", source:"terminal_ask", approved_at:now()}
-           save_session(); proceed
-       else: release_lock(); exit 0
-   else:  # is_resume — daemon-bridge spawned us
-       if state != "approved":
-           session.gates.gate2_pre_execute = {state:"pending", reached_at:now()}
-           save_session()
-       release_lock(); exit 0
-   ```
-
-8. **Stage 4 — execute** *(single-Phase / legacy path)*: invoke `/css:execute --session <slug>`. The `master_flow` flag tells `/css:execute` not to ask Gate 2 again (it inherits the answer from this step).
-
-9. **Stage 5 — verify (loop)** *(single-Phase / legacy path)*:
-   - Invoke `/css:verify --session <slug>`.
-   - On `LOOPBACK_TO_EXECUTE`, the verify command itself loops back to execute up to 3 attempts.
-   - On `ESCALATE`, stop with options.
-
-10. **Stage 6 — document** *(single-Phase / legacy path)*: invoke `/css:document --session <slug>`.
-
-11. **Gate 3 — pre-pr (cross-path)** *(single-Phase / legacy path)*:
-
-    ```
-    is_resume = ($CSS_DASHBOARD_RESUME == "1")
-    gate = session.gates.gate3_pre_pr
-    state = gate.state if gate else null
-
-    if state == "approved": proceed to step 12; return
-
-    if not is_resume and config.dashboard_enabled:
-        banner = "구현 + 문서 완료. 브랜치 'css/<session>'를 origin에 push하고 PR 생성."
-        if state == "pending": banner += " (대시보드 승인 대기 중 — 여기서 승인해도 됩니다)"
-        answer = AskUserQuestion(banner, options=["Yes (PR 생성)", "Draft PR (대시보드에서 드래그 후 PR draft 모드)", "Cancel"])
-        if answer == "Yes (PR 생성)":
-            session.gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", reached_at: gate.reached_at or now(), approved_at: now(), approved_by:"terminal"}
-            save_session(); proceed to step 12
-        elif answer startswith "Draft PR":
-            session.gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", reached_at: gate.reached_at or now(), approved_at: now(), approved_by:"terminal", draft: true}
-            save_session(); proceed to step 12
-        else: release_lock(); exit 0
-    elif not is_resume and not config.dashboard_enabled:
-        answer = AskUserQuestion(banner, options=["Yes (PR 생성)", "Draft PR", "Cancel"])
-        if answer startswith "Yes" or answer startswith "Draft PR":
-            session.gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", approved_at:now(), draft: answer startswith "Draft PR"}
-            save_session(); proceed
-        else: release_lock(); exit 0
-    else:  # is_resume — daemon-bridge spawned us
-        if state != "approved":
-            session.gates.gate3_pre_pr = {state:"pending", reached_at:now()}
-            save_session()
-        release_lock(); exit 0
-    ```
-
-12. **Stage 7 — pr** *(single-Phase / legacy path)*: invoke `/css:pr --session <slug>` (with `--draft` if user chose). The `master_flow` flag tells `/css:pr` not to ask Gate 3 again.
-
-13. **Stages plan→pr per Phase** *(multi-Phase Epics)*:
-   For each child slug in topological order (by `phase_index`, respecting `depends_on`):
-   a. `/css:plan --session <child>` (kind=phase → detailed) → `/css:review --session <child>` (kind=phase → rich-specs for this Phase).
-   b. **Gate 2 (per Phase)** — AskUserQuestion: "Phase {idx} '{label}' execute 시작. base=`{base_branch}`. [Yes / Show / Skip / Cancel]".
-   c. `/css:execute --session <child>` → `/css:verify --session <child>` → `/css:document --session <child>`.
-   d. **Gate 3 (per Phase)** — AskUserQuestion: "Phase {idx} PR 생성 (base=`{base_branch}`). [Yes / Draft / Cancel]".
-   e. `/css:pr --session <child> --base <base_branch>`.
-   Independent Phases (disjoint `depends_on`) MAY be dispatched in separate sessions for parallel runs.
-
-14. **Finalize**: mark all phases completed, release lock, print summary:
-    "Pipeline 완료. PR: `<URL>`. 산출물: `<paths>`."
+1. Resolve or initialize the session, set `master_flow:true`, acquire the master lock, and run `/css:interview`. A newly initialized session starts with `kind:"epic"` and `single_phase:false`; an existing kind-less session remains a legacy single-session.
+2. Gate 1 is the interview/spec approval.
+3. Run `/css:plan --session <slug>` then `/css:phase --session <slug>`.
+4. If `single_phase:true`, `/css:phase` has already expanded the skeleton into a detailed plan. Run rich `/css:review`, Gate 2, execute, verify, document, Gate 3, and PR in the same session.
+5. If multi-Phase, run one Epic architecture review. Then process child sessions in dependency order:
+   - detailed plan -> rich review -> per-Phase Gate 2 -> execute -> verify -> document -> per-Phase Gate 3 -> PR using the child base_branch.
+6. Gate 2 must be approved before execute and Gate 3 before PR. Dashboard resume may persist a pending gate and exit; terminal approval persists the approved state. Child gates are independent.
+7. On review or verify loopback, let the stage command enforce retry counters and re-enter the required earlier stage.
+8. Finalize only after all required sessions and PRs complete; record artifacts and release locks.
 
 <self_check>
-- [ ] All 7 phases recorded as completed in session
-- [ ] Each gate prompt was shown when applicable
-- [ ] PR URL captured
-- [ ] Lock released
+- [ ] Single-Phase path used a detailed plan and Rich Specs
+- [ ] Multi-Phase children inherited the parent spec and ran in dependency order
+- [ ] Gate 2 preceded every execute; Gate 3 preceded every PR
+- [ ] Final summary includes PR and artifact paths
 </self_check>
 
 $ARGUMENTS

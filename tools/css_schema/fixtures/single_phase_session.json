@@ -1,0 +1,22 @@
+{
+  "slug": "small-idea",
+  "kind": "epic",
+  "single_phase": true,
+  "idea": "small idea",
+  "phases": {
+    "interview": {"status": "completed", "artifact": "docs/superpowers/specs/small-idea.md"},
+    "plan": {"status": "completed", "level": "detailed", "task_count": 3, "batch_count": 1},
+    "phasing": {"status": "completed", "artifact": ".claude/css/plans/phase-manifest-small-idea.json"},
+    "review": {
+      "status": "completed",
+      "level": "rich-spec",
+      "verdict": "PASS",
+      "rich_specs": [".claude/css/plans/small-idea-T01.md"],
+      "advisories": []
+    }
+  },
+  "phase_manifest": [
+    {"idx": 1, "label": "small idea", "batches": [1], "depends_on": []}
+  ],
+  "child_slugs": []
+}

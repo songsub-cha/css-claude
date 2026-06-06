@@ -10,6 +10,7 @@ def validate_manifest(manifest: object) -> None:
     if not isinstance(manifest, list) or not manifest:
         raise SchemaError("phase_manifest must be a non-empty list")
     seen: set[int] = set()
+    previous_idx = 0
     for p in manifest:
         if not isinstance(p, dict):
             raise SchemaError("each phase must be an object")
@@ -18,7 +19,10 @@ def validate_manifest(manifest: object) -> None:
             raise SchemaError(f"phase idx must be int >= 1, got {idx!r}")
         if idx in seen:
             raise SchemaError(f"duplicate phase idx {idx}")
+        if idx <= previous_idx:
+            raise SchemaError("phase idx values must be strictly increasing")
         seen.add(idx)
+        previous_idx = idx
         if not isinstance(p.get("label"), str) or not p["label"].strip():
             raise SchemaError(f"phase {idx} needs a non-empty label")
         if not isinstance(p.get("batches"), list) or not p["batches"]:
@@ -37,6 +41,28 @@ _VALID_KINDS = {"epic", "phase"}
 _PHASE_REQUIRED = ("parent_slug", "phase_index", "base_branch")
 
 
+def _validate_path_list(value: object, field: str) -> None:
+    if not isinstance(value, list) or not all(
+        isinstance(path, str) and path.strip() for path in value
+    ):
+        raise SchemaError(f"{field} must be a list of non-empty paths")
+
+
+def resolve_spec_artifact(session: dict, parent_session: dict | None = None) -> str | None:
+    """Resolve a spec from a session, then its loaded parent session."""
+    artifact = session.get("phases", {}).get("interview", {}).get("artifact")
+    if artifact:
+        return artifact
+    if parent_session:
+        return parent_session.get("phases", {}).get("interview", {}).get("artifact")
+    return None
+
+
+def is_single_session(session: dict) -> bool:
+    """Legacy and explicitly single-phase sessions use the detailed linear flow."""
+    return "kind" not in session or bool(session.get("single_phase"))
+
+
 def validate_session(obj: dict) -> None:
     if not isinstance(obj, dict):
         raise SchemaError("session must be an object")
@@ -49,6 +75,13 @@ def validate_session(obj: dict) -> None:
         raise SchemaError("session requires a 'phases' object")
     if "phase_manifest" in obj:
         validate_manifest(obj["phase_manifest"])
+    if "single_phase" in obj and not isinstance(obj["single_phase"], bool):
+        raise SchemaError("single_phase must be a bool when present")
+    review = obj["phases"].get("review", {})
+    if "rich_specs" in review:
+        _validate_path_list(review["rich_specs"], "phases.review.rich_specs")
+    if "advisories" in review:
+        _validate_path_list(review["advisories"], "phases.review.advisories")
     if kind == "phase":
         for f in _PHASE_REQUIRED:
             if f not in obj:
@@ -57,10 +90,19 @@ def validate_session(obj: dict) -> None:
             raise SchemaError("phase_index must be int >= 1")
         if not isinstance(obj.get("depends_on", []), list):
             raise SchemaError("depends_on must be a list")
+        if not resolve_spec_artifact(obj):
+            parent = obj.get("parent_session")
+            if not isinstance(parent, str) or not parent.strip():
+                raise SchemaError(
+                    "phase session requires an interview artifact or parent_session fallback")
 
 
 def validate_active(obj: dict) -> None:
     if not isinstance(obj, dict) or not obj.get("latest_slug"):
         raise SchemaError("_active.json requires a non-empty latest_slug")
-    if "active_phase" in obj and not isinstance(obj["active_phase"], int):
-        raise SchemaError("active_phase must be an int when present")
+    if obj.get("active_phase") is not None and not isinstance(obj["active_phase"], int):
+        raise SchemaError("active_phase must be an int or null when present")
+    if "active_epic" in obj and (
+        not isinstance(obj["active_epic"], str) or not obj["active_epic"].strip()
+    ):
+        raise SchemaError("active_epic must be a non-empty string when present")

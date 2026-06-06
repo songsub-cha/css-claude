@@ -5,49 +5,25 @@ argument-hint: "[--session <name>] [--from <spec-path>]"
 
 # /css:plan
 
-Translate the spec into a step-by-step plan. Wraps `superpowers:writing-plans`.
+Translate the approved spec into a skeleton Epic plan or an executable detailed plan.
 
 ## Steps
 
-1. **Parse arguments**: extract `--session` and `--from`.
-
-2. **Resolve session**:
-   - `--session` → load `<project>/.claude/css/sessions/<slug>.json`.
-   - No `--session` → read `<project>/.claude/css/sessions/_active.json` for `latest_slug`.
-   - If neither resolves → ask: "어떤 슬러그의 plan을 작성할까요? `/css:plan --session <name>` 또는 `--from <spec path>` 로 다시 시도해주세요." and exit.
-
-3. **Resolve spec path**:
-   - `--from <path>` if provided.
-   - Else `session.phases.interview.artifact`.
-   - If missing → ask: "spec 이 아직 없습니다. `/css:interview` 를 먼저 실행하거나 `--from <path>` 로 spec 경로를 지정해주세요." and exit.
-
-4. **Acquire phase lock** on `plan` for this slug.
-
-5. **Echo header**: `[css:plan @ slug={slug}]`.
-
-6. **Verify superpowers** (same check as `/css:interview`).
-
-7. **Determine plan level** from session `kind`:
-   - `kind == "epic"` (or absent, legacy) → **skeleton plan**: coarse task titles grouped into batches with rough file targets. **No per-step code**. Output to `docs/superpowers/plans/YYYY-MM-DD-<slug>.md`. Record `phases.plan.level = "skeleton"`, `task_count`, `batch_count`.
-   - `kind == "phase"` → **detailed plan**: full bite-sized TDD steps (complete code) for **only this Phase's batches** (from `phase_index`). Output to `docs/superpowers/plans/{parent_slug}-p{phase_index}.md`. Record `phases.plan.level = "detailed"`.
-
-8. **Invoke writing-plans**:
-   ```
-   Skill("superpowers:writing-plans")
-   ```
-   Pass the spec path and level as context. Remind writing-plans that the next CSS stage (`/css:review`) will audit each task for the Single-Specialist Task Rule: every task should map to exactly one domain specialist (or executor-direct glue). Multi-domain tasks will trigger `LOOPBACK_TO_PLAN` — better to decompose pre-emptively.
-
-9. **On writing-plans completion**:
-   - Locate the plan file.
-   - Update session: `phases.plan.status = completed`, `phases.plan.artifact = <plan path>`, `phases.plan.level = <"skeleton"|"detailed">`, `phases.plan.task_count = <int>`, `phases.plan.batch_count = <int>`, `phases.plan.completed_at = <ISO>`.
-
-10. **Release lock** and announce:
-    "Plan 작성 완료 (level={level}): `<plan path>`. 다음 단계: `/css:review` 또는 `/css:ship --session <slug>`로 진행."
+1. Parse `--session` and `--from`; otherwise resolve `_active.json.latest_slug`.
+2. Resolve the spec in this order: `--from`, `session.phases.interview.artifact`, then `parent_session.phases.interview.artifact`. Stop if none exists.
+3. Acquire the plan lock, update `_active.json` (`latest_slug`, `active_epic`, `active_phase`), and echo `[css:plan @ slug={slug}]`.
+4. Determine the level:
+   - Multi-Phase candidate: `kind == "epic"` AND `single_phase != true` -> skeleton plan with coarse tasks, batches, rough file targets, `task_count`, and `batch_count`.
+   - `kind == "phase"`, `single_phase == true`, or kind-less legacy session -> detailed bite-sized TDD plan with exact files, complete code, dependencies, and executable verification commands.
+5. For a child Phase, include only its manifest batches and write `docs/superpowers/plans/{parent_slug}-p{phase_index}.md`. Otherwise write `docs/superpowers/plans/YYYY-MM-DD-{slug}.md`.
+6. Invoke `superpowers:writing-plans`. Require every task to map to one specialist or executor-direct glue; decompose multi-domain tasks before review.
+7. Record status, artifact, level, task_count, batch_count, and completed_at. Release the lock.
 
 <self_check>
-- [ ] Plan file exists at the path recorded in session
-- [ ] session file phase status updated
-- [ ] Final line contains NEXT=review or ARTIFACT=<plan path>
+- [ ] Spec resolved directly or through parent_session
+- [ ] Single-Phase and legacy sessions have detailed plans
+- [ ] Plan artifact exists and session points to it
+- [ ] Final line contains `NEXT=review` or `ARTIFACT=<plan path>`
 </self_check>
 
 $ARGUMENTS
