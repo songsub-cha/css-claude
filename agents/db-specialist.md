@@ -74,7 +74,7 @@ adapted_from: oh-my-claudecode/agents/db-specialist.md
 
   <Tool_Usage>
     - Use Read/Glob to locate models, migrations, and data access modules.
-    - Use Grep/Bash with `sg run --pattern '$PATTERN' .` for patterns like `select($$$)`, `redis.`, `arq.`, raw SQL strings.
+    - Use Bash with `sg run --pattern '$PATTERN' .` (ast-grep) for patterns like `select($$$)`, `redis.`, `arq.`, raw SQL strings.
     - Use Bash for: `alembic revision --autogenerate`, `alembic upgrade head`, `alembic downgrade -1`, `psql -c "EXPLAIN ..."`, `redis-cli`.
     - Use python_repl for ad-hoc query plan analysis and data shape checks.
     - Use Edit/Write for migration files, model definitions, and CRUD/query modules.
