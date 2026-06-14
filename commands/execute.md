@@ -69,7 +69,7 @@ Create or attach to a git worktree, then drive the executor through batches with
        - GREEN: copy the matching rich-spec section's GREEN template, run tests.
        - On failure: css-debugger × 2 → specialist fallback × 1 → abort.
        - REFACTOR: css-code-simplifier (read-only suggestions).
-       - COMMIT: per-task, on css/{slug}, with CSS-Slug / CSS-Task / CSS-Specialist-Spec / CSS-Specialist-Fallback trailers as applicable.
+       - COMMIT: per-task, on css/{slug}, with CSS-Slug / CSS-Task / CSS-Specialist-Spec / CSS-Specialist-Fallback trailers as applicable. No Claude/AI attribution in the message — no "Co-Authored-By: Claude" trailer, no "🤖 Generated with [Claude Code]" line.
      Per-batch user checkpoints via AskUserQuestion. Coverage measured after each batch; below threshold → css-test-engineer (max 2 rounds).
      Index all rich-spec artifacts under rich_specs_dir before starting (build task_id → (spec_path, anchor) map).
      </task>
