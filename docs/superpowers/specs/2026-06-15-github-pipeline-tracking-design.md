@@ -82,17 +82,16 @@ GitHub  ── Issue (코멘트·라벨·@mention)  ──┐
 
 ### 6.1 코멘트 내용
 
-- **interview(스펙) · document 스테이지 → 문서 전체**를 코멘트 본문에 포함.
-  - 산출물 파일(예: `docs/superpowers/specs/YYYY-MM-DD-*.md`, `docs/<slug>/README.md`)을 읽어 접이식 블록으로 게시:
+- **interview(스펙) · plan · document 스테이지 → 문서 전체**를 코멘트 본문에 포함.
+  - 산출물 파일(예: `docs/superpowers/specs/YYYY-MM-DD-*.md`, `docs/superpowers/plans/YYYY-MM-DD-*.md`, `docs/<slug>/README.md`)을 읽어 접이식 블록으로 게시:
     `<details><summary>📄 spec: <path></summary>\n\n<full markdown>\n</details>`
   - GitHub 코멘트 상한(65,536자) 초과 시 자동 분할(`(1/N)` 헤더), 또는 상한 근접 시 앞부분 + "전문은 `<path>` 참조" 링크.
-- **그 외 스테이지(plan·review·execute·verify) → 요약만**. 세션 JSON `phases.<stage>`에서 핵심 수치 추출:
-  - `plan`: `✅ plan 완료 — task_count=12, batch_count=4 · docs/...plan.md`
+- **그 외 스테이지(review·execute·verify) → 요약만**. 세션 JSON `phases.<stage>`에서 핵심 수치 추출:
   - `review`: `✅ review 완료 — verdict=PASS, findings c0/h0/m0/l3, rich-spec 캐시됨`
   - `execute`: `✅ execute 완료 — branch css/<slug>, 12 commits, tests 28/28, cov 97%`
   - `verify`: `✅ verify 완료 — verdict=PASS, cov 97%`
 
-> 해석 메모: 사용자 요구의 "spec 작성이나 문서 단계"를 **interview + document**로 해석했다. plan을 전문 포함으로 원하면 스펙 리뷰 때 조정.
+> 결정: 사용자 요구의 "spec 작성이나 문서 단계" = **interview + plan + document** (세 스테이지 모두 문서 전문 포함).
 
 ### 6.2 라벨 (현재 상태)
 
@@ -202,20 +201,20 @@ Gate 2(pre-execute) / Gate 3(pre-pr)에서 기존 대시보드 분기를 GitHub 
 ## 14. 테스트 전략
 
 - 기존 방식 준수(골든/스키마 검증 + `tools/css_schema` 스타일). 프롬프트 명령은 단위테스트 하네스가 없으므로 구조 검증 + 행위 체크리스트 병행.
-- **`gh_sync` 단위 테스트**: `gh`를 PATH 셰임(가짜 `gh` 스크립트가 인자/입력을 기록)으로 모킹해 각 subcommand의 인자 구성·멱등성·분할 로직·폴백 검증. bash 테스트(`bats` 또는 순수 bash assert; CI는 Ubuntu, 로컬은 Git Bash).
+- **`gh_sync` 단위 테스트**: `gh`를 PATH 셰임(가짜 `gh` 스크립트가 인자/입력을 기록)으로 모킹해 각 subcommand의 인자 구성·멱등성·분할 로직·폴백 검증. **순수 bash assert**(외부 러너 의존 없음; CI는 Ubuntu, 로컬은 Git Bash).
 - **명령 마크다운 구조 검증**: `ship.md`에 필요한 gh_sync 호출 단계/게이트 분기/Closes # 가 존재하는지 검사(기존 골든 테스트 스타일).
 - **행위 체크리스트**(수동): 실제 토이 repo에서 이슈 생성→스테이지 라벨/코멘트→게이트 원격 답글→PR 링크 1회 end-to-end 확인.
 - 대시보드 테스트(`dashboard/**/tests`, `bridge/tests`)는 삭제와 함께 제거.
 
-## 15. 미해결 / 리뷰 포인트
+## 15. 리뷰 포인트 (해소됨)
 
-1. interview·document만 전문 포함(§6.1) — plan도 포함할지?
-2. `gate-wait` 무기한 재호출의 UX(타임아웃 알림 주기) — 기본 9분마다 "아직 대기 중" 1줄 출력.
-3. 헬퍼 테스트 러너로 `bats` 도입 vs 순수 bash — CI 의존성 최소화 측면에서 결정 필요.
+1. 전문 포함 범위 → **interview·plan·document 모두 전문 포함**(§6.1).
+2. `gate-wait` 대기 알림 → **9분마다 "아직 대기 중" 1줄 출력**으로 확정.
+3. 헬퍼 테스트 러너 → **순수 bash assert**(외부 러너 미도입)로 확정.
 
 ## 16. 합의된 결정 (브레인스토밍)
 
 - 게이트 대기 = **인라인 폴링(서버 없음)**, 대시보드 전면 삭제.
 - 게이트 채널 = **터미널 우선 + 이슈 기록**, "원격" 선택 시 이슈 폴링.
 - 보드 = **유저 단위 통합 Projects 보드 1개**.
-- 삭제 범위 동의 / `gh_sync` 헬퍼 채택(크로스플랫폼) / Epic·Phase v1 포함 / `Closes #` 자동 종료 / interview·document 코멘트는 문서 전문.
+- 삭제 범위 동의 / `gh_sync` 헬퍼 채택(크로스플랫폼) / Epic·Phase v1 포함 / `Closes #` 자동 종료 / interview·plan·document 코멘트는 문서 전문 / 게이트 대기 알림 9분 / 테스트는 순수 bash assert.
