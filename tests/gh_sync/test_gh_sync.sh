@@ -51,8 +51,17 @@ test_enabled_off_when_flag_false() {
   teardown
 }
 
+test_set_board_status_calls_item_edit() {
+  setup
+  jq '.github.project_number=7 | .github.project_owner="tester"' "$CSS_CONFIG" > "$CSS_CONFIG.x" && mv "$CSS_CONFIG.x" "$CSS_CONFIG"
+  run __test_status PVTI_item Execute
+  assert_contains "item-edit field" "$(ghlog)" "project item-edit --id PVTI_item"
+  assert_contains "item-edit option" "$(ghlog)" "--single-select-option-id OPT_Execute"
+  teardown
+}
+
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]

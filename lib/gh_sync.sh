@@ -49,10 +49,51 @@ gh_enabled() {
 }
 cmd_enabled() { if gh_enabled; then echo 1; else echo 0; fi; }
 
+# --- board --------------------------------------------------------------------
+board_owner() {
+  local o; o="$(cfg '.github.project_owner' '')"
+  [[ -n "$o" ]] || o="$(gh api user -q '.login')"
+  printf '%s' "$o"
+}
+ensure_board() {
+  BOARD_OWNER="$(board_owner)"
+  BOARD_NUMBER="$(cfg '.github.project_number' '')"
+  [[ -n "$BOARD_NUMBER" ]] && return 0
+  local out; out="$(gh project create --owner "$BOARD_OWNER" --title 'CSS Pipeline' --format json)"
+  BOARD_NUMBER="$(printf '%s' "$out" | jq -r '.number')"
+  gh project field-create "$BOARD_NUMBER" --owner "$BOARD_OWNER" --name 'CSS Stage' \
+    --data-type SINGLE_SELECT \
+    --single-select-options 'Interview,Plan,Review,Execute,Verify,Document,PR,Done' >/dev/null
+  local p; p="$(config_path)"; local tmp="$p.tmp.$$"
+  jq --argjson n "$BOARD_NUMBER" --arg o "$BOARD_OWNER" \
+     '.github.project_number=$n | .github.project_owner=(.github.project_owner // $o)' \
+     "$p" > "$tmp" && mv "$tmp" "$p"
+}
+set_board_status() { # <item_id> <status_name>
+  local item="$1" status="$2" owner num fields fid oid pid
+  owner="$(board_owner)"; num="$(cfg '.github.project_number' '')"
+  [[ -n "$num" ]] || { log "no board number — skip status"; return 0; }
+  fields="$(gh project field-list "$num" --owner "$owner" --format json 2>/dev/null || echo '{}')"
+  fid="$(printf '%s' "$fields" | jq -r '.fields[]? | select(.name=="CSS Stage") | .id')"
+  oid="$(printf '%s' "$fields" | jq -r --arg s "$status" '.fields[]? | select(.name=="CSS Stage") | .options[]? | select(.name==$s) | .id')"
+  pid="$(gh project view "$num" --owner "$owner" --format json 2>/dev/null | jq -r '.id // empty')"
+  if [[ -z "$fid" || -z "$oid" || -z "$pid" ]]; then log "board ids unresolved — skip status"; return 0; fi
+  gh project item-edit --id "$item" --project-id "$pid" --field-id "$fid" --single-select-option-id "$oid" >/dev/null
+}
+status_name() {
+  case "$1" in
+    interview) echo Interview ;; plan) echo Plan ;; review) echo Review ;;
+    execute) echo Execute ;; verify) echo Verify ;; document) echo Document ;;
+    pr) echo PR ;; done) echo Done ;; *) echo Interview ;;
+  esac
+}
+__test_status() { set_board_status "$1" "$2"; }   # test-only hook
+
 main() {
   local sub="${1:-}"; shift || true
   case "$sub" in
-    enabled)      cmd_enabled "$@" ;;
+    enabled)       cmd_enabled "$@" ;;
+    __test_status) __test_status "$@" ;;
     -h|--help|"") usage; exit 2 ;;
     *)            usage; die "unknown subcommand: $sub" ;;
   esac
