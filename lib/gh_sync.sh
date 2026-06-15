@@ -224,6 +224,14 @@ cmd_gate_wait() {
   log "gate-wait: ${timeout}s 무응답 — 아직 대기 중"
   return 0
 }
+cmd_gate_close() {
+  parse_opts "$@"; local slug="${OPT[session]}" gate="${OPT[gate]}" decision="${OPT[decision]}" source="${OPT[source]:-terminal_ask}"
+  gh_enabled || return 0
+  local num; num="$(sess "$slug" '.github.issue_number')"; [[ -n "$num" ]] || return 0
+  gh issue edit "$num" --remove-label css:awaiting-approval >/dev/null 2>&1 || true
+  local src_ko="터미널"; [[ "$source" == "issue_reply" ]] && src_ko="이슈 답글"
+  gh issue comment "$num" --body "$(printf '게이트 %s 결정: **%s** (%s)' "$gate" "$decision" "$src_ko")" >/dev/null
+}
 
 main() {
   local sub="${1:-}"; shift || true
@@ -235,6 +243,7 @@ main() {
     adr)           cmd_adr "$@" ;;
     gate-open)     cmd_gate_open "$@" ;;
     gate-wait)     cmd_gate_wait "$@" ;;
+    gate-close)    cmd_gate_close "$@" ;;
     __test_status) __test_status "$@" ;;
     -h|--help|"") usage; exit 2 ;;
     *)            usage; die "unknown subcommand: $sub" ;;
