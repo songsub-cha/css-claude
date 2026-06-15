@@ -162,12 +162,27 @@ cmd_comment() {
   esac
 }
 
+# --- set-state ----------------------------------------------------------------
+STAGE_LABELS=(interview plan review execute verify document pr done)
+cmd_set_state() {
+  parse_opts "$@"; local slug="${OPT[session]}" state="${OPT[state]}"
+  gh_enabled || return 0
+  local num; num="$(sess "$slug" '.github.issue_number')"; [[ -n "$num" ]] || return 0
+  local rm=() s
+  for s in "${STAGE_LABELS[@]}"; do [[ "$s" == "$state" ]] || rm+=( --remove-label "css:$s" ); done
+  gh issue edit "$num" --add-label "css:$state" "${rm[@]}" >/dev/null 2>&1 \
+    || gh issue edit "$num" --add-label "css:$state" >/dev/null 2>&1 || true
+  local item; item="$(sess "$slug" '.github.project_item_id')"
+  [[ -n "$item" ]] && set_board_status "$item" "$(status_name "$state")"
+}
+
 main() {
   local sub="${1:-}"; shift || true
   case "$sub" in
     enabled)       cmd_enabled "$@" ;;
     init-issue)    cmd_init_issue "$@" ;;
     comment)       cmd_comment "$@" ;;
+    set-state)     cmd_set_state "$@" ;;
     __test_status) __test_status "$@" ;;
     -h|--help|"") usage; exit 2 ;;
     *)            usage; die "unknown subcommand: $sub" ;;

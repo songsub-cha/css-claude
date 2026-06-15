@@ -101,9 +101,16 @@ test_comment_chunks_when_oversized() {
   assert_contains "chunk header" "$(ghlog)" "(1/"
   teardown
 }
+test_set_state_swaps_labels() {
+  setup; seed_issue
+  run set-state --session demo --state execute
+  assert_contains "add label" "$(ghlog)" "--add-label css:execute"
+  assert_contains "remove prev" "$(ghlog)" "--remove-label css:review"
+  teardown
+}
 
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]
