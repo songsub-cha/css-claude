@@ -111,11 +111,63 @@ cmd_init_issue() {
   echo "$num"
 }
 
+# --- comment ------------------------------------------------------------------
+GH_COMMENT_LIMIT="${GH_COMMENT_LIMIT:-60000}"
+summary_body() { # <slug> <stage>
+  local slug="$1" stage="$2"
+  case "$stage" in
+    review)  printf '✅ review 완료 — verdict=%s, findings c%s/h%s/m%s/l%s' \
+               "$(sess "$slug" '.phases.review.verdict')" \
+               "$(sess "$slug" '.phases.review.findings.critical')" \
+               "$(sess "$slug" '.phases.review.findings.high')" \
+               "$(sess "$slug" '.phases.review.findings.medium')" \
+               "$(sess "$slug" '.phases.review.findings.low')" ;;
+    execute) printf '✅ execute 완료 — branch %s, %s commits, tests %s/%s, cov %s%%' \
+               "$(sess "$slug" '.phases.execute.branch')" \
+               "$(sess "$slug" '.phases.execute.commit_count')" \
+               "$(sess "$slug" '.phases.execute.test_summary.passed')" \
+               "$(sess "$slug" '.phases.execute.test_summary.tests')" \
+               "$(sess "$slug" '.phases.execute.test_summary.coverage_pct')" ;;
+    verify)  printf '✅ verify 완료 — verdict=%s, cov %s%%' \
+               "$(sess "$slug" '.phases.verify.verdict')" \
+               "$(sess "$slug" '.phases.verify.test_summary.coverage_pct')" ;;
+    *)       printf '✅ %s 완료' "$stage" ;;
+  esac
+}
+full_doc_body() { # <stage> <path>
+  local stage="$1" path="$2"
+  if [[ -z "$path" || ! -f "$path" ]]; then printf '✅ %s 완료 (문서 경로 없음)' "$stage"; return; fi
+  printf '✅ %s 완료\n\n<details><summary>📄 %s</summary>\n\n```markdown\n%s\n```\n</details>' \
+    "$stage" "$path" "$(cat "$path")"
+}
+post_chunked() { # <num> <body>
+  local num="$1" body="$2"
+  if [[ "${#body}" -le "$GH_COMMENT_LIMIT" ]]; then gh issue comment "$num" --body "$body" >/dev/null; return; fi
+  local total=$(( (${#body} + GH_COMMENT_LIMIT - 1) / GH_COMMENT_LIMIT )) i=1 off=0
+  while [[ $off -lt ${#body} ]]; do
+    gh issue comment "$num" --body "($i/$total)"$'\n'"${body:off:GH_COMMENT_LIMIT}" >/dev/null
+    off=$(( off + GH_COMMENT_LIMIT )); i=$(( i + 1 ))
+  done
+}
+cmd_comment() {
+  parse_opts "$@"; local slug="${OPT[session]}" stage="${OPT[stage]}" full="${OPT[full]:-}"
+  gh_enabled || return 0
+  local num; num="$(sess "$slug" '.github.issue_number')"; [[ -n "$num" ]] || { log "no issue — skip"; return 0; }
+  case "$stage" in
+    interview|plan|document)
+      local path="$full"; [[ -n "$path" ]] || path="$(sess "$slug" ".phases.\"$stage\".artifact")"
+      post_chunked "$num" "$(full_doc_body "$stage" "$path")" ;;
+    *)
+      gh issue comment "$num" --body "$(summary_body "$slug" "$stage")" >/dev/null ;;
+  esac
+}
+
 main() {
   local sub="${1:-}"; shift || true
   case "$sub" in
     enabled)       cmd_enabled "$@" ;;
     init-issue)    cmd_init_issue "$@" ;;
+    comment)       cmd_comment "$@" ;;
     __test_status) __test_status "$@" ;;
     -h|--help|"") usage; exit 2 ;;
     *)            usage; die "unknown subcommand: $sub" ;;

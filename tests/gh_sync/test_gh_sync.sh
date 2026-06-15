@@ -81,8 +81,29 @@ test_init_issue_idempotent() {
   teardown
 }
 
+test_comment_summary_review() {
+  setup; seed_issue
+  run comment --session demo --stage review
+  assert_contains "review summary" "$(ghlog)" "verdict=PASS"
+  assert_contains "findings" "$(ghlog)" "c0/h0/m0/l3"
+  teardown
+}
+test_comment_full_plan_embeds_doc() {
+  setup; seed_issue
+  run comment --session demo --stage plan
+  assert_contains "details block" "$(ghlog)" "<details>"
+  assert_contains "doc content" "$(ghlog)" "Full plan content line 1."
+  teardown
+}
+test_comment_chunks_when_oversized() {
+  setup; seed_issue
+  GH_COMMENT_LIMIT=20 run comment --session demo --stage plan
+  assert_contains "chunk header" "$(ghlog)" "(1/"
+  teardown
+}
+
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]
