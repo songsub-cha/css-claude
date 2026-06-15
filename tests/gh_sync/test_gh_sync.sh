@@ -118,9 +118,35 @@ test_adr_numbers_and_persists() {
   assert_eq "2 markers" "$len" "2"
   teardown
 }
+test_gate_open_mentions_and_labels() {
+  setup; seed_issue
+  export FAKE_ISSUE_VIEW='{"comments":[{"createdAt":"2026-06-15T00:00:00Z","body":"gate"}]}'
+  run gate-open --session demo --gate 2
+  assert_contains "mention" "$(ghlog)" "@tester"
+  assert_contains "gate label" "$(ghlog)" "--add-label css:awaiting-approval"
+  local at; at="$(jq -r '.github.gate2.opened_at' "$CSS_ROOT/.claude/css/sessions/demo.json")"
+  assert_eq "baseline stored" "$at" "2026-06-15T00:00:00Z"
+  teardown
+}
+test_gate_wait_returns_new_reply() {
+  setup; seed_issue
+  jq '.github.gate2={opened_at:"2026-06-15T00:00:00Z"}' "$CSS_ROOT/.claude/css/sessions/demo.json" > t && mv t "$CSS_ROOT/.claude/css/sessions/demo.json"
+  export FAKE_ISSUE_VIEW='{"comments":[{"createdAt":"2026-06-15T00:00:00Z","body":"gate"},{"createdAt":"2026-06-15T00:05:00Z","body":"approve please"}]}'
+  local out; out="$(run gate-wait --session demo --gate 2 --timeout 1)"
+  assert_eq "reply body" "$out" "approve please"
+  teardown
+}
+test_gate_wait_empty_on_timeout() {
+  setup; seed_issue
+  jq '.github.gate2={opened_at:"2026-06-15T00:00:00Z"}' "$CSS_ROOT/.claude/css/sessions/demo.json" > t && mv t "$CSS_ROOT/.claude/css/sessions/demo.json"
+  export FAKE_ISSUE_VIEW='{"comments":[{"createdAt":"2026-06-15T00:00:00Z","body":"gate"}]}'
+  local out; out="$(run gate-wait --session demo --gate 2 --timeout 1)"
+  assert_eq "empty output" "$out" ""
+  teardown
+}
 
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]

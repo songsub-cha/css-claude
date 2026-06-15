@@ -189,6 +189,42 @@ cmd_adr() {
   sess_set "$slug" ".github.adrs += [{n:$n, title:\"${OPT[title]}\", posted_at:\"$(date -u +%FT%TZ)\"}]"
 }
 
+# --- gates --------------------------------------------------------------------
+cmd_gate_open() {
+  parse_opts "$@"; local slug="${OPT[session]}" gate="${OPT[gate]}"
+  gh_enabled || return 0
+  local num; num="$(sess "$slug" '.github.issue_number')"; [[ -n "$num" ]] || return 0
+  local who; who="$(cfg '.github.mention_user' '')"; [[ -n "$who" ]] || who="$(gh api user -q '.login')"
+  local label desc draft=""
+  if [[ "$gate" == "2" ]]; then label="pre-execute"; desc="plan 검증 완료. 승인 시 execute 시작."
+  else label="pre-pr"; desc="구현+문서 완료. 승인 시 PR 생성."; draft=" / \`draft\`"; fi
+  local body
+  body="$(printf '@%s ✋ **Gate %s — %s**\n%s\n답글: `approve` / `cancel`%s (자유 문장·한국어 OK).' \
+    "$who" "$gate" "$label" "$desc" "$draft")"
+  gh issue comment "$num" --body "$body" >/dev/null
+  gh issue edit "$num" --add-label css:awaiting-approval >/dev/null 2>&1 || true
+  local base; base="$(gh issue view "$num" --json comments 2>/dev/null | jq -r '.comments[-1].createdAt // empty')"
+  [[ -n "$base" ]] || base="$(date -u +%FT%TZ)"
+  sess_set "$slug" ".github.gate$gate = {opened_at: \"$base\"}"
+}
+cmd_gate_wait() {
+  parse_opts "$@"; local slug="${OPT[session]}" gate="${OPT[gate]}" timeout="${OPT[timeout]:-540}"
+  gh_enabled || return 0
+  local num; num="$(sess "$slug" '.github.issue_number')"; [[ -n "$num" ]] || return 0
+  local since; since="$(sess "$slug" ".github.gate$gate.opened_at")"
+  local interval; interval="$(cfg '.github.poll_interval_sec' '20')"
+  local elapsed=0 reply
+  while [[ $elapsed -lt $timeout ]]; do
+    reply="$(gh issue view "$num" --json comments 2>/dev/null \
+      | jq -r --arg s "$since" '[.comments[]? | select(.createdAt > $s)] | .[0].body // empty')"
+    if [[ -n "$reply" ]]; then printf '%s\n' "$reply"; return 0; fi
+    [[ "$interval" -gt 0 ]] && sleep "$interval"
+    elapsed=$(( elapsed + interval + 1 ))
+  done
+  log "gate-wait: ${timeout}s 무응답 — 아직 대기 중"
+  return 0
+}
+
 main() {
   local sub="${1:-}"; shift || true
   case "$sub" in
@@ -197,6 +233,8 @@ main() {
     comment)       cmd_comment "$@" ;;
     set-state)     cmd_set_state "$@" ;;
     adr)           cmd_adr "$@" ;;
+    gate-open)     cmd_gate_open "$@" ;;
+    gate-wait)     cmd_gate_wait "$@" ;;
     __test_status) __test_status "$@" ;;
     -h|--help|"") usage; exit 2 ;;
     *)            usage; die "unknown subcommand: $sub" ;;
