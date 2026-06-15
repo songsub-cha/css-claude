@@ -945,9 +945,11 @@ class GhSyncBashSuite(unittest.TestCase):
             self.skipTest("gh_sync bash suite missing")
         proc = subprocess.run(
             [bash, str(SUITE)], cwd=str(REPO),
-            capture_output=True, text=True,
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
         )
-        self.assertEqual(proc.returncode, 0, msg=proc.stdout + proc.stderr)
+        self.assertEqual(
+            proc.returncode, 0, msg=(proc.stdout or "") + (proc.stderr or "")
+        )
 
 
 if __name__ == "__main__":
