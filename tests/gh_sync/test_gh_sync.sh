@@ -39,8 +39,20 @@ test_usage_exits_2() {
   teardown
 }
 
+test_enabled_true() {
+  setup
+  assert_eq "enabled=1" "$(run enabled --session demo)" "1"
+  teardown
+}
+test_enabled_off_when_flag_false() {
+  setup
+  jq '.github.tracking_enabled=false' "$CSS_CONFIG" > "$CSS_CONFIG.x" && mv "$CSS_CONFIG.x" "$CSS_CONFIG"
+  assert_eq "enabled=0 (flag off)" "$(run enabled --session demo)" "0"
+  teardown
+}
+
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]
