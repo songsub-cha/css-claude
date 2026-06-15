@@ -60,8 +60,29 @@ test_set_board_status_calls_item_edit() {
   teardown
 }
 
+test_init_issue_creates_and_persists() {
+  setup
+  local out; out="$(run init-issue --session demo)"
+  assert_eq "prints issue number" "$out" "42"
+  assert_contains "create called" "$(ghlog)" "issue create --title [CSS] demo idea text"
+  assert_contains "labels" "$(ghlog)" "--label css:tracked --label css:interview"
+  assert_contains "item-add" "$(ghlog)" "project item-add"
+  local n; n="$(jq -r '.github.issue_number' "$CSS_ROOT/.claude/css/sessions/demo.json")"
+  assert_eq "persisted number" "$n" "42"
+  teardown
+}
+test_init_issue_idempotent() {
+  setup
+  run init-issue --session demo >/dev/null
+  : > "$GH_LOG"
+  local out; out="$(run init-issue --session demo)"
+  assert_eq "reuse number" "$out" "42"
+  assert_not_contains "no second create" "$(ghlog)" "issue create"
+  teardown
+}
+
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]

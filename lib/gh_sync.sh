@@ -89,10 +89,33 @@ status_name() {
 }
 __test_status() { set_board_status "$1" "$2"; }   # test-only hook
 
+# --- init-issue ---------------------------------------------------------------
+init_body() { # <slug>
+  printf 'Tracked by the CSS pipeline.\n\nIdea: %s\n\n- [ ] interview\n- [ ] plan\n- [ ] review\n- [ ] execute\n- [ ] verify\n- [ ] document\n- [ ] pr\n' "$(sess "$1" '.idea')"
+}
+cmd_init_issue() {
+  parse_opts "$@"; local slug="${OPT[session]}"
+  gh_enabled || { log "tracking off — skip init-issue"; return 0; }
+  local existing; existing="$(sess "$slug" '.github.issue_number')"
+  if [[ -n "$existing" ]]; then echo "$existing"; return 0; fi
+  ensure_board
+  local idea title url num item repo
+  idea="$(sess "$slug" '.idea')"
+  title="[CSS] $(printf '%s' "$idea" | tr '\n' ' ' | cut -c1-60)"
+  url="$(gh issue create --title "$title" --body "$(init_body "$slug")" --label css:tracked --label css:interview)"
+  num="${url##*/}"
+  item="$(gh project item-add "$BOARD_NUMBER" --owner "$BOARD_OWNER" --url "$url" --format json | jq -r '.id')"
+  repo="$(gh repo view --json nameWithOwner -q '.nameWithOwner' 2>/dev/null || echo '')"
+  sess_set "$slug" ".github = {issue_number: ($num|tonumber), issue_url: \"$url\", repo: \"$repo\", project_item_id: \"$item\", adrs: []}"
+  set_board_status "$item" Interview
+  echo "$num"
+}
+
 main() {
   local sub="${1:-}"; shift || true
   case "$sub" in
     enabled)       cmd_enabled "$@" ;;
+    init-issue)    cmd_init_issue "$@" ;;
     __test_status) __test_status "$@" ;;
     -h|--help|"") usage; exit 2 ;;
     *)            usage; die "unknown subcommand: $sub" ;;
