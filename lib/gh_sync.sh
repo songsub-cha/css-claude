@@ -233,6 +233,20 @@ cmd_gate_close() {
   gh issue comment "$num" --body "$(printf '게이트 %s 결정: **%s** (%s)' "$gate" "$decision" "$src_ko")" >/dev/null
 }
 
+# --- pr-link + finalize -------------------------------------------------------
+cmd_pr_link() {
+  parse_opts "$@"; local slug="${OPT[session]}" url="${OPT[url]}"
+  gh_enabled || return 0
+  local num; num="$(sess "$slug" '.github.issue_number')"; [[ -n "$num" ]] || return 0
+  gh issue comment "$num" --body "$(printf '🔀 PR 생성: %s' "$url")" >/dev/null
+  cmd_set_state --session "$slug" --state pr
+}
+cmd_finalize() {
+  parse_opts "$@"; local slug="${OPT[session]}"
+  gh_enabled || return 0
+  cmd_set_state --session "$slug" --state done
+}
+
 main() {
   local sub="${1:-}"; shift || true
   case "$sub" in
@@ -244,6 +258,8 @@ main() {
     gate-open)     cmd_gate_open "$@" ;;
     gate-wait)     cmd_gate_wait "$@" ;;
     gate-close)    cmd_gate_close "$@" ;;
+    pr-link)       cmd_pr_link "$@" ;;
+    finalize)      cmd_finalize "$@" ;;
     __test_status) __test_status "$@" ;;
     -h|--help|"") usage; exit 2 ;;
     *)            usage; die "unknown subcommand: $sub" ;;

@@ -151,9 +151,22 @@ test_gate_close_removes_label_and_records() {
   assert_contains "decision comment" "$(ghlog)" "approve"
   teardown
 }
+test_pr_link_comments_and_sets_pr() {
+  setup; seed_issue
+  run pr-link --session demo --url https://github.com/owner/repo/pull/9
+  assert_contains "pr comment" "$(ghlog)" "PR 생성: https://github.com/owner/repo/pull/9"
+  assert_contains "pr label" "$(ghlog)" "--add-label css:pr"
+  teardown
+}
+test_finalize_sets_done() {
+  setup; seed_issue
+  run finalize --session demo
+  assert_contains "done label" "$(ghlog)" "--add-label css:done"
+  teardown
+}
 
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records test_pr_link_comments_and_sets_pr test_finalize_sets_done )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]
