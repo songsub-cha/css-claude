@@ -108,9 +108,19 @@ test_set_state_swaps_labels() {
   assert_contains "remove prev" "$(ghlog)" "--remove-label css:review"
   teardown
 }
+test_adr_numbers_and_persists() {
+  setup; seed_issue
+  run adr --session demo --title T1 --context C --decision D --consequences X
+  assert_contains "ADR-1" "$(ghlog)" "ADR-1: T1"
+  run adr --session demo --title T2 --context C --decision D --consequences X
+  assert_contains "ADR-2" "$(ghlog)" "ADR-2: T2"
+  local len; len="$(jq -r '.github.adrs|length' "$CSS_ROOT/.claude/css/sessions/demo.json")"
+  assert_eq "2 markers" "$len" "2"
+  teardown
+}
 
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]

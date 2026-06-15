@@ -176,6 +176,19 @@ cmd_set_state() {
   [[ -n "$item" ]] && set_board_status "$item" "$(status_name "$state")"
 }
 
+# --- adr ----------------------------------------------------------------------
+cmd_adr() {
+  parse_opts "$@"; local slug="${OPT[session]}"
+  gh_enabled || return 0
+  local num; num="$(sess "$slug" '.github.issue_number')"; [[ -n "$num" ]] || return 0
+  local n; n="$(sess "$slug" '.github.adrs | length')"; [[ -n "$n" ]] || n=0; n=$(( n + 1 ))
+  local body
+  body="$(printf '### 🏛️ ADR-%s: %s\n- **Context**: %s\n- **Decision**: %s\n- **Consequences**: %s' \
+    "$n" "${OPT[title]}" "${OPT[context]}" "${OPT[decision]}" "${OPT[consequences]}")"
+  gh issue comment "$num" --body "$body" >/dev/null
+  sess_set "$slug" ".github.adrs += [{n:$n, title:\"${OPT[title]}\", posted_at:\"$(date -u +%FT%TZ)\"}]"
+}
+
 main() {
   local sub="${1:-}"; shift || true
   case "$sub" in
@@ -183,6 +196,7 @@ main() {
     init-issue)    cmd_init_issue "$@" ;;
     comment)       cmd_comment "$@" ;;
     set-state)     cmd_set_state "$@" ;;
+    adr)           cmd_adr "$@" ;;
     __test_status) __test_status "$@" ;;
     -h|--help|"") usage; exit 2 ;;
     *)            usage; die "unknown subcommand: $sub" ;;
