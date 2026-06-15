@@ -164,9 +164,18 @@ test_finalize_sets_done() {
   assert_contains "done label" "$(ghlog)" "--add-label css:done"
   teardown
 }
+test_link_child_appends_checklist() {
+  setup
+  jq '.github={issue_number:42,adrs:[]}' "$CSS_ROOT/.claude/css/sessions/demo.json" > t && mv t "$CSS_ROOT/.claude/css/sessions/demo.json"
+  jq -n '{slug:"demo-p1", github:{issue_number:43}}' > "$CSS_ROOT/.claude/css/sessions/demo-p1.json"
+  export FAKE_ISSUE_VIEW='{"body":"Epic body"}'
+  run link-child --epic demo --child demo-p1 --index 1 --label "first slice"
+  assert_contains "child link line" "$(ghlog)" "Phase 1 — first slice #43"
+  teardown
+}
 
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records test_pr_link_comments_and_sets_pr test_finalize_sets_done )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records test_pr_link_comments_and_sets_pr test_finalize_sets_done test_link_child_appends_checklist )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]

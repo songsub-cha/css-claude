@@ -247,6 +247,16 @@ cmd_finalize() {
   cmd_set_state --session "$slug" --state done
 }
 
+# --- link-child (Epic checklist) ----------------------------------------------
+cmd_link_child() {
+  parse_opts "$@"; local epic="${OPT[epic]}" child="${OPT[child]}" idx="${OPT[index]}" label="${OPT[label]}"
+  gh_enabled || return 0
+  local enum cnum; enum="$(sess "$epic" '.github.issue_number')"; cnum="$(sess "$child" '.github.issue_number')"
+  [[ -n "$enum" && -n "$cnum" ]] || return 0
+  local cur; cur="$(gh issue view "$enum" --json body 2>/dev/null | jq -r '.body // empty')"
+  gh issue edit "$enum" --body "$cur"$'\n'"$(printf -- '- [ ] Phase %s — %s #%s' "$idx" "$label" "$cnum")" >/dev/null
+}
+
 main() {
   local sub="${1:-}"; shift || true
   case "$sub" in
@@ -260,6 +270,7 @@ main() {
     gate-close)    cmd_gate_close "$@" ;;
     pr-link)       cmd_pr_link "$@" ;;
     finalize)      cmd_finalize "$@" ;;
+    link-child)    cmd_link_child "$@" ;;
     __test_status) __test_status "$@" ;;
     -h|--help|"") usage; exit 2 ;;
     *)            usage; die "unknown subcommand: $sub" ;;
