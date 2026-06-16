@@ -50,10 +50,12 @@ Push the worktree branch and create a PR. Wraps `css-pr-creator`.
      docs: {session.phases.document.artifact}
      sibling_pr_urls: {[child_session.phases.pr.artifact for completed sibling Phases]}
      coverage_percent: {from verify report}
+     issue_number: {session.github.issue_number or null}
+     auto_close_issue: {config.github.auto_close_issue, default true}
      draft: {true if --draft else false}
      </inputs>
      <task>
-     Push the branch (no force) after explicit user confirmation; create the PR via gh with a body that links spec/plan/verify/docs, lists acceptance criteria as a Test Plan checklist, and shows coverage %. Honor --draft.
+     Push the branch (no force) after explicit user confirmation; create the PR via gh with a body that links spec/plan/verify/docs, lists acceptance criteria as a Test Plan checklist, and shows coverage %. When `issue_number` is set, include `Closes #<issue_number>` (or `Refs #<issue_number>` when `auto_close_issue` is false) so the PR links/closes the tracking issue. Honor --draft.
      </task>
      <output_contract>
      Final line: ARTIFACT=<PR URL>
