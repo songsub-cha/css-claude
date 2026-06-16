@@ -90,6 +90,18 @@ status_name() {
 __test_status() { set_board_status "$1" "$2"; }   # test-only hook
 
 # --- init-issue ---------------------------------------------------------------
+CSS_LABELS=(
+  "css:tracked:ededed" "css:interview:c5def5" "css:plan:c5def5" "css:review:fef2c0"
+  "css:execute:bfd4f2" "css:verify:bfd4f2" "css:document:c5def5" "css:pr:0e8a16"
+  "css:awaiting-approval:fbca04" "css:done:0e8a16" "css:cancelled:e11d21"
+)
+ensure_labels() {  # create/refresh all css:* labels (gh issue create won't auto-create them)
+  local s name color
+  for s in "${CSS_LABELS[@]}"; do
+    name="${s%:*}"; color="${s##*:}"
+    gh label create "$name" --color "$color" --force >/dev/null 2>&1 || true
+  done
+}
 init_body() { # <slug>
   printf 'Tracked by the CSS pipeline.\n\nIdea: %s\n\n- [ ] interview\n- [ ] plan\n- [ ] review\n- [ ] execute\n- [ ] verify\n- [ ] document\n- [ ] pr\n' "$(sess "$1" '.idea')"
 }
@@ -99,6 +111,7 @@ cmd_init_issue() {
   local existing; existing="$(sess "$slug" '.github.issue_number')"
   if [[ -n "$existing" ]]; then echo "$existing"; return 0; fi
   ensure_board
+  ensure_labels
   local idea title url num item repo
   idea="$(sess "$slug" '.idea')"
   title="[CSS] $(printf '%s' "$idea" | tr '\n' ' ' | cut -c1-60)"
