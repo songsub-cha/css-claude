@@ -11,8 +11,9 @@ $ErrorActionPreference = "Stop"
 $claudeHome = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { Join-Path $env:USERPROFILE ".claude" }
 $cmdDir   = Join-Path $claudeHome "commands\css"
 $agentDir = Join-Path $claudeHome "agents\css"
+$libDir   = Join-Path $claudeHome "css\lib"
 
-foreach ($d in @($cmdDir, $agentDir)) {
+foreach ($d in @($cmdDir, $agentDir, $libDir)) {
   if (Test-Path $d) {
     Remove-Item -Recurse -Force $d
     Write-Host "Removed $d" -ForegroundColor Green

@@ -6,8 +6,9 @@ set -euo pipefail
 CLAUDE_HOME="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 cmd_dir="$CLAUDE_HOME/commands/css"
 agent_dir="$CLAUDE_HOME/agents/css"
+lib_dir="$CLAUDE_HOME/css/lib"
 
-for d in "$cmd_dir" "$agent_dir"; do
+for d in "$cmd_dir" "$agent_dir" "$lib_dir"; do
   if [ -d "$d" ]; then
     rm -rf "$d"
     printf "\033[32mRemoved\033[0m %s\n" "$d"
