@@ -168,11 +168,19 @@ $css-ship "<아이디어>"
 
 ## GitHub 추적 (기본 내장)
 
-`/css:ship <아이디어>`를 실행하면 해당 slug에 대한 **GitHub 이슈**가 생성되고, 단계마다 라벨(`css:<state>`)·요약 코멘트(스펙/계획/문서 단계는 전문)가 갱신되며, 유저 단위 **GitHub Projects 칸반 보드**에 카드로 표시됩니다. 승인 게이트(Gate 2/3)에서는 이슈에 `@멘션`이 남고, 터미널에서 바로 답하거나 이슈 댓글로 답하면(원격) 그 결정으로 진행합니다. 개발이 끝나면 PR이 생성되어 `Closes #<이슈>`로 이슈에 연결됩니다.
+`/css:ship <아이디어>`를 실행하면 파이프라인이 진행 상황을 **GitHub Issues + Projects**에 그대로 비춥니다. 별도 서버·대시보드 없이 `gh` CLI만 사용합니다(`lib/gh_sync.sh`).
 
-- 사람용 미러일 뿐, 파이프라인 정본 상태는 `<project>/.claude/css/sessions/<slug>.json`입니다.
-- 끄려면 `~/.claude/css/config.json`의 `github.tracking_enabled`를 `false`로 두거나, GitHub 리모트가 없으면 자동으로 기존 터미널 게이트로 폴백합니다.
-- 최초 1회 `gh auth refresh -s project`로 Projects 스코프를 부여하세요.
+- **이슈 + 보드**: slug마다 이슈 1개가 생성되고, 유저 단위 **GitHub Projects 칸반 보드**에 카드로 등록됩니다.
+- **단계별 미러링**: 스테이지가 바뀔 때마다 라벨이 현재 상태(`css:interview` … `css:pr`, 완료 시 `css:done`)로 교체되고, 보드의 `CSS Stage` 컬럼도 함께 이동합니다. 각 스테이지 완료 시 요약 코멘트가 달리며, **interview·plan·document 단계는 산출 문서 전문**이 접이식 블록으로 첨부됩니다.
+- **의사결정 기록(ADR)**: review 단계의 중요한 결정은 `ADR-N` 코멘트로 남습니다.
+- **승인 게이트**: Gate 2(실행 전)·Gate 3(PR 전)에서 이슈에 `@멘션`이 달립니다. 터미널에서 바로 답하거나, "원격(이슈)에서 답변"을 선택해 **이슈 댓글로 답하면** 그 결정(자유 문장·한국어 OK)을 읽어 진행합니다 — 터미널 답변과 동일한 효과.
+- **PR 연결**: 개발이 끝나면 PR이 생성되고 본문에 `Closes #<이슈>`가 들어가 이슈에 연결·머지 시 자동 종료됩니다.
+
+**정본은 로컬입니다**: GitHub는 사람용 미러일 뿐, 파이프라인 상태의 정본은 `<project>/.claude/css/sessions/<slug>.json`입니다.
+
+**설정 / 끄기**
+- 최초 1회 `gh auth refresh -s project`로 Projects 스코프를 부여하세요(보드 생성·갱신에 필요).
+- 끄려면 `~/.claude/css/config.json`의 `github.tracking_enabled`를 `false`로 두면 됩니다. GitHub 리모트가 없거나 `gh` 미인증이면 자동으로 기존 **터미널 게이트로 폴백**합니다(파이프라인 동작 불변).
 
 ## 주요 기능
 
@@ -213,6 +221,7 @@ css-claude/
 ├── README.md
 ├── commands/      # → ~/.claude/commands/css/
 ├── agents/        # → ~/.claude/agents/css/
+├── lib/           # → ~/.claude/css/lib/ (gh_sync.sh — GitHub 추적)
 ├── config/        # 기본 설정
 ├── scripts/       # 설치 / 제거 스크립트 (Windows + Ubuntu)
 ├── docs/          # 설계 문서, 사용법, 트러블슈팅

@@ -168,11 +168,19 @@ See [`docs/usage.md`](docs/usage.md) for the full command reference, and the Cod
 
 ## GitHub tracking (built in)
 
-Running `/css:ship "<idea>"` opens a **GitHub issue** for the slug; each stage updates a label (`css:<state>`) and posts a summary comment (the interview/plan/document stages embed the full document), and the issue appears as a card on a user-level **GitHub Projects** board. At approval gates (Gate 2/3) the issue gets an `@mention`; answer in the terminal or reply on the issue (remote) and the pipeline proceeds on that decision. When development finishes, the PR is created and linked to the issue via `Closes #<issue>`.
+Running `/css:ship "<idea>"` mirrors pipeline progress to **GitHub Issues + Projects** — no server or dashboard, just the `gh` CLI (`lib/gh_sync.sh`).
 
-- It's a human-facing mirror only — the pipeline's source of truth stays in `<project>/.claude/css/sessions/<slug>.json`.
-- Disable by setting `github.tracking_enabled` to `false` in `~/.claude/css/config.json`; with no GitHub remote it automatically falls back to the terminal-only gates.
-- Grant the Projects scope once with `gh auth refresh -s project`.
+- **Issue + board**: one issue is opened per slug and added as a card to a user-level **GitHub Projects** board.
+- **Per-stage mirroring**: as stages advance, the label is swapped to the current state (`css:interview` … `css:pr`, then `css:done`) and the board's `CSS Stage` column moves in lockstep. Each stage posts a summary comment; the **interview/plan/document stages attach the full output document** in a collapsible block.
+- **Decision records (ADR)**: notable review-stage decisions are posted as `ADR-N` comments.
+- **Approval gates**: at Gate 2 (pre-execute) and Gate 3 (pre-PR) the issue gets an `@mention`. Answer in the terminal, or pick "reply on the issue (remote)" and **comment on the issue** — the pipeline reads your decision (free-form, any language) and proceeds, exactly as a terminal answer would.
+- **PR link**: when development finishes, the PR is created with `Closes #<issue>` in its body, linking and auto-closing the issue on merge.
+
+**The source of truth is local**: GitHub is a human-facing mirror; the pipeline's canonical state stays in `<project>/.claude/css/sessions/<slug>.json`.
+
+**Setup / disabling**
+- Grant the Projects scope once with `gh auth refresh -s project` (needed to create/update the board).
+- Disable by setting `github.tracking_enabled` to `false` in `~/.claude/css/config.json`. With no GitHub remote or an unauthenticated `gh`, it automatically **falls back to the terminal-only gates** (pipeline behavior unchanged).
 
 ## Key features
 
@@ -213,6 +221,7 @@ css-claude/
 ├── README.md
 ├── commands/      # → ~/.claude/commands/css/
 ├── agents/        # → ~/.claude/agents/css/
+├── lib/           # → ~/.claude/css/lib/ (gh_sync.sh — GitHub tracking)
 ├── config/        # default settings
 ├── scripts/       # install / uninstall scripts (Windows + Ubuntu)
 ├── docs/          # design docs, usage, troubleshooting
