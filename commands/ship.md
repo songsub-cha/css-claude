@@ -53,35 +53,40 @@ These run only when `gh_on`; otherwise they are skipped and the pipeline behaves
 7. **Gate 2 — pre-execute (cross-path)** *(single-Phase / legacy path)*:
 
    ```
-   is_resume = ($CSS_DASHBOARD_RESUME == "1")
-   gate = session.gates.gate2_pre_execute
-   state = gate.state if gate else null
+   gate  = session.gates.gate2_pre_execute
+   if gate and gate.state == "approved": proceed to step 8; return
 
-   if state == "approved": proceed to step 8; return
+   banner = "Plan 검증 완료. worktree 생성 후 execute 시작."
+   if gh_on:
+       GHS gate-open --session <slug> --gate 2          # @mention + css:awaiting-approval
+       options = ["Yes (여기서 승인)", "원격(이슈)에서 답변 대기", "Cancel"]
+   else:
+       options = ["Yes", "Cancel"]
+   answer = AskUserQuestion(banner, options)
 
-   if not is_resume and config.dashboard_enabled:
-       banner = "Plan 검증 완료. worktree '../<repo>-css-<session>' 생성 후 execute 시작."
-       if state == "pending": banner += " (대시보드 승인 대기 중 — 여기서 승인해도 됩니다)"
-       answer = AskUserQuestion(banner, options=["Yes (여기서 승인)", "Wait for dashboard (대시보드에서 드래그)", "Cancel"])
-       if answer == "Yes (여기서 승인)":
-           session.gates.gate2_pre_execute = {state:"approved", source:"terminal_ask", reached_at: gate.reached_at or now(), approved_at: now(), approved_by:"terminal"}
-           save_session(); proceed to step 8
-       elif answer startswith "Wait for dashboard":
-           if state != "pending":
-               session.gates.gate2_pre_execute = {state:"pending", reached_at: now(), source:null, approved_at:null, approved_by:null}
-               save_session()
-           release_lock(); exit 0
-       else: release_lock(); exit 0
-   elif not is_resume and not config.dashboard_enabled:
-       answer = AskUserQuestion(banner, options=["Yes", "Cancel"])
-       if answer == "Yes":
-           session.gates.gate2_pre_execute = {state:"approved", source:"terminal_ask", approved_at:now()}
-           save_session(); proceed
-       else: release_lock(); exit 0
-   else:  # is_resume — daemon-bridge spawned us
-       if state != "approved":
-           session.gates.gate2_pre_execute = {state:"pending", reached_at:now()}
-           save_session()
+   if answer startswith "Yes":
+       decision = "approve"; source = "terminal_ask"
+   elif answer startswith "원격":
+       # inline poll — no servers; each call returns within ~9 min, re-poll until a human replies
+       loop:
+           reply = GHS gate-wait --session <slug> --gate 2 --timeout 540
+           if reply is non-empty:
+               interpret reply → decision in {approve, cancel}   # free-form/Korean OK
+               if ambiguous: GHS comment ... "approve/cancel 중 무엇인가요?"; continue
+               break
+           else:
+               inform user "이슈 #<n> 답변 대기 중 (9분째)"; continue
+       source = "issue_reply"
+   else:
+       decision = "cancel"; source = "terminal_ask"
+
+   if decision == "approve":
+       session.gates.gate2_pre_execute = {state:"approved", source:source, reached_at: gate.reached_at or now(), approved_at: now(), approved_by: source}
+       save_session()
+       if gh_on: GHS gate-close --session <slug> --gate 2 --decision approve --source <source>
+       proceed to step 8
+   else:
+       if gh_on: GHS gate-close --session <slug> --gate 2 --decision cancel --source <source>
        release_lock(); exit 0
    ```
 
@@ -97,33 +102,38 @@ These run only when `gh_on`; otherwise they are skipped and the pipeline behaves
 11. **Gate 3 — pre-pr (cross-path)** *(single-Phase / legacy path)*:
 
     ```
-    is_resume = ($CSS_DASHBOARD_RESUME == "1")
     gate = session.gates.gate3_pre_pr
-    state = gate.state if gate else null
+    if gate and gate.state == "approved": proceed to step 12; return
 
-    if state == "approved": proceed to step 12; return
+    banner = "구현+문서 완료. 브랜치 'css/<slug>'를 push하고 PR 생성."
+    if gh_on:
+        GHS gate-open --session <slug> --gate 3          # @mention + css:awaiting-approval
+        options = ["Yes (PR 생성)", "Draft PR", "원격(이슈)에서 답변 대기", "Cancel"]
+    else:
+        options = ["Yes (PR 생성)", "Draft PR", "Cancel"]
+    answer = AskUserQuestion(banner, options)
 
-    if not is_resume and config.dashboard_enabled:
-        banner = "구현 + 문서 완료. 브랜치 'css/<session>'를 origin에 push하고 PR 생성."
-        if state == "pending": banner += " (대시보드 승인 대기 중 — 여기서 승인해도 됩니다)"
-        answer = AskUserQuestion(banner, options=["Yes (PR 생성)", "Draft PR (대시보드에서 드래그 후 PR draft 모드)", "Cancel"])
-        if answer == "Yes (PR 생성)":
-            session.gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", reached_at: gate.reached_at or now(), approved_at: now(), approved_by:"terminal"}
-            save_session(); proceed to step 12
-        elif answer startswith "Draft PR":
-            session.gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", reached_at: gate.reached_at or now(), approved_at: now(), approved_by:"terminal", draft: true}
-            save_session(); proceed to step 12
-        else: release_lock(); exit 0
-    elif not is_resume and not config.dashboard_enabled:
-        answer = AskUserQuestion(banner, options=["Yes (PR 생성)", "Draft PR", "Cancel"])
-        if answer startswith "Yes" or answer startswith "Draft PR":
-            session.gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", approved_at:now(), draft: answer startswith "Draft PR"}
-            save_session(); proceed
-        else: release_lock(); exit 0
-    else:  # is_resume — daemon-bridge spawned us
-        if state != "approved":
-            session.gates.gate3_pre_pr = {state:"pending", reached_at:now()}
-            save_session()
+    if answer startswith "Yes":        decision = "approve"; source = "terminal_ask"
+    elif answer startswith "Draft":    decision = "draft";   source = "terminal_ask"
+    elif answer startswith "원격":
+        loop:
+            reply = GHS gate-wait --session <slug> --gate 3 --timeout 540
+            if reply is non-empty:
+                interpret reply → decision in {approve, draft, cancel}
+                if ambiguous: GHS comment ... "approve / draft / cancel 중?"; continue
+                break
+            else:
+                inform user "이슈 #<n> 답변 대기 중 (9분째)"; continue
+        source = "issue_reply"
+    else: decision = "cancel"; source = "terminal_ask"
+
+    if decision in {approve, draft}:
+        session.gates.gate3_pre_pr = {state:"approved", source:source, reached_at: gate.reached_at or now(), approved_at: now(), approved_by: source, draft: (decision == "draft")}
+        save_session()
+        if gh_on: GHS gate-close --session <slug> --gate 3 --decision <decision> --source <source>
+        proceed to step 12
+    else:
+        if gh_on: GHS gate-close --session <slug> --gate 3 --decision cancel --source <source>
         release_lock(); exit 0
     ```
 
