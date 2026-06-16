@@ -1,16 +1,17 @@
-# Golden Test: ship-gate2-crosspath (T2.3)
+# Golden Test: ship-gate2-crosspath (GitHub)
 
-Asserts that `commands/ship.md` contains the cross-path Gate 2 branching logic.
+Asserts that `commands/ship.md` drives Gate 2 through the GitHub issue, not the dashboard.
 
 ```bash
-# RED: these must all return 0 before implementation
-grep -c "CSS_DASHBOARD_RESUME" commands/ship.md  # expect 0 pre-impl
-grep -c "Wait for dashboard" commands/ship.md    # expect 0 pre-impl
-grep -c "gate2_pre_execute" commands/ship.md     # expect 0 pre-impl
+# These reflect the GitHub-native flow (P2)
+grep -c "CSS_DASHBOARD_RESUME" commands/ship.md            # expect 0
+grep -c "gate-open --session <slug> --gate 2" commands/ship.md
 ```
 
 ## Acceptance criteria
 
-- `grep -c "CSS_DASHBOARD_RESUME" commands/ship.md` >= 1
-- `grep -c "Wait for dashboard" commands/ship.md` >= 1
-- `grep -c "gate2_pre_execute" commands/ship.md` >= 3
+- `grep -c "CSS_DASHBOARD_RESUME" commands/ship.md` == 0
+- `grep -c "gate-open --session <slug> --gate 2" commands/ship.md` >= 1
+- `grep -c "gate-wait --session <slug> --gate 2" commands/ship.md` >= 1
+- `grep -c "gate-close --session <slug> --gate 2" commands/ship.md` >= 1
+- `grep -c "원격(이슈)에서 답변" commands/ship.md` >= 1
