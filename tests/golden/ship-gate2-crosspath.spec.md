@@ -1,6 +1,6 @@
 # Golden Test: ship-gate2-crosspath (GitHub)
 
-Asserts that `commands/ship.md` drives Gate 2 through the GitHub issue, not the dashboard.
+Asserts that `commands/ship.md` drives Gate 2 through the GitHub issue (no local resume daemon).
 
 ```bash
 # These reflect the GitHub-native flow (P2)

@@ -166,15 +166,13 @@ Stage by stage: `/css-interview → /css-plan → /css-phase → /css-review →
 
 See [`docs/usage.md`](docs/usage.md) for the full command reference, and the Codex CLI section of [`docs/installation.md`](docs/installation.md) for install/usage.
 
-## Dashboard (Optional)
+## GitHub tracking (built in)
 
-Install the dashboard to visualize all in-progress CSS sessions on a Kanban board and handle Gate approvals via drag-and-drop.
+Running `/css:ship "<idea>"` opens a **GitHub issue** for the slug; each stage updates a label (`css:<state>`) and posts a summary comment (the interview/plan/document stages embed the full document), and the issue appears as a card on a user-level **GitHub Projects** board. At approval gates (Gate 2/3) the issue gets an `@mention`; answer in the terminal or reply on the issue (remote) and the pipeline proceeds on that decision. When development finishes, the PR is created and linked to the issue via `Closes #<issue>`.
 
-```bash
-bash scripts/install-dashboard.sh
-```
-
-See [`dashboard/README.md`](dashboard/README.md) for details.
+- It's a human-facing mirror only — the pipeline's source of truth stays in `<project>/.claude/css/sessions/<slug>.json`.
+- Disable by setting `github.tracking_enabled` to `false` in `~/.claude/css/config.json`; with no GitHub remote it automatically falls back to the terminal-only gates.
+- Grant the Projects scope once with `gh auth refresh -s project`.
 
 ## Key features
 
