@@ -42,12 +42,14 @@ These run only when `gh_on`; otherwise they are skipped and the pipeline behaves
    - Invoke `/css:phase --session <slug>` (creates child Phase sessions from the approved manifest).
    - If the Epic stays single-Phase (sub-threshold), continue exactly as the legacy linear flow (one session, one PR) via steps 6–12.
    - If multi-Phase: run the Epic **architecture review** once (`/css:review --session <epic>`, kind=epic → coarse, no rich-specs), then run the per-child loop in step 13.
+   - If `gh_on` and multi-Phase: for each child Phase, `GHS init-issue --session <child>` then `GHS link-child --epic <epic> --child <child> --index <phase_index> --label "<phase label>"` (adds a checklist row to the Epic issue).
 
 6. **Stage 3 — review (loop)** *(single-Phase / legacy path)*:
    - Invoke `/css:review --session <slug>`.
    - On `LOOPBACK_TO_PLAN`, the review command itself loops back to plan up to 2 attempts.
    - On `LOOPBACK_TO_INTERVIEW`, ask user to confirm before re-entering interview.
    - On `ESCALATE`, stop and surface options.
+   - If `gh_on` and review produced a notable architectural decision or non-trivial verdict rationale, post it: `GHS adr --session <slug> --title "<short>" --context "<why>" --decision "<what>" --consequences "<tradeoffs>"` (post only decisions that matter; the helper numbers them ADR-1, ADR-2, … and de-dupes on resume).
    - *Multi-Phase Epics: the Epic architecture review was already run in step 5b. Skip to step 13 (per-Phase loop).*
 
 7. **Gate 2 — pre-execute (cross-path)** *(single-Phase / legacy path)*:
@@ -138,6 +140,7 @@ These run only when `gh_on`; otherwise they are skipped and the pipeline behaves
     ```
 
 12. **Stage 7 — pr** *(single-Phase / legacy path)*: invoke `/css:pr --session <slug>` (with `--draft` if user chose). The `master_flow` flag tells `/css:pr` not to ask Gate 3 again.
+    - After `/css:pr` returns the PR URL, if `gh_on`: `GHS pr-link --session <slug> --url <PR URL>` (issue comment + label `css:pr` + board `PR`; the PR body itself carries `Closes #<issue>` — see `pr.md` / `pr-creator`).
 
 13. **Stages plan→pr per Phase** *(multi-Phase Epics)*:
    For each child slug in topological order (by `phase_index`, respecting `depends_on`):
