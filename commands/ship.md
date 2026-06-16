@@ -16,12 +16,24 @@ Run the full CSS pipeline. Three approval gates: Gate 1 is implicit (brainstormi
    - `--session` provided + no file → init.
    - No `--session` → derive slug from idea (kebab-case, collision-suffixed if needed), init session, update `_active.json`.
    - Set `session.master_flow = true`.
+   - **GitHub tracking init**: define `GHS() { bash "${CSS_LIB:-$HOME/.claude/css/lib}/gh_sync.sh" "$@"; }`. Set `gh_on = ("$(GHS enabled --session <slug>)" == "1")`. If `gh_on`, run `GHS init-issue --session <slug>` (idempotent — creates the issue + adds it to the user Projects board, or reuses the stored issue on resume).
 
 3. **Acquire lock**.
+
+### GitHub stage sync (when `gh_on`)
+
+Wrap every stage invocation below:
+- **Before** invoking `/css:<stage>`: `GHS set-state --session <slug> --state <stage>` (issue label → `css:<stage>`, board Status → matching column).
+- **After** it completes: `GHS comment --session <slug> --stage <stage>`.
+  - `interview` / `plan` / `document` → the helper embeds the **full** artifact document (`session.phases.<stage>.artifact`) in a collapsible block (chunked if it exceeds GitHub's comment limit).
+  - all other stages → a one-line summary built from `session.phases.<stage>`.
+
+These run only when `gh_on`; otherwise they are skipped and the pipeline behaves exactly as before.
 
 4. **Stage 1 — interview**:
    - Invoke `/css:interview <idea>` (or resume) inheriting the slug.
    - Gate 1 is implicit: brainstorming's own "user reviews spec" step.
+   - GitHub: `set-state --state interview` before, `comment --stage interview` (full spec doc) after — see "GitHub stage sync". Apply the same wrap to every stage below.
 
 5. **Stage 2 — plan (skeleton)**:
    - Invoke `/css:plan --session <slug>`.
@@ -126,8 +138,9 @@ Run the full CSS pipeline. Three approval gates: Gate 1 is implicit (brainstormi
    e. `/css:pr --session <child> --base <base_branch>`.
    Independent Phases (disjoint `depends_on`) MAY be dispatched in separate sessions for parallel runs.
 
-14. **Finalize**: mark all phases completed, release lock, print summary:
-    "Pipeline 완료. PR: `<URL>`. 산출물: `<paths>`."
+14. **Finalize**: mark all phases completed.
+    - If `gh_on`, run `GHS finalize --session <slug>` (label `css:done` + board `Done`).
+    - Release lock, print summary: "Pipeline 완료. PR: `<URL>`. 산출물: `<paths>`."
 
 <self_check>
 - [ ] All 7 phases recorded as completed in session
