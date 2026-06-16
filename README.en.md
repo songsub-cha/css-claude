@@ -168,7 +168,7 @@ See [`docs/usage.md`](docs/usage.md) for the full command reference, and the Cod
 
 ## GitHub tracking (built in)
 
-Running `/css:ship "<idea>"` mirrors pipeline progress to **GitHub Issues + Projects** — no server or dashboard, just the `gh` CLI (`lib/gh_sync.sh`).
+Running `/css:ship "<idea>"` mirrors pipeline progress to **GitHub Issues + Projects** — no long-running server, just the `gh` CLI (`lib/gh_sync.sh`).
 
 - **Issue + board**: one issue is opened per slug and added as a card to a user-level **GitHub Projects** board.
 - **Per-stage mirroring**: as stages advance, the label is swapped to the current state (`css:interview` … `css:pr`, then `css:done`) and the board's `CSS Stage` column moves in lockstep. Each stage posts a summary comment; the **interview/plan/document stages attach the full output document** in a collapsible block.

@@ -168,7 +168,7 @@ $css-ship "<아이디어>"
 
 ## GitHub 추적 (기본 내장)
 
-`/css:ship <아이디어>`를 실행하면 파이프라인이 진행 상황을 **GitHub Issues + Projects**에 그대로 비춥니다. 별도 서버·대시보드 없이 `gh` CLI만 사용합니다(`lib/gh_sync.sh`).
+`/css:ship <아이디어>`를 실행하면 파이프라인이 진행 상황을 **GitHub Issues + Projects**에 그대로 비춥니다. 상주 서버 없이 `gh` CLI만 사용합니다(`lib/gh_sync.sh`).
 
 - **이슈 + 보드**: slug마다 이슈 1개가 생성되고, 유저 단위 **GitHub Projects 칸반 보드**에 카드로 등록됩니다.
 - **단계별 미러링**: 스테이지가 바뀔 때마다 라벨이 현재 상태(`css:interview` … `css:pr`, 완료 시 `css:done`)로 교체되고, 보드의 `CSS Stage` 컬럼도 함께 이동합니다. 각 스테이지 완료 시 요약 코멘트가 달리며, **interview·plan·document 단계는 산출 문서 전문**이 접이식 블록으로 첨부됩니다.
