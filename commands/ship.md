@@ -16,12 +16,24 @@ Run the full CSS pipeline. Three approval gates: Gate 1 is implicit (brainstormi
    - `--session` provided + no file → init.
    - No `--session` → derive slug from idea (kebab-case, collision-suffixed if needed), init session, update `_active.json`.
    - Set `session.master_flow = true`.
+   - **GitHub tracking init**: define `GHS() { bash "${CSS_LIB:-$HOME/.claude/css/lib}/gh_sync.sh" "$@"; }`. Set `gh_on = ("$(GHS enabled --session <slug>)" == "1")`. If `gh_on`, run `GHS init-issue --session <slug>` (idempotent — creates the issue + adds it to the user Projects board, or reuses the stored issue on resume).
 
 3. **Acquire lock**.
+
+### GitHub stage sync (when `gh_on`)
+
+Wrap every stage invocation below:
+- **Before** invoking `/css:<stage>`: `GHS set-state --session <slug> --state <stage>` (issue label → `css:<stage>`, board Status → matching column).
+- **After** it completes: `GHS comment --session <slug> --stage <stage>`.
+  - `interview` / `plan` / `document` → the helper embeds the **full** artifact document (`session.phases.<stage>.artifact`) in a collapsible block (chunked if it exceeds GitHub's comment limit).
+  - all other stages → a one-line summary built from `session.phases.<stage>`.
+
+These run only when `gh_on`; otherwise they are skipped and the pipeline behaves exactly as before.
 
 4. **Stage 1 — interview**:
    - Invoke `/css:interview <idea>` (or resume) inheriting the slug.
    - Gate 1 is implicit: brainstorming's own "user reviews spec" step.
+   - GitHub: `set-state --state interview` before, `comment --stage interview` (full spec doc) after — see "GitHub stage sync". Apply the same wrap to every stage below.
 
 5. **Stage 2 — plan (skeleton)**:
    - Invoke `/css:plan --session <slug>`.
@@ -30,46 +42,53 @@ Run the full CSS pipeline. Three approval gates: Gate 1 is implicit (brainstormi
    - Invoke `/css:phase --session <slug>` (creates child Phase sessions from the approved manifest).
    - If the Epic stays single-Phase (sub-threshold), continue exactly as the legacy linear flow (one session, one PR) via steps 6–12.
    - If multi-Phase: run the Epic **architecture review** once (`/css:review --session <epic>`, kind=epic → coarse, no rich-specs), then run the per-child loop in step 13.
+   - If `gh_on` and multi-Phase: for each child Phase, `GHS init-issue --session <child>` then `GHS link-child --epic <epic> --child <child> --index <phase_index> --label "<phase label>"` (adds a checklist row to the Epic issue).
 
 6. **Stage 3 — review (loop)** *(single-Phase / legacy path)*:
    - Invoke `/css:review --session <slug>`.
    - On `LOOPBACK_TO_PLAN`, the review command itself loops back to plan up to 2 attempts.
    - On `LOOPBACK_TO_INTERVIEW`, ask user to confirm before re-entering interview.
    - On `ESCALATE`, stop and surface options.
+   - If `gh_on` and review produced a notable architectural decision or non-trivial verdict rationale, post it: `GHS adr --session <slug> --title "<short>" --context "<why>" --decision "<what>" --consequences "<tradeoffs>"` (post only decisions that matter; the helper numbers them ADR-1, ADR-2, … and de-dupes on resume).
    - *Multi-Phase Epics: the Epic architecture review was already run in step 5b. Skip to step 13 (per-Phase loop).*
 
 7. **Gate 2 — pre-execute (cross-path)** *(single-Phase / legacy path)*:
 
    ```
-   is_resume = ($CSS_DASHBOARD_RESUME == "1")
-   gate = session.gates.gate2_pre_execute
-   state = gate.state if gate else null
+   gate  = session.gates.gate2_pre_execute
+   if gate and gate.state == "approved": proceed to step 8; return
 
-   if state == "approved": proceed to step 8; return
+   banner = "Plan 검증 완료. worktree 생성 후 execute 시작."
+   if gh_on:
+       GHS gate-open --session <slug> --gate 2          # @mention + css:awaiting-approval
+       options = ["Yes (여기서 승인)", "원격(이슈)에서 답변 대기", "Cancel"]
+   else:
+       options = ["Yes", "Cancel"]
+   answer = AskUserQuestion(banner, options)
 
-   if not is_resume and config.dashboard_enabled:
-       banner = "Plan 검증 완료. worktree '../<repo>-css-<session>' 생성 후 execute 시작."
-       if state == "pending": banner += " (대시보드 승인 대기 중 — 여기서 승인해도 됩니다)"
-       answer = AskUserQuestion(banner, options=["Yes (여기서 승인)", "Wait for dashboard (대시보드에서 드래그)", "Cancel"])
-       if answer == "Yes (여기서 승인)":
-           session.gates.gate2_pre_execute = {state:"approved", source:"terminal_ask", reached_at: gate.reached_at or now(), approved_at: now(), approved_by:"terminal"}
-           save_session(); proceed to step 8
-       elif answer startswith "Wait for dashboard":
-           if state != "pending":
-               session.gates.gate2_pre_execute = {state:"pending", reached_at: now(), source:null, approved_at:null, approved_by:null}
-               save_session()
-           release_lock(); exit 0
-       else: release_lock(); exit 0
-   elif not is_resume and not config.dashboard_enabled:
-       answer = AskUserQuestion(banner, options=["Yes", "Cancel"])
-       if answer == "Yes":
-           session.gates.gate2_pre_execute = {state:"approved", source:"terminal_ask", approved_at:now()}
-           save_session(); proceed
-       else: release_lock(); exit 0
-   else:  # is_resume — daemon-bridge spawned us
-       if state != "approved":
-           session.gates.gate2_pre_execute = {state:"pending", reached_at:now()}
-           save_session()
+   if answer startswith "Yes":
+       decision = "approve"; source = "terminal_ask"
+   elif answer startswith "원격":
+       # inline poll — no servers; each call returns within ~9 min, re-poll until a human replies
+       loop:
+           reply = GHS gate-wait --session <slug> --gate 2 --timeout 540
+           if reply is non-empty:
+               interpret reply → decision in {approve, cancel}   # free-form/Korean OK
+               if ambiguous: GHS comment ... "approve/cancel 중 무엇인가요?"; continue
+               break
+           else:
+               inform user "이슈 #<n> 답변 대기 중 (9분째)"; continue
+       source = "issue_reply"
+   else:
+       decision = "cancel"; source = "terminal_ask"
+
+   if decision == "approve":
+       session.gates.gate2_pre_execute = {state:"approved", source:source, reached_at: gate.reached_at or now(), approved_at: now(), approved_by: source}
+       save_session()
+       if gh_on: GHS gate-close --session <slug> --gate 2 --decision approve --source <source>
+       proceed to step 8
+   else:
+       if gh_on: GHS gate-close --session <slug> --gate 2 --decision cancel --source <source>
        release_lock(); exit 0
    ```
 
@@ -85,37 +104,43 @@ Run the full CSS pipeline. Three approval gates: Gate 1 is implicit (brainstormi
 11. **Gate 3 — pre-pr (cross-path)** *(single-Phase / legacy path)*:
 
     ```
-    is_resume = ($CSS_DASHBOARD_RESUME == "1")
     gate = session.gates.gate3_pre_pr
-    state = gate.state if gate else null
+    if gate and gate.state == "approved": proceed to step 12; return
 
-    if state == "approved": proceed to step 12; return
+    banner = "구현+문서 완료. 브랜치 'css/<slug>'를 push하고 PR 생성."
+    if gh_on:
+        GHS gate-open --session <slug> --gate 3          # @mention + css:awaiting-approval
+        options = ["Yes (PR 생성)", "Draft PR", "원격(이슈)에서 답변 대기", "Cancel"]
+    else:
+        options = ["Yes (PR 생성)", "Draft PR", "Cancel"]
+    answer = AskUserQuestion(banner, options)
 
-    if not is_resume and config.dashboard_enabled:
-        banner = "구현 + 문서 완료. 브랜치 'css/<session>'를 origin에 push하고 PR 생성."
-        if state == "pending": banner += " (대시보드 승인 대기 중 — 여기서 승인해도 됩니다)"
-        answer = AskUserQuestion(banner, options=["Yes (PR 생성)", "Draft PR (대시보드에서 드래그 후 PR draft 모드)", "Cancel"])
-        if answer == "Yes (PR 생성)":
-            session.gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", reached_at: gate.reached_at or now(), approved_at: now(), approved_by:"terminal"}
-            save_session(); proceed to step 12
-        elif answer startswith "Draft PR":
-            session.gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", reached_at: gate.reached_at or now(), approved_at: now(), approved_by:"terminal", draft: true}
-            save_session(); proceed to step 12
-        else: release_lock(); exit 0
-    elif not is_resume and not config.dashboard_enabled:
-        answer = AskUserQuestion(banner, options=["Yes (PR 생성)", "Draft PR", "Cancel"])
-        if answer startswith "Yes" or answer startswith "Draft PR":
-            session.gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", approved_at:now(), draft: answer startswith "Draft PR"}
-            save_session(); proceed
-        else: release_lock(); exit 0
-    else:  # is_resume — daemon-bridge spawned us
-        if state != "approved":
-            session.gates.gate3_pre_pr = {state:"pending", reached_at:now()}
-            save_session()
+    if answer startswith "Yes":        decision = "approve"; source = "terminal_ask"
+    elif answer startswith "Draft":    decision = "draft";   source = "terminal_ask"
+    elif answer startswith "원격":
+        loop:
+            reply = GHS gate-wait --session <slug> --gate 3 --timeout 540
+            if reply is non-empty:
+                interpret reply → decision in {approve, draft, cancel}
+                if ambiguous: GHS comment ... "approve / draft / cancel 중?"; continue
+                break
+            else:
+                inform user "이슈 #<n> 답변 대기 중 (9분째)"; continue
+        source = "issue_reply"
+    else: decision = "cancel"; source = "terminal_ask"
+
+    if decision in {approve, draft}:
+        session.gates.gate3_pre_pr = {state:"approved", source:source, reached_at: gate.reached_at or now(), approved_at: now(), approved_by: source, draft: (decision == "draft")}
+        save_session()
+        if gh_on: GHS gate-close --session <slug> --gate 3 --decision <decision> --source <source>
+        proceed to step 12
+    else:
+        if gh_on: GHS gate-close --session <slug> --gate 3 --decision cancel --source <source>
         release_lock(); exit 0
     ```
 
 12. **Stage 7 — pr** *(single-Phase / legacy path)*: invoke `/css:pr --session <slug>` (with `--draft` if user chose). The `master_flow` flag tells `/css:pr` not to ask Gate 3 again.
+    - After `/css:pr` returns the PR URL, if `gh_on`: `GHS pr-link --session <slug> --url <PR URL>` (issue comment + label `css:pr` + board `PR`; the PR body itself carries `Closes #<issue>` — see `pr.md` / `pr-creator`).
 
 13. **Stages plan→pr per Phase** *(multi-Phase Epics)*:
    For each child slug in topological order (by `phase_index`, respecting `depends_on`):
@@ -126,8 +151,9 @@ Run the full CSS pipeline. Three approval gates: Gate 1 is implicit (brainstormi
    e. `/css:pr --session <child> --base <base_branch>`.
    Independent Phases (disjoint `depends_on`) MAY be dispatched in separate sessions for parallel runs.
 
-14. **Finalize**: mark all phases completed, release lock, print summary:
-    "Pipeline 완료. PR: `<URL>`. 산출물: `<paths>`."
+14. **Finalize**: mark all phases completed.
+    - If `gh_on`, run `GHS finalize --session <slug>` (label `css:done` + board `Done`).
+    - Release lock, print summary: "Pipeline 완료. PR: `<URL>`. 산출물: `<paths>`."
 
 <self_check>
 - [ ] All 7 phases recorded as completed in session

@@ -100,6 +100,19 @@ if compgen -G "$SOURCE_PATH/agents/*.md" >/dev/null; then
 fi
 echo "  ($agent_count agent files copied)"
 
+section "Copying lib"
+lib_dir="$css_dir/lib"
+mkdir -p "$lib_dir"
+lib_count=0
+if compgen -G "$SOURCE_PATH/lib/*.sh" >/dev/null; then
+  for f in "$SOURCE_PATH"/lib/*.sh; do
+    cp "$f" "$lib_dir/"
+    echo "  $(basename "$f")"
+    lib_count=$((lib_count + 1))
+  done
+fi
+echo "  ($lib_count lib files copied)"
+
 section "Installing default config"
 src_config="$SOURCE_PATH/config/default-config.json"
 dst_config="$css_dir/config.json"

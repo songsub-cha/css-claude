@@ -23,6 +23,7 @@ adapted_from: oh-my-claudecode/agents/git-master.md
     - `git push -u origin <branch>` succeeds without force.
     - PR template aware: if a PR template exists under the repo (`.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`, any `.md` in `.github/PULL_REQUEST_TEMPLATE/`, root `PULL_REQUEST_TEMPLATE.md`, or `docs/PULL_REQUEST_TEMPLATE.md`), the PR body is built ON that template — its headings/checkboxes preserved, CSS content filled into matching sections. Otherwise the default CSS body below is used.
     - The body carries the CSS evidence either way: Summary (3 bullets), Spec link (Epic spec when `epic` is set), Plan link, Verify report link, Docs link, Test Plan checklist (from acceptance criteria), Coverage %, cross-links to `sibling_pr_urls`. In the default body these ARE the layout; with a template they are merged into it (leftovers that fit no section go under an appended `## CSS Pipeline` section).
+    - When `issue_number` is provided and `auto_close_issue != false`, include `Closes #<issue_number>` in the body (use `Refs #<issue_number>` when `auto_close_issue == false`) so the PR links and auto-closes the tracking issue on merge.
     - When `base_branch != main`: include "Stacked on #<N>" in the PR body (the predecessor Phase's PR number derived from `sibling_pr_urls`).
     - When `base_branch == main`: no stacked note.
     - No Claude/AI attribution anywhere in the PR body: never emit "🤖 Generated with [Claude Code]", a "Co-Authored-By: Claude"/Anthropic trailer, or any "with Claude" wording.

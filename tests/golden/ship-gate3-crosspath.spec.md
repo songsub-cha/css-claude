@@ -1,14 +1,15 @@
-# Golden Test: ship-gate3-crosspath (T2.4)
+# Golden Test: ship-gate3-crosspath (GitHub)
 
-Asserts that `commands/ship.md` contains the cross-path Gate 3 branching logic with Draft PR option.
+Asserts that `commands/ship.md` drives Gate 3 through the GitHub issue, with a Draft PR option.
 
 ```bash
-# RED: these must all return 0 before implementation
-grep -c "gate3_pre_pr" commands/ship.md   # expect 0 pre-impl
-grep -c "Draft PR" commands/ship.md       # expect 0 pre-impl
+grep -c "gate-open --session <slug> --gate 3" commands/ship.md
+grep -c "Draft PR" commands/ship.md
 ```
 
 ## Acceptance criteria
 
-- `grep -c "gate3_pre_pr" commands/ship.md` >= 3
+- `grep -c "gate-open --session <slug> --gate 3" commands/ship.md` >= 1
+- `grep -c "gate-wait --session <slug> --gate 3" commands/ship.md` >= 1
+- `grep -c "gate-close --session <slug> --gate 3" commands/ship.md` >= 1
 - `grep -c "Draft PR" commands/ship.md` >= 1

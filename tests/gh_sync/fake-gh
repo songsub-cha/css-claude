@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Mock gh: log every invocation to $GH_LOG, emit canned stdout for read calls.
+printf '%s\n' "$*" >> "${GH_LOG:?GH_LOG unset}"
+case "$1 $2" in
+  "auth status")        exit 0 ;;
+  "repo view")          echo "owner/repo" ;;
+  "api user")           echo "tester" ;;
+  "issue create")       echo "https://github.com/owner/repo/issues/42" ;;
+  "project create")     echo '{"number":7,"id":"PVT_board","url":"u"}' ;;
+  "project field-list") echo '{"fields":[{"id":"FLD","name":"CSS Stage","options":[{"id":"OPT_Interview","name":"Interview"},{"id":"OPT_Execute","name":"Execute"},{"id":"OPT_Done","name":"Done"},{"id":"OPT_PR","name":"PR"}]}]}' ;;
+  "project view")       echo '{"id":"PVT_board"}' ;;
+  "project item-add")   echo '{"id":"PVTI_item"}' ;;
+  "issue view")         echo "${FAKE_ISSUE_VIEW:-}" ;;
+  *)                    : ;;
+esac
+exit 0

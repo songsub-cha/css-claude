@@ -40,8 +40,9 @@ out/
 # Local Claude state (not part of source of truth)
 .claude/state/
 .claude/css/
+
+# superpowers brainstorming visual companion
+.superpowers/
+
 *.tmp
 *.bak
-
-# dashboard local config
-dashboard/.env

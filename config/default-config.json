@@ -22,5 +22,13 @@
   "pr": {
     "default_base_branch": null,
     "default_draft": false
+  },
+  "github": {
+    "tracking_enabled": true,
+    "project_owner": null,
+    "project_number": null,
+    "mention_user": null,
+    "auto_close_issue": true,
+    "poll_interval_sec": 20
   }
 }
