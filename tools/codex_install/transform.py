@@ -1,14 +1,15 @@
-"""Pure transforms: Claude CSS command/agent markdown -> Codex CLI text.
+"""Pure transforms: Claude CSS command/agent markdown -> Codex skill text.
 
 No filesystem side effects. Claude source files are never mutated — the
-installer reads source text and writes transformed copies under ~/.codex.
+installer reads source text and writes transformed copies under user Codex
+artifact locations.
 """
 from __future__ import annotations
 
 import re
 
-# Prepended to every Codex command prompt. Points the agent at the runtime
-# brain that maps Claude tool names (Task/AskUserQuestion/TodoWrite) to Codex.
+# Prepended to every Codex skill. Points the agent at the runtime brain that
+# maps Claude tool names (Task/AskUserQuestion/TodoWrite) to Codex.
 RUNTIME_POINTER = (
     "> Execution model & tool mapping: read `~/.codex/css/RUNTIME.md` and "
     "follow it before proceeding.\n"
@@ -33,18 +34,25 @@ def split_frontmatter(text):
     return fields, text[m.end():]
 
 
-def transform_command(text):
-    """Claude command .md -> Codex prompt text.
+def transform_command_to_skill(text, skill_name):
+    """Claude command .md -> Codex SKILL.md text.
 
-    Keeps only the `description` frontmatter key, prepends the RUNTIME pointer,
-    preserves the body (including `$ARGUMENTS`) verbatim.
+    Keeps only the `description` frontmatter key, adds required skill `name`,
+    prepends the RUNTIME pointer, and preserves the body (including
+    `$ARGUMENTS`) verbatim.
     """
     fields, body = split_frontmatter(text)
-    out = ""
-    if fields and fields.get("description"):
-        out += f"---\ndescription: {fields['description']}\n---\n"
+    description = fields.get("description") if fields else None
+    if not description:
+        description = f"CSS command skill: {skill_name}"
+    out = f"---\nname: {skill_name}\ndescription: {description}\n---\n"
     out += RUNTIME_POINTER + "\n" + body
     return out
+
+
+def transform_command(text):
+    """Backward-compatible wrapper for callers that still expect prompt text."""
+    return transform_command_to_skill(text, "css-command")
 
 
 def transform_agent(text):

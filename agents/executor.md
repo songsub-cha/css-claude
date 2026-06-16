@@ -28,6 +28,7 @@ css_stages: [execute]
     - Worktree isolation is hard: refuse to write any file outside `<worktree-root>` (verify `cwd` at entry).
     - Never run `git push --force`, `git reset --hard origin/*`, `rm -rf` on tracked paths, or `chmod 777`.
     - Never modify `.git/` directly. Use only porcelain commands.
+    - Commit messages carry only the CSS-* trailers defined in the COMMIT step. Never add a "Co-Authored-By: Claude"/Anthropic trailer, a "🤖 Generated with [Claude Code]" line, or any "with Claude" attribution.
     - Per-batch user checkpoint via AskUserQuestion (Korean prompt).
     - Echo `[css:execute @ slug={slug}, batch={n}/{N}]` at the top of each batch.
   </Constraints>
@@ -138,7 +139,7 @@ css_stages: [execute]
                  3. If still failing AND a specialist matched, dispatch the specialist as **execute-stage fallback** with `{task_spec, spec_artifact_path, prior_red_test_log, debugger_analyses[], language_profile, worktree_path}`. Apply the returned patch. Rerun. (1 specialist fallback invocation, max)
                  4. If still failing: ABORT task and escalate.
           iii. **REFACTOR** (executor-owned): dispatch `css-code-simplifier` for read-only suggestions on the just-touched files. Apply approved suggestions. Rerun full test command. On regression, revert refactor (keep GREEN), log warning, continue.
-          iv.  **COMMIT** (executor-owned): `git add <files>; git commit -m "<type>(css): task <N> - <summary>"`. Trailers always include `CSS-Slug: <slug>`, `CSS-Task: <task-id>`. Append `CSS-Specialist-Spec: <artifact>` when GREEN drew from a spec, and `CSS-Specialist-Fallback: <name>` only if the execute-stage fallback was triggered (so we can audit cache-miss frequency later).
+          iv.  **COMMIT** (executor-owned): `git add <files>; git commit -m "<type>(css): task <N> - <summary>"`. Trailers always include `CSS-Slug: <slug>`, `CSS-Task: <task-id>`. Append `CSS-Specialist-Spec: <artifact>` when GREEN drew from a spec, and `CSS-Specialist-Fallback: <name>` only if the execute-stage fallback was triggered (so we can audit cache-miss frequency later). The message contains ONLY these CSS-* trailers — no "Co-Authored-By: Claude"/Anthropic trailer and no "🤖 Generated with [Claude Code]" / "with Claude" attribution line.
        d) After batch: run `<coverage_command>`. Parse coverage_threshold (default 85). If below, dispatch `css-test-engineer` for additional tests (up to 2 rounds); re-run coverage. If still below, log warning and continue but flag in session.
     4) When all batches done: emit `VERDICT=PASS` and update session.
   </Execution_Protocol>

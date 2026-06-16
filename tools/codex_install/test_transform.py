@@ -9,6 +9,7 @@ from codex_install.transform import (
     split_frontmatter,
     transform_agent,
     transform_command,
+    transform_command_to_skill,
 )
 
 _COMMAND = """---
@@ -47,16 +48,21 @@ class CommandTransformTests(unittest.TestCase):
         self.assertIsNone(fields)
         self.assertEqual(body, "# no frontmatter\n")
 
-    def test_command_drops_argument_hint_keeps_description(self):
-        out = transform_command(_COMMAND)
+    def test_command_skill_frontmatter_drops_argument_hint(self):
+        out = transform_command_to_skill(_COMMAND, "css-ship")
+        self.assertIn("name: css-ship", out)
         self.assertIn("description: Master pipeline", out)
         self.assertNotIn("argument-hint", out)
 
-    def test_command_prepends_pointer_and_preserves_body(self):
-        out = transform_command(_COMMAND)
+    def test_command_skill_prepends_pointer_and_preserves_body(self):
+        out = transform_command_to_skill(_COMMAND, "css-ship")
         self.assertIn(RUNTIME_POINTER.strip(), out)
         self.assertIn("# /css:ship", out)
         self.assertIn("$ARGUMENTS", out)
+
+    def test_legacy_transform_command_wrapper_still_returns_skill_text(self):
+        out = transform_command(_COMMAND)
+        self.assertIn("name: css-command", out)
 
 
 class AgentTransformTests(unittest.TestCase):

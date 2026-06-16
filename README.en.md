@@ -133,7 +133,7 @@ Detailed design: [`docs/superpowers/specs/2026-05-29-epic-phase-pipeline-design.
 
 ## Quick start
 
-After installing, both environments run the **same pipeline** — the only difference is the command namespace (`css:` ↔ `css-`).
+After installing, both environments run the **same pipeline**. Claude Code uses `/css:*` commands; Codex App and CLI use installed `css-*` skills.
 
 ### Claude Code
 
@@ -149,22 +149,22 @@ Or run it stage by stage:
 /css:interview → /css:plan → /css:phase → /css:review → /css:execute → /css:verify → /css:document → /css:pr
 ```
 
-### Codex CLI
+### Codex App / CLI
 
-Install first: `bash scripts/install-codex.sh` (Windows: `scripts\install-codex.ps1`). Codex has no `:` namespace, so it uses the **`css-` prefix**:
+Install first: `bash scripts/install-codex.sh` (Windows: `scripts\install-codex.ps1`). Then select the `css-ship` skill from the App/CLI skill menu, or mention it directly:
 
 ```
-/css-ship "<idea>"
+$css-ship "<idea>"
 ```
 
-Stage by stage: `/css-interview → /css-plan → /css-phase → /css-review → /css-execute → /css-verify → /css-document → /css-pr`
+Stage by stage: `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, `$css-pr`.
 
 - **Parallel specialists** (optional): add `multi_agent = true` under `[features]` in `~/.codex/config.toml`. Without it, specialists run sequentially in one agent (same result).
 - **Approval gates**: presented as plain-text questions (no structured UI) that wait for your reply.
 - **Shared sessions**: state lives in `<project>/.claude/css/`, so a session started in Claude Code resumes in Codex (and vice versa).
 - Execution behavior is governed by `~/.codex/css/RUNTIME.md`.
 
-See [`docs/usage.md`](docs/usage.md) for the full command reference, and the Codex CLI section of [`docs/installation.md`](docs/installation.md) for install/usage.
+See [`docs/usage.md`](docs/usage.md) for the full command reference, and the Codex section of [`docs/installation.md`](docs/installation.md) for install/usage.
 
 ## GitHub tracking (built in)
 
@@ -202,7 +202,7 @@ Install via the platform script:
 
 - Windows: `powershell -ExecutionPolicy Bypass -File scripts\install.ps1`
 - Ubuntu 22.04: `bash scripts/install.sh`
-- Codex CLI (experimental): `bash scripts/install-codex.sh` — see the Codex CLI section in [`docs/installation.md`](docs/installation.md)
+- Codex App / CLI (experimental): `bash scripts/install-codex.sh` — see the Codex section in [`docs/installation.md`](docs/installation.md)
 
 See [`docs/installation.md`](docs/installation.md) for details.
 

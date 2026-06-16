@@ -28,6 +28,17 @@ Each stage can also be run independently with `--slug`:
 
 `--slug` is optional. If omitted, CSS automatically picks the most recent session from `<project>/.claude/css/sessions/_active.json`.
 
+## Codex App / CLI equivalents
+
+After `scripts/install-codex.*`, Codex exposes the same stages as installed `css-*` skills. Select a skill from the App/CLI skill menu, or mention it directly:
+
+```
+$css-ship "<idea>"
+$css-review --slug <slug>
+```
+
+The full set is `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, and `$css-pr`. Skill invocation text is treated as the command's `$ARGUMENTS`; execution details are governed by `~/.codex/css/RUNTIME.md`.
+
 ## Concurrent multi-session
 
 You can open two terminals and work on the same project at the same time:

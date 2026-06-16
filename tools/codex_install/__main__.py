@@ -14,12 +14,15 @@ def main(argv=None):
                         help="css-claude repo root (default: inferred)")
     parser.add_argument("--dest", default=str(Path.home() / ".codex"),
                         help="Codex home (default: ~/.codex)")
+    parser.add_argument("--skills-dir", default=str(Path.home() / ".agents" / "skills"),
+                        help="Codex user skills directory (default: ~/.agents/skills)")
     parser.add_argument("--force", action="store_true",
                         help="overwrite existing config.json")
     args = parser.parse_args(argv)
-    summary = install(args.source, args.dest, force=args.force)
-    print(f"Installed {summary['commands']} prompts, {summary['agents']} agents "
-          f"into {args.dest}")
+    summary = install(args.source, args.dest, force=args.force,
+                      skills_home=args.skills_dir)
+    print(f"Installed {summary['skills']} skills into {args.skills_dir}")
+    print(f"Installed {summary['agents']} agents into {Path(args.dest) / 'css'}")
     print(f"  config.json {'written' if summary['config_written'] else 'kept (exists)'}")
     return 0
 
