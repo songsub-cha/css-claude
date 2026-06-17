@@ -260,12 +260,35 @@ cmd_finalize() {
   cmd_set_state --session "$slug" --state done
 }
 
-# --- link-child (Epic checklist) ----------------------------------------------
+# --- link-child (Epic ⇄ Phase nesting) ----------------------------------------
+repo_slug() { # <slug> — owner/name, preferring the value cached at init-issue
+  local r; r="$(sess "$1" '.github.repo')"
+  [[ -n "$r" ]] || r="$(gh repo view --json nameWithOwner -q '.nameWithOwner' 2>/dev/null || echo '')"
+  printf '%s' "$r"
+}
+# Nest the child issue under the Epic via GitHub's native sub-issues API
+# (gives the built-in nested list + progress bar). Returns 1 so the caller can
+# fall back to a markdown checklist on older GitHub that lacks the endpoint.
+link_subissue() { # <epic_slug> <epic_number> <child_number>
+  local eslug="$1" enum="$2" cnum="$3"
+  local repo; repo="$(repo_slug "$eslug")"; [[ -n "$repo" ]] || return 1
+  # Idempotent: skip if the child is already a sub-issue of the Epic.
+  if gh api "repos/$repo/issues/$enum/sub_issues" -q '.[].number' 2>/dev/null | grep -qx "$cnum"; then
+    return 0
+  fi
+  # The sub-issues endpoint takes the child's database id, not its number.
+  local cid; cid="$(gh api "repos/$repo/issues/$cnum" -q '.id' 2>/dev/null || true)"
+  [[ -n "$cid" ]] || return 1
+  gh api --method POST "repos/$repo/issues/$enum/sub_issues" -F "sub_issue_id=$cid" >/dev/null 2>&1 || return 1
+  return 0
+}
 cmd_link_child() {
   parse_opts "$@"; local epic="${OPT[epic]}" child="${OPT[child]}" idx="${OPT[index]}" label="${OPT[label]}"
   gh_enabled || return 0
   local enum cnum; enum="$(sess "$epic" '.github.issue_number')"; cnum="$(sess "$child" '.github.issue_number')"
   [[ -n "$enum" && -n "$cnum" ]] || return 0
+  # Prefer the native sub-issue relationship; fall back to an Epic checklist row.
+  link_subissue "$epic" "$enum" "$cnum" && return 0
   local cur; cur="$(gh issue view "$enum" --json body 2>/dev/null | jq -r '.body // empty')"
   gh issue edit "$enum" --body "$cur"$'\n'"$(printf -- '- [ ] Phase %s — %s #%s' "$idx" "$label" "$cnum")" >/dev/null
 }
