@@ -171,6 +171,7 @@ See [`docs/usage.md`](docs/usage.md) for the full command reference, and the Cod
 Running `/css:ship "<idea>"` mirrors pipeline progress to **GitHub Issues + Projects** — no long-running server, just the `gh` CLI (`lib/gh_sync.sh`).
 
 - **Issue + board**: one issue is opened per slug and added as a card to a user-level **GitHub Projects** board.
+- **Epic → Phase sub-issues**: when `/css:phase` splits a large idea into multiple Phases, each Phase gets its own issue nested under the Epic issue as a native GitHub **sub-issue** (built-in nested list + progress bar), so every Phase syncs its content independently. On older GitHub without the sub-issues API it falls back to an Epic checklist.
 - **Per-stage mirroring**: as stages advance, the label is swapped to the current state (`css:interview` … `css:pr`, then `css:done`) and the board's `CSS Stage` column moves in lockstep. Each stage posts a summary comment; the **interview/plan/document stages attach the full output document** in a collapsible block.
 - **Decision records (ADR)**: notable review-stage decisions are posted as `ADR-N` comments.
 - **Approval gates**: at Gate 2 (pre-execute) and Gate 3 (pre-PR) the issue gets an `@mention`. Answer in the terminal, or pick "reply on the issue (remote)" and **comment on the issue** — the pipeline reads your decision (free-form, any language) and proceeds, exactly as a terminal answer would.

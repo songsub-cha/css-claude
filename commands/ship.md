@@ -42,7 +42,7 @@ These run only when `gh_on`; otherwise they are skipped and the pipeline behaves
    - Invoke `/css:phase --session <slug>` (creates child Phase sessions from the approved manifest).
    - If the Epic stays single-Phase (sub-threshold), continue exactly as the legacy linear flow (one session, one PR) via steps 6–12.
    - If multi-Phase: run the Epic **architecture review** once (`/css:review --session <epic>`, kind=epic → coarse, no rich-specs), then run the per-child loop in step 13.
-   - If `gh_on` and multi-Phase: for each child Phase, `GHS init-issue --session <child>` then `GHS link-child --epic <epic> --child <child> --index <phase_index> --label "<phase label>"` (adds a checklist row to the Epic issue).
+   - If `gh_on` and multi-Phase: for each child Phase, `GHS init-issue --session <child>` (its own issue, so each Phase syncs its content independently) then `GHS link-child --epic <epic> --child <child> --index <phase_index> --label "<phase label>"` (nests the Phase issue under the Epic as a native GitHub **sub-issue** — built-in nested list + progress bar; falls back to an Epic checklist row on older GitHub without the sub-issues API).
 
 6. **Stage 3 — review (loop)** *(single-Phase / legacy path)*:
    - Invoke `/css:review --session <slug>`.
