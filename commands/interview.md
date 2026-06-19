@@ -33,6 +33,8 @@ Run a deep, Socratic brainstorming session to turn an idea into a CSS spec. Wrap
    ```
    Pass the idea text as the user's initial request inside the invoked skill's context. **Important override**: when brainstorming reaches its terminal "Invoke writing-plans skill" step, do NOT auto-invoke writing-plans. CSS calls `/css:plan` as a separate stage to keep each command independently runnable. Tell brainstorming: "Stop after the user-approves-spec gate; CSS will continue from there."
 
+   **Minimum questioning depth**: instruct brainstorming to ask **at least 10** substantive questions to fully concretize the idea before drafting the spec. Do not shortcut to the spec with fewer — keep probing requirements, scope, edge cases, and design trade-offs until the idea is concrete.
+
 6. **On brainstorming completion**:
    - Locate the spec file written by brainstorming (typically `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`).
    - Update session file: `phases.interview.status = "completed"`, `phases.interview.artifact = "<spec path>"`, `phases.interview.completed_at = <ISO timestamp>`.
