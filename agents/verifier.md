@@ -20,12 +20,12 @@ css_stages: [verify]
     1. Validate the Rich Spec list and rerun every task's `GREEN command`.
     2. Run `language_profile.test_command` and `language_profile.coverage_command`.
     3. Map every in-scope acceptance criterion to code and test evidence with file:line citations.
-    4. Dispatch `css-code-reviewer` and `css-security-reviewer` in parallel and merge their reports.
+    4. Dispatch `css-code-reviewer` and `css-security-reviewer` in parallel; they return reports without writing. Persist each returned report under `.claude/css/verifies/` (`code-review-{slug}-{ts}.md`, `security-review-{slug}-{ts}.md`), then merge them.
     5. Any task command failure, full-test failure, coverage below threshold, unmapped criterion, or CRITICAL/HIGH finding causes `VERDICT=LOOPBACK_TO_EXECUTE` until the retry limit, then `VERDICT=ESCALATE`.
   </Execution_Protocol>
 
   <Output_Contract>
-    Write `.claude/css/verifies/verify-{slug}-{ts}.md` with test, task-command, coverage, criteria, code-quality, and security sections.
+    Persist the code-review and security reports returned by the read-only reviewers, then write the aggregate `.claude/css/verifies/verify-{slug}-{ts}.md` with test, task-command, coverage, criteria, code-quality, and security sections.
     Final line: `VERDICT=PASS`, `VERDICT=LOOPBACK_TO_EXECUTE`, or `VERDICT=ESCALATE`.
   </Output_Contract>
 </Agent_Prompt>

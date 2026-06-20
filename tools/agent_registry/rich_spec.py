@@ -32,12 +32,20 @@ def validate_rich_spec(
     expected_artifact: str | None = None,
 ) -> dict[str, str]:
     """Validate one task-scoped artifact and return its core identity fields."""
-    artifact = re.search(r"^ARTIFACT=(\S+)\s*$", text, re.MULTILINE)
+    # The ARTIFACT path is authoritative only on the final non-empty line. Keying
+    # off the last line (not the first ``^ARTIFACT=`` match) means a decoy
+    # ``ARTIFACT=`` line inside a RED/GREEN code block can neither be misread as
+    # an advisory nor satisfy the "must be final" contract.
+    stripped = text.rstrip()
+    final = re.match(r"ARTIFACT=(\S+)$", stripped.splitlines()[-1]) if stripped else None
+    if not final:
+        raise RichSpecError("missing final ARTIFACT=<path>")
+    artifact_path = final.group(1)
     # Advisory reports live under .claude/css/reviews/; executable Rich Specs
     # live under .claude/css/plans/. Key off the artifact directory, not an
     # arbitrary substring, so a legitimate spec whose slug contains "advisory"
     # (e.g. an "advisory-dashboard" feature) is not misread as an advisory.
-    if artifact and "/css/reviews/" in artifact.group(1):
+    if "/css/reviews/" in artifact_path:
         raise RichSpecError("advisory reports are not executable Rich Specs")
     heading = f"## Task {expected_task_id}"
     if text.count(heading) != 1:
@@ -45,14 +53,15 @@ def validate_rich_spec(
     for field in REQUIRED_FIELDS:
         if field not in text:
             raise RichSpecError(f"missing required field {field!r}")
+    # Presence alone is not enough: an empty ``RED command:``/``GREEN command:``
+    # label would let the executor run nothing and still pass the contract.
+    for label in ("RED command", "GREEN command"):
+        if not re.search(rf"^{label}:[ \t]*(\S.*)$", text, re.MULTILINE):
+            raise RichSpecError(f"{label}: must be a non-empty command")
     phase = re.search(r"^Phase:\s*(\d+)\s*$", text, re.MULTILINE)
     if not phase or int(phase.group(1)) != expected_phase:
         raise RichSpecError(f"expected Phase: {expected_phase}")
-    if not artifact:
-        raise RichSpecError("missing final ARTIFACT=<path>")
-    if text.rstrip().splitlines()[-1] != f"ARTIFACT={artifact.group(1)}":
-        raise RichSpecError("ARTIFACT line must be final")
-    if expected_artifact is not None and artifact.group(1) != expected_artifact:
+    if expected_artifact is not None and artifact_path != expected_artifact:
         raise RichSpecError(
             f"ARTIFACT must equal the assigned path {expected_artifact!r}")
     specialist = re.search(r"^Specialist:\s*(\S+)\s*$", text, re.MULTILINE)
@@ -62,7 +71,7 @@ def validate_rich_spec(
         "task_id": expected_task_id,
         "phase": phase.group(1),
         "specialist": specialist.group(1),
-        "artifact": artifact.group(1),
+        "artifact": artifact_path,
     }
 
 

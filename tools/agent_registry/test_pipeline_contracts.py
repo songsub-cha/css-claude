@@ -102,16 +102,24 @@ class SpecialistContractTests(unittest.TestCase):
         self.assertIn("deterministic local acceptance harness", text)
         self.assertIn("VERDICT=LOOPBACK_TO_PLAN", text)
 
-    def test_read_only_reviewers_can_write_only_their_reports(self):
+    def test_leaf_reviewers_are_write_blocked_and_orchestrator_persists(self):
+        # Pure advisory leaves cannot touch the filesystem at all; they return
+        # their report and the dispatching agent persists it.
         for rel in (
-            "agents/reviewer.md",
             "agents/architect.md",
             "agents/security-reviewer.md",
             "agents/code-reviewer.md",
         ):
             text = read(rel)
-            self.assertNotIn("disallowedTools: [Write, Edit]", text, rel)
-            self.assertIn("Write only", text, rel)
+            self.assertIn("disallowedTools: [Write, Edit]", text, rel)
+            self.assertIn("Return your", text, rel)
+            self.assertNotIn("Write only", text, rel)
+        # The dispatchers persist the returned reports, so they retain Write.
+        reviewer = read("agents/reviewer.md")
+        self.assertIn("disallowedTools: [Edit]", reviewer)
+        self.assertNotIn("disallowedTools: [Write, Edit]", reviewer)
+        for rel in ("agents/reviewer.md", "agents/verifier.md"):
+            self.assertIn("persist", read(rel).lower(), rel)
 
 
 if __name__ == "__main__":

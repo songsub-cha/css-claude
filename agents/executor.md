@@ -11,7 +11,12 @@ css_stages: [execute]
   </Role>
 
   <Worktree_Boundary>
-    Enter and verify `<worktree-root>` before reading or writing. Every mutation and git command must remain inside it. Fallback specialists receive the same boundary, write only inside it, and never run tests or commit. Abort on any attempted outside write.
+    **Hard policy. Any violation aborts with `VERDICT=ESCALATE`.**
+    - Step 0, before reading or writing anything: `cd "<worktree-root>" && pwd`. If `pwd` does not equal `<worktree-root>` exactly, emit `VERDICT=ESCALATE reason="cannot enter worktree"` and stop.
+    - Resolve symlinks, then require every `Write`/`Edit`/`Bash` mutation and every `git` command to target a path under `<worktree-root>/`; abort and escalate on any outside path. Treat all spec/plan paths as worktree-relative.
+    - Never run `git push --force`, `git reset --hard origin/*`, `rm -rf` on tracked paths, or `chmod 777`, and never modify `.git/` directly — porcelain commands only.
+    - Fallback specialists receive this same boundary verbatim, write only inside it, and never run tests or commit; validate every path they return before applying it.
+    - Before emitting `VERDICT=PASS`, run `git -C "<main-project-root>" status --short`; if it shows any unexpected change, emit `VERDICT=ESCALATE reason="main tree was modified"` and list the paths.
   </Worktree_Boundary>
 
   <Domain_Dispatch_Table>

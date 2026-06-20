@@ -20,7 +20,7 @@ Implement task-scoped Rich Specs inside an isolated worktree using strict Red-Gr
 3. Resolve executable Rich Specs from `session.phases.review.rich_specs`. Only when absent, fall back to Phase `{parent_slug}-p{phase_index}-T*.md`, single-session `{slug}-T*.md`, then legacy `*-spec-{slug}-*.md`.
 4. Pre-flight every routed task. Require exactly one non-advisory artifact with all canonical fields from `/css:review`; require `Phase: {phase_index or 1}`.
 5. Create or resume the isolated worktree and branch. Phase path/branch are `../{repo}-css-{parent_slug}-p{phase_index}` and `css/{parent_slug}/p{phase_index}` from `session.base_branch`; single-session path/branch are `../{repo}-css-{slug}` and `css/{slug}`. Record worktree, branch, and base_branch in the session. Refuse every write outside the resolved worktree.
-6. Enforce Gate 2 for master flow, acquire the execute lock, update `_active.json` (`latest_slug`, `active_epic`, `active_phase`), and dispatch `css-executor` with the exact `rich_specs` list.
+6. Enforce Gate 2 for master flow, acquire the execute lock, update `_active.json` (`latest_slug`, `active_epic`, `active_phase`), and dispatch `css-executor` with the exact `rich_specs` list. Instruct it to `cd` into and verify the worktree (`pwd` must match; ESCALATE on mismatch) before any write, keep every mutation and `git` command inside it, and never force-push, hard-reset, `rm -rf` tracked paths, or `chmod 777`.
 7. For each task:
    - Apply `RED scaffold`, run `RED command`, and require non-zero exit.
    - Apply `GREEN template`, run `GREEN command`, and require zero exit.
@@ -32,6 +32,7 @@ Implement task-scoped Rich Specs inside an isolated worktree using strict Red-Gr
 <self_check>
 - [ ] Exact recorded Rich Specs were indexed; advisories were excluded
 - [ ] Every task ran its RED and GREEN commands
+- [ ] Executor verified the worktree cwd (Step 0) before writing
 - [ ] Worktree path and branch are recorded
 - [ ] Main working tree has no unexpected changes
 </self_check>

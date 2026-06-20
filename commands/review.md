@@ -22,7 +22,7 @@ Audit the plan and create task-scoped executable Rich Specs before implementatio
    Pass each specialist its `artifact_paths` mapping. Specialists MUST NOT invent filenames.
 6. Every executable task artifact must contain:
    `## Task {id}`, `Specialist:`, `Phase: {phase_index or 1}`, `Files:`, `Verification mode: command`, `RED scaffold:`, `RED command:`, `GREEN template:`, `GREEN command:`, `Edge cases:`, `Depends-on:`, `Cross_Domain_Notes:`, and final `ARTIFACT=<path>`.
-7. Dispatch advisories separately:
+7. Dispatch advisories separately; these reviewers cannot write, so persist each returned report under `.claude/css/reviews/`:
    - `css-architect` for module boundaries, new architecture, or large refactors.
    - `css-security-reviewer` for auth, authorization, secrets, dependencies, payments, file uploads, or security-sensitive input.
    Advisory paths are not executable Rich Specs. CRITICAL/HIGH security design findings cause `LOOPBACK_TO_PLAN`.

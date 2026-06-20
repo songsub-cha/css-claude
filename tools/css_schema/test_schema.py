@@ -82,6 +82,16 @@ class TestSession(unittest.TestCase):
                 "phases": {},
             })
 
+    def test_phase_session_without_spec_or_parent_rejected(self):
+        # parent_slug/phase_index/base_branch are present, but the Phase can
+        # resolve no spec: neither its own interview artifact nor a parent_session
+        # fallback. This must be rejected rather than silently executing specless.
+        with self.assertRaises(SchemaError):
+            validate_session({
+                "slug": "e-p1", "kind": "phase", "parent_slug": "e",
+                "phase_index": 1, "base_branch": "main", "phases": {},
+            })
+
     def test_review_artifact_lists_must_be_paths(self):
         validate_session({
             "slug": "e", "kind": "epic", "single_phase": True,

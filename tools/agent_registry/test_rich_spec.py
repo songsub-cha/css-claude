@@ -89,6 +89,33 @@ class RichSpecTests(unittest.TestCase):
                 expected_artifact=".claude/css/plans/wrong-path.md",
             )
 
+    def test_decoy_artifact_in_body_is_ignored(self):
+        # A stray "ARTIFACT=" line inside a GREEN/RED block must NOT be mistaken
+        # for the spec's artifact: only the final line is authoritative. Here the
+        # decoy points at reviews/, which would wrongly trip advisory detection
+        # if the parser keyed off the first match instead of the last line.
+        text = (FX / "valid_single_rich_spec.md").read_text(encoding="utf-8").replace(
+            "export function App() { return <main /> }",
+            "export function App() { return <main /> }\n"
+            "ARTIFACT=.claude/css/reviews/decoy.md",
+        )
+        result = validate_rich_spec(text, expected_task_id="01", expected_phase=1)
+        self.assertEqual(result["artifact"], ".claude/css/plans/small-idea-T01.md")
+
+    def test_empty_red_or_green_command_rejected(self):
+        base = (FX / "valid_single_rich_spec.md").read_text(encoding="utf-8")
+        for original in (
+            "RED command: npm test -- App.test.tsx",
+            "GREEN command: npm test -- App.test.tsx",
+        ):
+            label = original.split(":", 1)[0]
+            with self.subTest(label=label), self.assertRaises(RichSpecError):
+                validate_rich_spec(
+                    base.replace(original, f"{label}:", 1),
+                    expected_task_id="01",
+                    expected_phase=1,
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
