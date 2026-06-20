@@ -30,8 +30,8 @@ class LiveInstallTests(unittest.TestCase):
             codex_home = home / ".codex"
             skills_home = home / ".agents" / "skills"
             summary = install(REPO_ROOT, codex_home, skills_home=skills_home)
-            n_cmds = len(list((REPO_ROOT / "commands").glob("*.md")))
-            n_agents = len(list((REPO_ROOT / "agents").glob("*.md")))
+            n_cmds = len([p for p in (REPO_ROOT / "commands").glob("*.md") if "." not in p.stem])
+            n_agents = len([p for p in (REPO_ROOT / "agents").glob("*.md") if "." not in p.stem])
             self.assertEqual(n_cmds, 9)
             self.assertEqual(summary["skills"], n_cmds)
             self.assertEqual(summary["agents"], n_agents)
@@ -45,11 +45,18 @@ class LiveInstallTests(unittest.TestCase):
             self.assertIn("$ARGUMENTS", ship)
             self.assertNotIn("argument-hint", ship)
 
+            execute = (skills_home / "css-execute" / "SKILL.md").read_text(encoding="utf-8")
+            for marker in ("rich_specs", "RED command", "GREEN command", "go.mod"):
+                self.assertIn(marker, execute)
+
             index = json.loads((codex_home / "css" / "agents" / "index.json").read_text(encoding="utf-8"))
             self.assertEqual(len(index), n_agents)
             for rel in index.values():
                 body = (codex_home / "css" / rel).read_text(encoding="utf-8")
                 self.assertFalse(body.lstrip().startswith("---"))
+            api = (codex_home / "css" / index["css-api-specialist"]).read_text(encoding="utf-8")
+            self.assertIn("<CSS_Rich_Spec_Contract>", api)
+            self.assertIn("ARTIFACT=<exact assigned path>", api)
 
     def test_real_sources_unchanged_after_install(self):
         def h(p):

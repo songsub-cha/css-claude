@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 
 from agent_registry.registry import (
+    check_semantic_contracts,
     check_consistency,
     domain_specialists,
     parse_agent_files,
@@ -124,6 +125,10 @@ class ConsistencyTests(unittest.TestCase):
     def test_live_repo_is_consistent(self):
         """The real repo must stay in sync (agents <-> dispatch <-> README)."""
         self.assertEqual(check_consistency(REPO_ROOT), [])
+
+    def test_live_repo_semantic_contracts_are_consistent(self):
+        """Commands and specialists must agree on the executable Rich Spec contract."""
+        self.assertEqual(check_semantic_contracts(REPO_ROOT), [])
 
 
 if __name__ == "__main__":

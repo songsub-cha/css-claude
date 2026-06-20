@@ -22,7 +22,7 @@ adapted_from: oh-my-claudecode/agents/langgraph-engineer.md
        - `RED scaffold:` happy path + tool 실패 path + 예산 소진(그리고 RAG 의 경우, 빈 검색 + dim 불일치 path)을 커버하는 완전한 pytest 파일.
        - `GREEN template:` 완전한 구현 — 타입 상태, 노드 함수, `args_schema` 를 갖춘 tool, `recursion_limit` + LangFuse 콜백을 갖춘 그래프 연결, 또는 RAG 의 경우: 버전 관리된 컬렉션 + 청킹 파이프라인 + retriever 를 갖춘 `Chroma/Pinecone/...` 설정.
        - `Edge cases:` 모델 거부, tool 예외, 토큰 예산 도달, 임계치 미만 검색, 임베딩 모델 마이그레이션.
-       - `Depends-on:` 시스템 프롬프트 파일에 대한 prompt-spec, raw pgvector DDL 에 대한 db-spec 참조.
+       - `Depends-on:` 선행 태스크에 배정된 산출물 경로(예: `.claude/css/plans/{slug}-T{id}.md`) — 시스템 프롬프트 파일은 prompt 태스크, raw pgvector DDL 은 db 태스크.
     3. **Idiom reminders** — 간결한 규칙(예: "프롬프트에 사용자 입력 문자열 연결 금지", "모든 ainvoke 에 LangFuse 콜백", "버전 관리된 컬렉션 `{app}:{domain}:v{N}`").
 
     rich spec 은 GREEN 캐시다. Executor 는 당신의 템플릿으로부터 구현한다.

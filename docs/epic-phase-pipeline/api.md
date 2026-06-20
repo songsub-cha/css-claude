@@ -217,7 +217,7 @@ validate_active({})  # SchemaError: _active.json requires a non-empty latest_slu
 
 | 인수 | 기본값 | 설명 |
 |------|--------|------|
-| `--slug <name>` | `_active.json.latest_slug` | Epic 슬러그 |
+| `--session <name>` | `_active.json.latest_slug` | Epic 슬러그 |
 
 ### 사전 조건
 
@@ -233,7 +233,7 @@ validate_active({})  # SchemaError: _active.json requires a non-empty latest_slu
 4. **지속화:**
    - `.claude/css/plans/phase-manifest-{slug}.json` 저장
    - Epic 세션: `kind="epic"`, `phases.phasing=completed`, `phase_manifest`, `child_slugs` 업데이트
-   - Phase별 자식 세션 파일 생성: `kind="phase"`, `parent_slug`, `phase_index`, `phase_label`, `depends_on`, `base_branch`
+   - Phase별 자식 세션 파일 생성: `kind="phase"`, `parent_slug`, `parent_session`, `phase_index`, `phase_label`, `depends_on`, `base_branch`; 부모 interview/spec 컨텍스트 복사
 5. 잠금 키: `locks/{child_slug}-phasing.lock` (형제 Phase 간 충돌 방지)
 6. "Phasing 완료: {N} Phases. NEXT=review" 공지
 
@@ -263,12 +263,15 @@ validate_active({})  # SchemaError: _active.json requires a non-empty latest_slu
 |------|------|------|
 | `slug` | `str` | Epic 식별자 |
 | `kind` | `"epic"` | 세션 유형 |
+| `single_phase` | `bool` | `true`면 상세 plan + rich-spec 단일 세션 경로 |
 | `idea` | `str` | 원본 아이디어 |
 | `phases.plan.level` | `"skeleton"` | 스켈레톤 플랜 — 코드 없음 |
 | `phases.plan.task_count` | `int` | 전체 태스크 수 |
 | `phases.plan.batch_count` | `int` | 전체 배치 수 |
 | `phases.phasing.artifact` | `str` | phase-manifest JSON 경로 |
 | `phases.review.level` | `"architecture"` | 아키텍처 review — rich-spec 없음 |
+| `phases.review.rich_specs` | `list[str]` | 실행 가능한 태스크 단위 Rich Spec 경로 |
+| `phases.review.advisories` | `list[str]` | 실행 대상이 아닌 architecture/security advisory 경로 |
 | `phase_manifest` | `list` | Phase 설명 배열 (validate_manifest 통과) |
 | `child_slugs` | `list[str]` | 자식 Phase 슬러그 목록 |
 
@@ -281,12 +284,15 @@ validate_active({})  # SchemaError: _active.json requires a non-empty latest_slu
 | `slug` | `str` | `{epic}-p{idx}` 형식 |
 | `kind` | `"phase"` | 세션 유형 |
 | `parent_slug` | `str` | Epic 슬러그 |
+| `parent_session` | `str` | 부모 세션 경로; 자식 컨텍스트 fallback |
 | `phase_index` | `int` | 1-기반 Phase 번호 |
 | `phase_label` | `str` | 사람이 읽을 수 있는 레이블 |
 | `depends_on` | `list[int]` | 이 Phase가 의존하는 phase_index 목록 |
 | `base_branch` | `str` | 이 Phase가 분기하는 브랜치 |
 | `phases.plan.level` | `"detailed"` | 이 Phase 배치의 완전한 TDD 단계 |
 | `phases.review.level` | `"rich-spec"` | 이 Phase 태스크의 RED scaffold + GREEN template |
+| `phases.review.rich_specs` | `list[str]` | 이 Phase의 실행 가능한 태스크 단위 Rich Spec 경로 |
+| `phases.review.advisories` | `list[str]` | 실행 대상이 아닌 advisory 경로 |
 | `phases.execute.worktree` | `str` | `../{repo}-css-{epic}-p{n}` |
 | `phases.execute.branch` | `str` | `css/{epic}/p{n}` |
 | `phases.document.artifact` | `str` | `docs/{epic}/p{n}/README.md` |

@@ -24,7 +24,7 @@ adapted_from: oh-my-claudecode/agents/db-specialist.md
        - `GREEN template:` 완전한 모델 + 마이그레이션 upgrade/downgrade + CRUD 코드(TIMESTAMPTZ, NUMERIC, 인덱싱된 FK 등).
        - `Edge cases:` unique 위반, 누락된 FK 타깃, 트랜잭션 중단, 캐시 미스 / stale, ARQ 실패 시 재시도.
        - `EXPLAIN plan:` 사소하지 않은 쿼리는 예상 plan 형태(Index Scan / 행 추정치를 갖춘 Seq Scan)를 붙인다.
-       - `Depends-on:` 다른 spec 참조(db 는 보통 leaf 도메인이라 일반적으로 없음).
+       - `Depends-on:` 선행 태스크에 배정된 산출물 경로(예: `.claude/css/plans/{slug}-T{id}.md`) — db 는 leaf 도메인이라 보통 없음.
     3. **Idiom reminders** — 간결한 규칙(예: "TIMESTAMPTZ 는 절대 naive 아님", "돈은 FLOAT 가 아니라 NUMERIC", "온라인 인덱스는 CONCURRENTLY").
 
     rich spec 은 GREEN 캐시다. Executor 는 당신을 재호출하지 않고 당신의 템플릿으로부터 구현한다.

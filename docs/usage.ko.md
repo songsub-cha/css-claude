@@ -14,19 +14,20 @@ git 프로젝트 어디서든:
 
 ## 단독 커맨드
 
-각 단계는 `--slug`와 함께 독립적으로 실행할 수도 있습니다:
+각 단계는 `--session`과 함께 독립적으로 실행할 수도 있습니다:
 
 ```
 /css:interview "<아이디어>"
-/css:plan --slug <slug>
-/css:review --slug <slug>
-/css:execute --slug <slug>
-/css:verify --slug <slug>
-/css:document --slug <slug>
-/css:pr --slug <slug>
+/css:plan --session <slug>
+/css:phase --session <slug>
+/css:review --session <slug>
+/css:execute --session <slug>
+/css:verify --session <slug>
+/css:document --session <slug>
+/css:pr --session <slug>
 ```
 
-`--slug`는 생략 가능합니다. 생략하면 CSS가 `<project>/.claude/css/sessions/_active.json`에서 가장 최근 세션을 자동으로 찾습니다.
+`--session`은 생략 가능합니다. 생략하면 CSS가 `<project>/.claude/css/sessions/_active.json`에서 가장 최근 세션을 자동으로 찾습니다.
 
 ## Codex App / CLI 대응 skill
 
@@ -34,7 +35,7 @@ git 프로젝트 어디서든:
 
 ```
 $css-ship "<아이디어>"
-$css-review --slug <slug>
+$css-review --session <slug>
 ```
 
 전체 목록은 `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, `$css-pr`입니다. Skill invocation 뒤의 텍스트는 커맨드의 `$ARGUMENTS`로 해석하며, 실행 동작은 `~/.codex/css/RUNTIME.md`가 규정합니다.
@@ -60,11 +61,11 @@ $css-review --slug <slug>
 | Spec | `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` |
 | Plan | `docs/superpowers/plans/YYYY-MM-DD-<feature>.md` |
 | 스테이징 (review / execute / verify / document) | `<project>/.claude/css/{reviews,executions,verifies,documents}/` |
-| 도메인 전문가 Rich Spec | `<project>/.claude/css/plans/<domain>-spec-<slug>-<ts>.md` |
+| 태스크 단위 Rich Spec | `<project>/.claude/css/plans/{<slug>-T<task-id>.md | <epic>-p<phase>-T<task-id>.md}` |
 | 최종 사용자 문서 | `<project>/docs/<slug>/{README,api,changelog}.md` |
 | 구현 브랜치 | `css/<slug>` (워크트리: `../<repo>-css-<slug>`) |
 
 ## 재개
 
 - `Ctrl+C`는 언제든 안전합니다. 세션 상태가 유지됩니다.
-- `/css:ship --slug <slug>` (또는 `--slug`를 붙인 단독 커맨드)로 재시작하면 중단된 단계부터 자동으로 이어집니다.
+- `/css:ship --session <slug>` (또는 `--session`을 붙인 단독 커맨드)로 재시작하면 중단된 단계부터 자동으로 이어집니다.

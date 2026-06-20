@@ -15,6 +15,7 @@ Run a deep, Socratic brainstorming session to turn an idea into a CSS spec. Wrap
    - If `--session <name>` provided and `<project>/.claude/css/sessions/<name>.json` exists → resume.
    - Else generate a new kebab-case slug from the idea (e.g. "JWT auth middleware" → `jwt-auth-middleware`). If the generated slug collides with an existing session file, append a numeric suffix.
    - Initialize `<project>/.claude/css/sessions/<slug>.json` if new, or load it if resuming.
+   - New sessions MUST start with `kind:"epic"` and `single_phase:false` so the first plan is a skeleton eligible for `/css:phase`. Do not add these fields while merely resuming a kind-less legacy session; legacy sessions retain the detailed single-session compatibility path.
    - **Capture repo metadata** (NEW):
      - `repo_root = git -C <project> rev-parse --show-toplevel`
      - `repo_name = basename(repo_root)`

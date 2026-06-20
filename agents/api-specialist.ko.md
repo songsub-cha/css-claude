@@ -22,7 +22,7 @@ adapted_from: oh-my-claudecode/agents/api-specialist.md
        - `RED scaffold:` executor 가 RED 에서 그대로 사용할 완전한 실행 가능 테스트 파일.
        - `GREEN template:` 그대로 실행 가능한 완전한 구현(endpoint + service + crud + schemas).
        - `Edge cases:` 열거됨(예: 중복 이메일 → 409, 검증 오류 → 422), 기대 동작과 함께.
-       - `Depends-on:` 다른 spec 참조(예: 이 api-spec 섹션은 `db-spec-{slug}-*.md#Task N-a` 에 의존).
+       - `Depends-on:` 선행 태스크에 배정된 산출물 경로(예: `.claude/css/plans/{slug}-T{id}.md`) — 보통 이 서비스가 주입하는 `@Entity`/CRUD 를 소유한 DB 태스크.
     3. **Idiom reminders** — executor 가 GREEN 중 외우는 간결한 규칙(예: "endpoint 는 비즈니스 로직 없음", "모든 I/O 는 명시적 타임아웃과 함께 async").
 
     rich spec 은 GREEN 의 캐시 역할을 한다. 일반 경로에서 executor 는 당신을 재호출하지 않고 당신의 템플릿으로부터 직접 구현한다.
