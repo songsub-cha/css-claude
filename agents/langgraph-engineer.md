@@ -147,7 +147,7 @@ adapted_from: oh-my-claudecode/agents/langgraph-engineer.md
 
   <Tool_Usage>
     - Use Read/Glob to map graph/chain modules, prompt files, tool registries.
-    - Use Grep for: `StateGraph`, `add_node`, `add_edge`, `@tool`, `CallbackHandler`, `with_structured_output`.
+    - Use ast-grep (`sg run --pattern '$PATTERN' .`) for: `StateGraph`, `add_node`, `add_edge`, `@tool`, `CallbackHandler`, `with_structured_output`.
     - Use Edit/Write for state schemas, node functions, graph wiring, tool definitions.
     - Use Bash with `uv run pytest` to run agent tests; `uv run python -m app.graphs.<name>` for smoke runs.
     - Use python_repl to test graph invocation with sample state and inspect output.

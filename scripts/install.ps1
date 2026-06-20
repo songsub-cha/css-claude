@@ -97,6 +97,17 @@ foreach ($f in $agentFiles) {
 }
 Write-Host "  ($($agentFiles.Count) agent files copied)"
 
+Write-Section "Copying lib"
+$libDir = Join-Path $cssDir "lib"
+New-Item -ItemType Directory -Force -Path $libDir | Out-Null
+$srcLib = Join-Path $SourcePath "lib"
+$libFiles = Get-ChildItem $srcLib -Filter "*.sh" -ErrorAction SilentlyContinue
+foreach ($f in $libFiles) {
+  Copy-Item $f.FullName -Destination $libDir -Force
+  Write-Host "  $($f.Name)"
+}
+Write-Host "  ($($libFiles.Count) lib files copied)"
+
 Write-Section "Installing default config"
 $srcConfig = Join-Path $SourcePath "config\default-config.json"
 $dstConfig = Join-Path $cssDir "config.json"

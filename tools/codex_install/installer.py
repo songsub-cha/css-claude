@@ -17,6 +17,13 @@ from codex_install.transform import (
 )
 
 
+def _source_md(directory: Path) -> list[Path]:
+    """Canonical prompt files only — skip i18n reference copies like `*.ko.md`
+    (their stem carries a locale suffix, e.g. `ship.ko`), which must not be
+    installed as functional `css-*.ko` skills/agents."""
+    return [p for p in sorted(directory.glob("*.md")) if "." not in p.stem]
+
+
 def install(source_root, codex_home, force=False, skills_home=None):
     """Transform repo CSS sources into Codex artifacts.
 
@@ -36,7 +43,7 @@ def install(source_root, codex_home, force=False, skills_home=None):
         d.mkdir(parents=True, exist_ok=True)
 
     skill_count = 0
-    for md in sorted((source_root / "commands").glob("*.md")):
+    for md in _source_md(source_root / "commands"):
         skill_name = f"css-{md.stem}"
         out = transform_command_to_skill(md.read_text(encoding="utf-8"), skill_name)
         skill_dir = skills_home / skill_name
@@ -45,7 +52,7 @@ def install(source_root, codex_home, force=False, skills_home=None):
         skill_count += 1
 
     index = {}
-    for md in sorted((source_root / "agents").glob("*.md")):
+    for md in _source_md(source_root / "agents"):
         name, body = transform_agent(md.read_text(encoding="utf-8"))
         (agents_dir / md.name).write_text(body, encoding="utf-8")
         index[name] = f"agents/{md.name}"

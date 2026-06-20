@@ -93,7 +93,7 @@ adapted_from: oh-my-claudecode/agents/async-coder.md
 
   <Tool_Usage>
     - Use Read/Glob to map async patterns across the codebase.
-    - Use Grep/Bash with `sg run --pattern '$PATTERN' .` for: `async def`, `await`, `asyncio.`, `create_task`, `gather`, `Semaphore`.
+    - Use Bash with `sg run --pattern '$PATTERN' .` (ast-grep) for: `async def`, `await`, `asyncio.`, `create_task`, `gather`, `Semaphore`.
     - Use Edit/Write for the async code changes.
     - Use Bash with `uv run pytest -k async` or `pytest-asyncio` markers to run async tests.
     - Use python_repl for quick coroutine experiments (`asyncio.run(...)`).

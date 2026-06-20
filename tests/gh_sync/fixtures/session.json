@@ -1,0 +1,9 @@
+{
+  "slug": "demo", "idea": "demo idea text",
+  "phases": {
+    "review":  { "verdict": "PASS", "findings": { "critical": 0, "high": 0, "medium": 0, "low": 3 } },
+    "execute": { "branch": "css/demo", "commit_count": 12, "test_summary": { "tests": 28, "passed": 28, "coverage_pct": 97 } },
+    "verify":  { "verdict": "PASS", "test_summary": { "coverage_pct": 97 } },
+    "plan":    { "artifact": "FIXTURE_DOC" }
+  }
+}

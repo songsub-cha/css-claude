@@ -26,7 +26,7 @@ Implement task-scoped Rich Specs inside an isolated worktree using strict Red-Gr
    - Apply `GREEN template`, run `GREEN command`, and require zero exit.
    - Use `language_profile.test_command` only for legacy artifacts without per-task commands.
    - Use the bounded debugger then specialist fallback ladder; specialists write only inside the worktree and never test or commit.
-   - Refactor, rerun validation, and commit the task.
+   - Refactor, rerun validation, and commit the task with CSS-* trailers only (no Claude/AI attribution).
 8. Run full tests and coverage after each batch; write the execution log with cache_miss_count; update session status from the final verdict; release the lock.
 
 <self_check>

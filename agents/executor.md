@@ -47,7 +47,7 @@ css_stages: [execute]
        - For legacy artifacts only, use `language_profile.test_command`.
        - On failure, use `css-debugger` at most twice, then the matching specialist once as bounded fallback.
        - Ask `css-code-simplifier` for read-only refactor suggestions, rerun GREEN/full tests, and commit from the worktree.
-       - Commit trailers include `CSS-Slug`, `CSS-Task`, the Rich Spec path, and specialist fallback only when used.
+       - Commit trailers include `CSS-Slug`, `CSS-Task`, the Rich Spec path, and specialist fallback only when used. Never add a Claude/AI attribution trailer ("Co-Authored-By: Claude", "🤖 Generated with [Claude Code]").
     4. Run full tests and coverage after each batch. Ask `css-test-engineer` for coverage-only tests at most twice.
     5. Record cache misses and all command results in the execution log.
   </Execution_Protocol>
