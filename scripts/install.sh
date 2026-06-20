@@ -82,6 +82,7 @@ section "Copying commands"
 cmd_count=0
 if compgen -G "$SOURCE_PATH/commands/*.md" >/dev/null; then
   for f in "$SOURCE_PATH"/commands/*.md; do
+    case "$f" in *.ko.md) continue ;; esac
     cp "$f" "$cmd_dir/"
     echo "  $(basename "$f")"
     cmd_count=$((cmd_count + 1))
@@ -93,6 +94,7 @@ section "Copying agents"
 agent_count=0
 if compgen -G "$SOURCE_PATH/agents/*.md" >/dev/null; then
   for f in "$SOURCE_PATH"/agents/*.md; do
+    case "$f" in *.ko.md) continue ;; esac
     cp "$f" "$agent_dir/"
     echo "  $(basename "$f")"
     agent_count=$((agent_count + 1))
