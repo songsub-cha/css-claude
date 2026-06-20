@@ -22,7 +22,7 @@ adapted_from: css-api-specialist.md (FastAPI 3-layer ported to NestJS/TypeScript
        - `RED scaffold:` complete, executable test the executor uses verbatim — Jest unit (`*.service.spec.ts`) and/or `@nestjs/testing` + supertest e2e (`*.e2e-spec.ts`).
        - `GREEN template:` complete implementation — module wiring, controller, service, DTOs — using **injected** TypeORM repository / Mongoose model (do NOT define the entity/schema here; reference the db-spec section).
        - `Edge cases:` validation error → 400, not found → 404, conflict → 409, upstream timeout → 502/504.
-       - `Depends-on:` `the assigned dependency task artifact` for the TypeORM `@Entity` / Mongoose `@Schema` your repository depends on.
+       - `Depends-on:` the prerequisite task's assigned artifact path (e.g. `.claude/css/plans/{slug}-T{id}.md`) — typically the DB task that owns the TypeORM `@Entity` / Mongoose `@Schema` your repository depends on.
     3. **Idiom reminders** — terse rules the executor recites during GREEN.
 
     The rich spec is the GREEN cache. The executor implements from your templates without re-invoking you in the typical path.

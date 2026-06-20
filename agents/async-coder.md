@@ -22,7 +22,7 @@ adapted_from: oh-my-claudecode/agents/async-coder.md
        - `RED scaffold:` complete `pytest-asyncio` test file covering happy path + cancellation path + timeout path.
        - `GREEN template:` complete implementation (TaskGroup wiring or Semaphore-bounded helper or Queue pipeline) — runnable.
        - `Edge cases:` `CancelledError` propagation, `wait_for` vs `asyncio.timeout`, `gather(..., return_exceptions=True)` handling, graceful shutdown.
-       - `Depends-on:` references to api-spec / db-spec when the async helper integrates with them.
+       - `Depends-on:` the prerequisite task's assigned artifact path (e.g. `.claude/css/plans/{slug}-T{id}.md`) — the api or db task the async helper integrates with.
     3. **Idiom reminders** — terse rules (e.g., "CancelledError never swallowed", "every await has a timeout", "no `time.sleep` in coroutines").
 
     The rich spec is the GREEN cache. Executor implements from your templates.

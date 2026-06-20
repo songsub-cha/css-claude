@@ -22,7 +22,7 @@ adapted_from: oh-my-claudecode/agents/infra-engineer.md
        - `RED scaffold:` the lint/dry-run command and expected initial FAIL output (e.g., `hadolint Dockerfile` → DL3007, `kubectl apply --dry-run=server` → missing field, `nginx -t` → directive not allowed).
        - `GREEN template:` complete config (Dockerfile / compose service / K8s Deployment+Service+Ingress / nginx server block / GitHub Actions workflow) ready to drop in.
        - `Edge cases:` multi-arch builds, secret rotation, rolling-update strategy, PDB for HA, resource-limit headroom.
-       - `Depends-on:` ports/health endpoints from api-spec; storage requirements from db-spec.
+       - `Depends-on:` the prerequisite task's assigned artifact path (e.g. `.claude/css/plans/{slug}-T{id}.md`) — the api task for ports/health endpoints; the db task for storage requirements.
     3. **Idiom reminders** — concise (e.g., "non-root USER 1000", "pin digests not :latest", "requests AND limits", "liveness + readiness").
 
     The rich spec is the GREEN cache. Executor applies your templates without re-invoking you.

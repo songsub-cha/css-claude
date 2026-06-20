@@ -21,7 +21,7 @@ adapted_from: oh-my-claudecode/agents/designer.md + frontend-engineer.md
        - `RED scaffold:` executor 가 그대로 사용할 완전한 unit / snapshot / interaction 테스트 파일(jest+react-testing-library, vitest, @testing-library/vue, 또는 androidx.compose.ui.test).
        - `GREEN template:` 모든 상호작용 상태가 연결된 완전한 컴포넌트 구현(function component 또는 `@Composable`).
        - `Edge cases:` 빈 상태, 로딩, 에러, 비활성화, 포커스/키보드 내비게이션; Android 는 pressed/dragged/large-font 도.
-       - `Depends-on:` 데이터 형태에 대한 api-spec 섹션 참조, 그리고 디자인 토큰 참조.
+       - `Depends-on:` 선행 태스크에 배정된 산출물 경로(예: `.claude/css/plans/{slug}-T{id}.md`) — 데이터 형태는 api 태스크, 그리고 디자인 토큰.
     3. **Idiom reminders** — 간결한 규칙(예: "컴포넌트에 비즈니스 로직 금지", "모든 문자열은 i18n 경유", "기존 Button 사용 — 재선언 금지").
 
     rich spec 은 GREEN 캐시다. executor 는 당신을 재호출하지 않고 당신의 템플릿으로부터 구현한다.

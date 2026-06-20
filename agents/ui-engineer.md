@@ -21,7 +21,7 @@ adapted_from: oh-my-claudecode/agents/designer.md + frontend-engineer.md
        - `RED scaffold:` complete unit / snapshot / interaction test file (jest+react-testing-library, vitest, @testing-library/vue, or androidx.compose.ui.test) the executor uses verbatim.
        - `GREEN template:` complete component implementation (function component or `@Composable`) with all interaction states wired.
        - `Edge cases:` empty states, loading, error, disabled, focus/keyboard navigation; for Android also pressed/dragged/large-font.
-       - `Depends-on:` references to api-spec sections for data shape, and to design tokens.
+       - `Depends-on:` the prerequisite task's assigned artifact path (e.g. `.claude/css/plans/{slug}-T{id}.md`) — the api task for data shape, plus design tokens.
     3. **Idiom reminders** — concise rules (e.g., "no business logic in components", "all strings via i18n", "use existing Button — don't redeclare").
 
     The rich spec is the GREEN cache. Executor implements from your templates without re-invoking you.

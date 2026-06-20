@@ -22,7 +22,7 @@ adapted_from: css-api-specialist.md (FastAPI 3-layer ported to NestJS/TypeScript
        - `RED scaffold:` executor 가 그대로 사용할 완전한 실행 가능 테스트 — Jest 유닛(`*.service.spec.ts`) 그리고/또는 `@nestjs/testing` + supertest e2e(`*.e2e-spec.ts`).
        - `GREEN template:` 완전한 구현 — 모듈 연결, 컨트롤러, 서비스, DTO — **주입된** TypeORM repository / Mongoose model 사용(여기서 엔티티/스키마를 정의하지 말 것; db-spec 섹션 참조).
        - `Edge cases:` 검증 오류 → 400, 미발견 → 404, 충돌 → 409, 업스트림 타임아웃 → 502/504.
-       - `Depends-on:` repository 가 의존하는 TypeORM `@Entity` / Mongoose `@Schema` 에 대한 `db-spec-{slug}-*.md#Task N`.
+       - `Depends-on:` 선행 태스크에 배정된 산출물 경로(예: `.claude/css/plans/{slug}-T{id}.md`) — repository 가 의존하는 TypeORM `@Entity` / Mongoose `@Schema` 를 소유한 DB 태스크.
     3. **Idiom reminders** — executor 가 GREEN 중 외우는 간결한 규칙.
 
     rich spec 은 GREEN 캐시다. 일반 경로에서 executor 는 당신을 재호출하지 않고 당신의 템플릿으로부터 구현한다.

@@ -22,7 +22,7 @@ adapted_from: css-api-specialist.md (FastAPI 3-layer ported to Spring Boot)
        - `RED scaffold:` complete, executable test the executor uses verbatim — JUnit 5 with `@WebMvcTest` + MockMvc (controller) and/or `@SpringBootTest` + `WebTestClient` + Testcontainers (integration).
        - `GREEN template:` complete implementation — controller, service, repository interface, DTO/validation — using repositories whose `@Entity`/QueryDSL definitions come from db-spec.
        - `Edge cases:` validation → 400, not found → 404, conflict → 409, transaction rollback.
-       - `Depends-on:` `the assigned dependency task artifact` for the `@Entity` mapping / QueryDSL query / Flyway migration.
+       - `Depends-on:` the prerequisite task's assigned artifact path (e.g. `.claude/css/plans/{slug}-T{id}.md`) — typically the DB task that owns the `@Entity` mapping / QueryDSL query / Flyway migration.
     3. **Idiom reminders** — terse rules for GREEN.
 
     The rich spec is the GREEN cache. The executor implements from your templates without re-invoking you in the typical path.

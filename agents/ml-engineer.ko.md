@@ -22,7 +22,7 @@ adapted_from: css-async-coder.md (testable-code discipline applied to ML)
        - `RED scaffold:` executor 가 그대로 사용할 완전한 `pytest` 테스트 — 피처 변환 출력, Pandera 검증(유효 + 무효 프레임), 추론 입력/출력 **shape & dtype 계약**, 결정론(같은 시드 → 같은 결과), 고정 픽스처에 대한 평가 임계치 assertion 을 포함.
        - `GREEN template:` 완전한 구현 — `Pipeline`/`ColumnTransformer`, Pandera `DataFrameSchema`, 순수 추론 래퍼, 메트릭을 반환하는 평가 함수.
        - `Edge cases:` 결측값, dtype 불일치, 빈/초과 크기 입력, shape 불일치, 미관측 범주 레벨.
-       - `Depends-on:` 추론 호출 가능 객체가 HTTP 로 노출될 때 `api-spec-{slug}-*.md#Task N`.
+       - `Depends-on:` 선행 태스크에 배정된 산출물 경로(예: `.claude/css/plans/{slug}-T{id}.md`) — 추론 호출 객체가 HTTP 로 노출될 때의 api 태스크.
     3. **Idiom reminders** — GREEN 을 위한 간결한 규칙.
 
     rich spec 은 GREEN 캐시다. 일반 경로에서 executor 는 당신을 재호출하지 않고 당신의 템플릿으로부터 구현한다.

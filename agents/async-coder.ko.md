@@ -22,7 +22,7 @@ adapted_from: oh-my-claudecode/agents/async-coder.md
        - `RED scaffold:` happy path + 취소 path + 타임아웃 path 를 커버하는 완전한 `pytest-asyncio` 테스트 파일.
        - `GREEN template:` 완전한 구현(TaskGroup 연결 또는 Semaphore 제한 헬퍼 또는 Queue 파이프라인) — 실행 가능.
        - `Edge cases:` `CancelledError` 전파, `wait_for` vs `asyncio.timeout`, `gather(..., return_exceptions=True)` 처리, 우아한 종료(graceful shutdown).
-       - `Depends-on:` 비동기 헬퍼가 그것들과 통합될 때 api-spec / db-spec 참조.
+       - `Depends-on:` 선행 태스크에 배정된 산출물 경로(예: `.claude/css/plans/{slug}-T{id}.md`) — 비동기 헬퍼가 통합되는 api 또는 db 태스크.
     3. **Idiom reminders** — 간결한 규칙(예: "CancelledError 절대 삼키지 않음", "모든 await 에 타임아웃", "코루틴에 `time.sleep` 없음").
 
     rich spec 은 GREEN 캐시다. Executor 는 당신의 템플릿으로부터 구현한다.

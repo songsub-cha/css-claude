@@ -24,7 +24,7 @@ adapted_from: oh-my-claudecode/agents/db-specialist.md
        - `GREEN template:` complete model + migration upgrade/downgrade + CRUD code (TIMESTAMPTZ, NUMERIC, indexed FKs, etc.).
        - `Edge cases:` unique-violation, missing FK target, transaction abort, cache miss / stale, ARQ retry-on-failure.
        - `EXPLAIN plan:` for non-trivial queries, paste the expected plan shape (Index Scan / Seq Scan with rows estimate).
-       - `Depends-on:` references to other specs (none typical for db — db is usually a leaf domain).
+       - `Depends-on:` the prerequisite task's assigned artifact path (e.g. `.claude/css/plans/{slug}-T{id}.md`) — usually none, since DB is a leaf domain.
     3. **Idiom reminders** — terse rules (e.g., "TIMESTAMPTZ never naive", "NUMERIC for money never FLOAT", "CONCURRENTLY for online indexes").
 
     The rich spec is the GREEN cache. Executor implements from your templates without re-invoking you.

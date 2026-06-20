@@ -22,7 +22,7 @@ adapted_from: oh-my-claudecode/agents/api-specialist.md
        - `RED scaffold:` a complete, executable test file the executor uses verbatim at RED.
        - `GREEN template:` complete, executable implementation (endpoint + service + crud + schemas), runnable as-is.
        - `Edge cases:` enumerated (e.g., duplicate-email → 409, validation error → 422), with expected behavior.
-       - `Depends-on:` references to other specs (e.g., this api-spec section depends on `the assigned dependency task artifact`).
+       - `Depends-on:` the prerequisite task's assigned artifact path (e.g. `.claude/css/plans/{slug}-T{id}.md`) — typically the DB task that owns the `@Entity`/CRUD this service injects.
     3. **Idiom reminders** — terse rules the executor recites during GREEN (e.g., "endpoints contain no business logic", "all I/O async with explicit timeouts").
 
     The rich spec acts as a cache for GREEN. The executor implements from your templates directly without re-invoking you in the typical path.

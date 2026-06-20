@@ -22,7 +22,7 @@ adapted_from: oh-my-claudecode/agents/langgraph-engineer.md
        - `RED scaffold:` complete pytest file covering happy path + tool-failure path + budget exhaustion (and, for RAG, empty-retrieval + dim-mismatch paths).
        - `GREEN template:` complete implementation — typed state, node functions, tool with `args_schema`, graph wiring with `recursion_limit` + LangFuse callback, OR for RAG: `Chroma/Pinecone/...` setup with versioned collection + chunking pipeline + retriever.
        - `Edge cases:` model refusal, tool exception, token budget hit, retrieval below threshold, embedding model migration.
-       - `Depends-on:` references to prompt-spec for system-prompt files, db-spec for raw pgvector DDL.
+       - `Depends-on:` the prerequisite task's assigned artifact path (e.g. `.claude/css/plans/{slug}-T{id}.md`) — the prompt task for system-prompt files; the db task for raw pgvector DDL.
     3. **Idiom reminders** — terse rules (e.g., "no string-concat user input into prompts", "LangFuse callback on every ainvoke", "versioned collection `{app}:{domain}:v{N}`").
 
     The rich spec is the GREEN cache. Executor implements from your templates.

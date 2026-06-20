@@ -22,7 +22,7 @@ adapted_from: css-async-coder.md (testable-code discipline applied to ML)
        - `RED scaffold:` complete `pytest` test the executor uses verbatim — covering feature-transform output, Pandera validation (valid + invalid frame), inference input/output **shape & dtype contract**, determinism (same seed → same result), and an evaluation threshold assertion on a fixed fixture.
        - `GREEN template:` complete implementation — `Pipeline`/`ColumnTransformer`, Pandera `DataFrameSchema`, a pure inference wrapper, and an evaluation function returning metrics.
        - `Edge cases:` missing values, dtype mismatch, empty/oversized input, shape mismatch, unseen categorical level.
-       - `Depends-on:` `the assigned dependency task artifact` when the inference callable is exposed over HTTP.
+       - `Depends-on:` the prerequisite task's assigned artifact path (e.g. `.claude/css/plans/{slug}-T{id}.md`) — the api task when the inference callable is exposed over HTTP.
     3. **Idiom reminders** — terse rules for GREEN.
 
     The rich spec is the GREEN cache. The executor implements from your templates without re-invoking you in the typical path.

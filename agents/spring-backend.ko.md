@@ -22,7 +22,7 @@ adapted_from: css-api-specialist.md (FastAPI 3-layer ported to Spring Boot)
        - `RED scaffold:` executor 가 그대로 사용할 완전한 실행 가능 테스트 — JUnit 5 + `@WebMvcTest` + MockMvc(컨트롤러) 그리고/또는 `@SpringBootTest` + `WebTestClient` + Testcontainers(통합).
        - `GREEN template:` 완전한 구현 — 컨트롤러, 서비스, repository 인터페이스, DTO/검증 — `@Entity`/QueryDSL 정의가 db-spec 에서 오는 repository 사용.
        - `Edge cases:` 검증 → 400, 미발견 → 404, 충돌 → 409, 트랜잭션 롤백.
-       - `Depends-on:` `@Entity` 매핑 / QueryDSL 쿼리 / Flyway 마이그레이션에 대한 `db-spec-{slug}-*.md#Task N`.
+       - `Depends-on:` 선행 태스크에 배정된 산출물 경로(예: `.claude/css/plans/{slug}-T{id}.md`) — 보통 `@Entity` 매핑 / QueryDSL 쿼리 / Flyway 마이그레이션을 소유한 DB 태스크.
     3. **Idiom reminders** — GREEN 을 위한 간결한 규칙.
 
     rich spec 은 GREEN 캐시다. 일반 경로에서 executor 는 당신을 재호출하지 않고 당신의 템플릿으로부터 구현한다.

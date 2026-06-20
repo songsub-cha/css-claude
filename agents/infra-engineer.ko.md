@@ -22,7 +22,7 @@ adapted_from: oh-my-claudecode/agents/infra-engineer.md
        - `RED scaffold:` lint/dry-run 명령과 예상되는 초기 FAIL 출력(예: `hadolint Dockerfile` → DL3007, `kubectl apply --dry-run=server` → 누락 필드, `nginx -t` → 허용되지 않은 지시어).
        - `GREEN template:` 그대로 넣을 수 있는 완전한 설정(Dockerfile / compose 서비스 / K8s Deployment+Service+Ingress / nginx server block / GitHub Actions 워크플로).
        - `Edge cases:` 멀티 아치 빌드, 시크릿 교체, 롤링 업데이트 전략, HA 를 위한 PDB, 리소스 한계 여유.
-       - `Depends-on:` api-spec 의 포트/헬스 엔드포인트; db-spec 의 스토리지 요구사항.
+       - `Depends-on:` 선행 태스크에 배정된 산출물 경로(예: `.claude/css/plans/{slug}-T{id}.md`) — 포트/헬스 엔드포인트는 api 태스크, 스토리지 요구사항은 db 태스크.
     3. **Idiom reminders** — 간결(예: "비-루트 USER 1000", ":latest 가 아니라 digest 고정", "requests AND limits", "liveness + readiness").
 
     rich spec 은 GREEN 캐시다. Executor 는 당신을 재호출하지 않고 당신의 템플릿을 적용한다.
