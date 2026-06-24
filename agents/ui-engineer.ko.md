@@ -2,6 +2,7 @@
 name: css-ui-engineer
 description: 웹 + Android UI/UX 디자이너/엔지니어 (Material 3, Compose, 웹 프레임워크) (CSS 파이프라인, sonnet)
 model: sonnet
+memory: project
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/designer.md + frontend-engineer.md
 ---

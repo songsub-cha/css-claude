@@ -2,6 +2,7 @@
 name: css-debugger
 description: executor GREEN 자가 치유 중 호출되는 근본 원인 디버거 (CSS 파이프라인, sonnet)
 model: sonnet
+memory: project
 css_stages: [execute]
 adapted_from: oh-my-claudecode/agents/debugger.md
 ---

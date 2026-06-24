@@ -2,6 +2,7 @@
 name: css-verifier
 description: Aggregate verifier (tests + coverage + criteria + code/security review) (CSS pipeline, sonnet/opus)
 model: sonnet
+memory: project
 css_stages: [verify]
 ---
 
