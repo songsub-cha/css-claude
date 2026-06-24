@@ -2,6 +2,7 @@
 name: css-code-simplifier
 description: TDD 의 REFACTOR 단계용 리팩터링 제안자 (CSS 파이프라인, opus, read-only)
 model: opus
+color: red
 disallowedTools: [Write, Edit]
 css_stages: [execute]
 adapted_from: oh-my-claudecode/agents/code-simplifier.md

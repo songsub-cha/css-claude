@@ -2,6 +2,7 @@
 name: css-ml-engineer
 description: ML code/inference specialist — scikit-learn/PyTorch, feature pipelines, validation, eval (CSS pipeline, sonnet)
 model: sonnet
+color: purple
 memory: project
 css_stages: [review, execute]
 adapted_from: css-async-coder.md (testable-code discipline applied to ML)

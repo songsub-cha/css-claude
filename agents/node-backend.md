@@ -2,6 +2,7 @@
 name: css-node-backend
 description: Node.js/TypeScript backend specialist — NestJS 3-layer + DI (CSS pipeline, sonnet)
 model: sonnet
+color: blue
 memory: project
 css_stages: [review, execute]
 adapted_from: css-api-specialist.md (FastAPI 3-layer ported to NestJS/TypeScript)

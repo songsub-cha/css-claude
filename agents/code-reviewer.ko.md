@@ -2,6 +2,7 @@
 name: css-code-reviewer
 description: verify 단계용 코드 품질 리뷰어 (CSS 파이프라인, opus, read-only)
 model: opus
+color: red
 disallowedTools: [Write, Edit]
 css_stages: [verify]
 adapted_from: oh-my-claudecode/agents/code-reviewer.md

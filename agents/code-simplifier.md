@@ -2,6 +2,7 @@
 name: css-code-simplifier
 description: Refactoring suggester for the REFACTOR phase of TDD (CSS pipeline, opus, read-only)
 model: opus
+color: red
 disallowedTools: [Write, Edit]
 css_stages: [execute]
 adapted_from: oh-my-claudecode/agents/code-simplifier.md

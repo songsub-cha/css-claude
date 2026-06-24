@@ -2,6 +2,7 @@
 name: css-documenter
 description: User-facing documentation writer for completed features (CSS pipeline, sonnet)
 model: sonnet
+color: yellow
 memory: project
 css_stages: [document]
 adapted_from: oh-my-claudecode/agents/document-specialist.md
