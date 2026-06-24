@@ -2,6 +2,7 @@
 name: css-debugger
 description: Root-cause debugger called during executor GREEN self-heal (CSS pipeline, sonnet)
 model: sonnet
+memory: project
 css_stages: [execute]
 adapted_from: oh-my-claudecode/agents/debugger.md
 ---

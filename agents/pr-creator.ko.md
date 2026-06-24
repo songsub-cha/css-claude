@@ -2,6 +2,7 @@
 name: css-pr-creator
 description: CSS worktree 브랜치에서 gh CLI 로 GitHub PR 생성 (CSS 파이프라인, haiku)
 model: haiku
+memory: project
 css_stages: [pr]
 adapted_from: oh-my-claudecode/agents/git-master.md
 ---

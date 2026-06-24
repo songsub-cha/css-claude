@@ -2,6 +2,7 @@
 name: css-executor
 description: TDD-enforcing implementer running in an isolated worktree (CSS pipeline, sonnet/opus)
 model: sonnet
+memory: project
 css_stages: [execute]
 ---
 

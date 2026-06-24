@@ -2,6 +2,7 @@
 name: css-langgraph-engineer
 description: LLM-app + vector DB / RAG specialist — LangChain/LangGraph/LangFuse and Chroma/Pinecone/Weaviate/Qdrant/FAISS/pgvector (CSS pipeline, sonnet)
 model: sonnet
+memory: project
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/langgraph-engineer.md
 ---

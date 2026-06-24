@@ -2,6 +2,7 @@
 name: css-api-specialist
 description: Python/FastAPI REST/GraphQL API specialist (CSS pipeline, sonnet)
 model: sonnet
+memory: project
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/api-specialist.md
 ---

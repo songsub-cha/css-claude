@@ -2,6 +2,7 @@
 name: css-prompt-engineer
 description: 9-section prompt design and refactor specialist (CSS pipeline, opus)
 model: opus
+memory: project
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/prompt-engineer.md
 ---

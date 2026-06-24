@@ -2,6 +2,7 @@
 name: css-pr-creator
 description: GitHub PR creator using gh CLI from a CSS worktree branch (CSS pipeline, haiku)
 model: haiku
+memory: project
 css_stages: [pr]
 adapted_from: oh-my-claudecode/agents/git-master.md
 ---

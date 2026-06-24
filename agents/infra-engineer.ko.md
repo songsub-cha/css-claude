@@ -2,6 +2,7 @@
 name: css-infra-engineer
 description: Docker, K8s, CI/CD, nginx, Terraform 전문가 (CSS 파이프라인, sonnet)
 model: sonnet
+memory: project
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/infra-engineer.md
 ---

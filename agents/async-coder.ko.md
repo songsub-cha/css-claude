@@ -2,6 +2,7 @@
 name: css-async-coder
 description: Python asyncio 동시성 전문가 (CSS 파이프라인, sonnet)
 model: sonnet
+memory: project
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/async-coder.md
 ---

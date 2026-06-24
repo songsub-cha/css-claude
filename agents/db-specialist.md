@@ -2,6 +2,7 @@
 name: css-db-specialist
 description: PostgreSQL/Redis/ARQ schema, query, and migration specialist (CSS pipeline, sonnet)
 model: sonnet
+memory: project
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/db-specialist.md
 ---

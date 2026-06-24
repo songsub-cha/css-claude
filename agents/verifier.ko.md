@@ -2,6 +2,7 @@
 name: css-verifier
 description: 집계 검증자 (테스트 + 커버리지 + 기준 + 코드/보안 리뷰) (CSS 파이프라인, sonnet/opus)
 model: sonnet
+memory: project
 css_stages: [verify]
 ---
 
