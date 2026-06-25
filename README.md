@@ -207,7 +207,16 @@ $css-ship "<아이디어>"
 
 ## 설치
 
-플랫폼 스크립트로 설치:
+플러그인으로 설치 (Claude Code):
+
+```
+/plugin marketplace add songsub-cha/css-claude
+/plugin install css@css-claude
+```
+
+`version`은 릴리스마다 `plugin.json`에서 올려야 사용자에게 업데이트가 전달됩니다.
+
+또는 플랫폼 스크립트로 설치 (기존 방식, 계속 지원):
 
 - Windows: `powershell -ExecutionPolicy Bypass -File scripts\install.ps1`
 - Ubuntu 22.04: `bash scripts/install.sh`
@@ -220,8 +229,10 @@ $css-ship "<아이디어>"
 ```
 css-claude/
 ├── README.md
+├── .claude-plugin/  # plugin.json + marketplace.json (플러그인 배포)
 ├── commands/      # → ~/.claude/commands/css/
 ├── agents/        # → ~/.claude/agents/css/
+├── i18n/            # commands/agents 한국어 참조 번역(.ko.md)
 ├── lib/           # → ~/.claude/css/lib/ (gh_sync.sh — GitHub 추적)
 ├── config/        # 기본 설정
 ├── scripts/       # 설치 / 제거 스크립트 (Windows + Ubuntu)

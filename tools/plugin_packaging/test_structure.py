@@ -19,3 +19,11 @@ class ComponentDiscoveryTests(unittest.TestCase):
     def test_i18n_holds_translations(self):
         self.assertEqual(len(list((REPO / "i18n" / "commands").glob("*.ko.md"))), 9)
         self.assertEqual(len(list((REPO / "i18n" / "agents").glob("*.ko.md"))), 21)
+
+
+class DocsTests(unittest.TestCase):
+    def test_readmes_document_plugin_install(self):
+        for name in ("README.md", "README.en.md"):
+            text = (REPO / name).read_text(encoding="utf-8")
+            self.assertIn("/plugin marketplace add", text, f"{name} missing plugin install")
+            self.assertIn("css@css-claude", text, f"{name} missing install target")

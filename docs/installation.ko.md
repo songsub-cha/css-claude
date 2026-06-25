@@ -19,6 +19,17 @@
   설치 확인: `sg --version`
 - (Ubuntu 전용) 설정 파싱을 위해 `jq` 필요.
 
+## 플러그인 (Claude Code)
+
+Claude Code에서 가장 간단한 방법은 레포 내장 마켓플레이스입니다:
+
+```
+/plugin marketplace add songsub-cha/css-claude
+/plugin install css@css-claude
+```
+
+릴리스마다 `.claude-plugin/plugin.json`의 `version`을 올려야 설치된 사용자에게 업데이트가 전달됩니다. 아래 플랫폼 스크립트도 계속 지원되며 동일한 명령·에이전트를 설치합니다.
+
 ## Windows
 
 ```powershell
