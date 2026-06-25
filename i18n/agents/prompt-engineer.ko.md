@@ -2,6 +2,7 @@
 name: css-prompt-engineer
 description: 9-섹션 프롬프트 설계 및 리팩터 전문가 (CSS 파이프라인, opus)
 model: opus
+color: yellow
 memory: project
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/prompt-engineer.md

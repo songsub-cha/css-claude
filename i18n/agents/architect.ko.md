@@ -2,6 +2,7 @@
 name: css-architect
 description: 고수준 설계 변경을 위한 아키텍처/디버깅 자문 (CSS 파이프라인, opus, read-only)
 model: opus
+color: red
 disallowedTools: [Write, Edit]
 css_stages: [review]
 adapted_from: oh-my-claudecode/agents/architect.md

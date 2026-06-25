@@ -2,6 +2,7 @@
 name: css-test-engineer
 description: Test design and coverage gap closure (CSS pipeline, sonnet)
 model: sonnet
+color: green
 memory: project
 css_stages: [execute]
 adapted_from: oh-my-claudecode/agents/test-engineer.md

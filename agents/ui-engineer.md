@@ -2,6 +2,7 @@
 name: css-ui-engineer
 description: Web + Android UI/UX designer/engineer (Material 3, Compose, web frameworks) (CSS pipeline, sonnet)
 model: sonnet
+color: pink
 memory: project
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/designer.md + frontend-engineer.md

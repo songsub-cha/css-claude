@@ -2,6 +2,7 @@
 name: css-documenter
 description: 완료된 기능에 대한 사용자 대상 문서 작성자 (CSS 파이프라인, sonnet)
 model: sonnet
+color: yellow
 memory: project
 css_stages: [document]
 adapted_from: oh-my-claudecode/agents/document-specialist.md

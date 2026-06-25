@@ -2,6 +2,7 @@
 name: css-api-specialist
 description: Python/FastAPI REST/GraphQL API 전문가 (CSS 파이프라인, sonnet)
 model: sonnet
+color: blue
 memory: project
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/api-specialist.md
