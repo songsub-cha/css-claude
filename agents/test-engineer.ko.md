@@ -2,6 +2,7 @@
 name: css-test-engineer
 description: 테스트 설계 및 커버리지 공백 보완 (CSS 파이프라인, sonnet)
 model: sonnet
+color: green
 memory: project
 css_stages: [execute]
 adapted_from: oh-my-claudecode/agents/test-engineer.md

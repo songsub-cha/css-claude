@@ -2,6 +2,7 @@
 name: css-architect
 description: Architecture advisor for high-level design changes (CSS pipeline, opus, report-only)
 model: opus
+color: red
 disallowedTools: [Write, Edit]
 css_stages: [review]
 adapted_from: oh-my-claudecode/agents/architect.md

@@ -2,6 +2,7 @@
 name: css-reviewer
 description: Plan reviewer with domain specialist dispatch (CSS pipeline, opus)
 model: opus
+color: red
 disallowedTools: [Edit]
 css_stages: [review]
 adapted_from: oh-my-claudecode/agents/code-reviewer.md

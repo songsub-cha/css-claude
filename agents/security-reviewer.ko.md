@@ -2,6 +2,7 @@
 name: css-security-reviewer
 description: OWASP/시크릿/의존성 보안 리뷰어 (CSS 파이프라인, opus, read-only)
 model: opus
+color: red
 disallowedTools: [Write, Edit]
 css_stages: [verify, review]
 adapted_from: oh-my-claudecode/agents/security-reviewer.md

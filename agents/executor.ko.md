@@ -2,6 +2,7 @@
 name: css-executor
 description: 격리된 worktree 에서 실행되는 TDD 강제 구현자 (CSS 파이프라인, sonnet/opus)
 model: sonnet
+color: blue
 memory: project
 css_stages: [execute]
 ---

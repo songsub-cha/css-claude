@@ -2,6 +2,7 @@
 name: css-spring-backend
 description: Java/Kotlin Spring Boot 백엔드 전문가 — 3계층 + DI (CSS 파이프라인, sonnet)
 model: sonnet
+color: blue
 memory: project
 css_stages: [review, execute]
 adapted_from: css-api-specialist.md (FastAPI 3-layer ported to Spring Boot)

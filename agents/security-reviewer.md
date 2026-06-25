@@ -2,6 +2,7 @@
 name: css-security-reviewer
 description: OWASP/secrets/dependency security reviewer (CSS pipeline, opus, report-only)
 model: opus
+color: red
 disallowedTools: [Write, Edit]
 css_stages: [verify, review]
 adapted_from: oh-my-claudecode/agents/security-reviewer.md

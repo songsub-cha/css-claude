@@ -2,6 +2,7 @@
 name: css-db-specialist
 description: PostgreSQL/Redis/ARQ 스키마·쿼리·마이그레이션 전문가 (CSS 파이프라인, sonnet)
 model: sonnet
+color: cyan
 memory: project
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/db-specialist.md

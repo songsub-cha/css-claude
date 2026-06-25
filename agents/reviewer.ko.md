@@ -2,6 +2,7 @@
 name: css-reviewer
 description: 도메인 전문가 디스패치를 갖춘 plan 리뷰어 (CSS 파이프라인, opus)
 model: opus
+color: red
 disallowedTools: [Write, Edit]
 css_stages: [review]
 adapted_from: oh-my-claudecode/agents/code-reviewer.md

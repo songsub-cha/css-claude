@@ -2,6 +2,7 @@
 name: css-ml-engineer
 description: ML 코드/추론 전문가 — scikit-learn/PyTorch, 피처 파이프라인, 검증, eval (CSS 파이프라인, sonnet)
 model: sonnet
+color: purple
 memory: project
 css_stages: [review, execute]
 adapted_from: css-async-coder.md (testable-code discipline applied to ML)

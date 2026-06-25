@@ -2,6 +2,7 @@
 name: css-code-reviewer
 description: Code-quality reviewer for the verify stage (CSS pipeline, opus, report-only)
 model: opus
+color: red
 disallowedTools: [Write, Edit]
 css_stages: [verify]
 adapted_from: oh-my-claudecode/agents/code-reviewer.md

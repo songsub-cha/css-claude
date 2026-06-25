@@ -2,6 +2,7 @@
 name: css-async-coder
 description: Python asyncio concurrency specialist (CSS pipeline, sonnet)
 model: sonnet
+color: blue
 memory: project
 css_stages: [review, execute]
 adapted_from: oh-my-claudecode/agents/async-coder.md
