@@ -81,7 +81,7 @@ Write-Host "  $cssDir"
 
 Write-Section "Copying commands"
 $srcCmd = Join-Path $SourcePath "commands"
-$cmdFiles = Get-ChildItem $srcCmd -Filter "*.md" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike "*.ko.md" }
+$cmdFiles = Get-ChildItem $srcCmd -Filter "*.md" -ErrorAction SilentlyContinue
 foreach ($f in $cmdFiles) {
   Copy-Item $f.FullName -Destination $cmdDir -Force
   Write-Host "  $($f.Name)"
@@ -90,7 +90,7 @@ Write-Host "  ($($cmdFiles.Count) command files copied)"
 
 Write-Section "Copying agents"
 $srcAgent = Join-Path $SourcePath "agents"
-$agentFiles = Get-ChildItem $srcAgent -Filter "*.md" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike "*.ko.md" }
+$agentFiles = Get-ChildItem $srcAgent -Filter "*.md" -ErrorAction SilentlyContinue
 foreach ($f in $agentFiles) {
   Copy-Item $f.FullName -Destination $agentDir -Force
   Write-Host "  $($f.Name)"
