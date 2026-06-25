@@ -24,3 +24,20 @@ class PluginManifestTests(unittest.TestCase):
         m = self._load()
         self.assertNotIn("commands", m)
         self.assertNotIn("agents", m)
+
+
+class MarketplaceManifestTests(unittest.TestCase):
+    def _load(self):
+        p = REPO / ".claude-plugin" / "marketplace.json"
+        self.assertTrue(p.exists(), "marketplace.json missing")
+        return json.loads(p.read_text(encoding="utf-8"))
+
+    def test_name_and_owner(self):
+        m = self._load()
+        self.assertEqual(m["name"], "css-claude")
+        self.assertTrue(m["owner"]["name"])
+
+    def test_lists_css_plugin_at_repo_root(self):
+        plugins = self._load()["plugins"]
+        entry = next(p for p in plugins if p["name"] == "css")
+        self.assertEqual(entry["source"], "./")

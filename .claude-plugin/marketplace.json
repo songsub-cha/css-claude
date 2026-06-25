@@ -1,0 +1,11 @@
+{
+  "name": "css-claude",
+  "owner": { "name": "songsub-cha", "email": "sub1904@gmail.com" },
+  "plugins": [
+    {
+      "name": "css",
+      "source": "./",
+      "description": "Idea to PR software-development pipeline for Claude Code."
+    }
+  ]
+}
