@@ -26,7 +26,15 @@ parse_opts() {
 }
 
 # --- read layer ---------------------------------------------------------------
-config_path() { printf '%s' "${CSS_CONFIG:-$HOME/.claude/css/config.json}"; }
+config_path() {
+  if [[ -n "${CSS_CONFIG:-}" ]]; then printf '%s' "$CSS_CONFIG"; return; fi
+  local user="$HOME/.claude/css/config.json"
+  if [[ -f "$user" ]]; then printf '%s' "$user"; return; fi
+  local here; here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  local bundled="$here/../config/default-config.json"
+  if [[ -f "$bundled" ]]; then printf '%s' "$bundled"; return; fi
+  printf '%s' "$user"
+}
 cfg() { # cfg <jq-filter> <default>
   local p; p="$(config_path)"
   [[ -f "$p" ]] || { printf '%s' "${2:-}"; return; }
@@ -88,6 +96,7 @@ status_name() {
   esac
 }
 __test_status() { set_board_status "$1" "$2"; }   # test-only hook
+__test_config_path() { config_path; }             # test-only hook
 
 # --- init-issue ---------------------------------------------------------------
 CSS_LABELS=(
@@ -308,6 +317,7 @@ main() {
     finalize)      cmd_finalize "$@" ;;
     link-child)    cmd_link_child "$@" ;;
     __test_status) __test_status "$@" ;;
+    __test_config_path) __test_config_path "$@" ;;
     -h|--help|"") usage; exit 2 ;;
     *)            usage; die "unknown subcommand: $sub" ;;
   esac

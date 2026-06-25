@@ -205,8 +205,25 @@ test_init_issue_ensures_labels() {
   teardown
 }
 
+test_config_path_resolution() {
+  local sb; sb="$(mktemp -d)"
+  # explicit override wins
+  assert_eq "explicit CSS_CONFIG" \
+    "$(CSS_CONFIG="$sb/x.json" bash "$SCRIPT" __test_config_path)" "$sb/x.json"
+  # no override, no user config -> bundled default beside the script
+  assert_contains "bundled default" \
+    "$(CSS_CONFIG= HOME="$sb/home" bash "$SCRIPT" __test_config_path)" \
+    "config/default-config.json"
+  # user config present -> used
+  mkdir -p "$sb/home/.claude/css"; printf '{}' > "$sb/home/.claude/css/config.json"
+  assert_eq "user config" \
+    "$(CSS_CONFIG= HOME="$sb/home" bash "$SCRIPT" __test_config_path)" \
+    "$sb/home/.claude/css/config.json"
+  rm -rf "$sb"
+}
+
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_init_issue_ensures_labels test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records test_pr_link_comments_and_sets_pr test_finalize_sets_done test_link_child_creates_subissue test_link_child_subissue_idempotent test_link_child_appends_checklist )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_init_issue_ensures_labels test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records test_pr_link_comments_and_sets_pr test_finalize_sets_done test_link_child_creates_subissue test_link_child_subissue_idempotent test_link_child_appends_checklist test_config_path_resolution )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]
