@@ -19,6 +19,17 @@
   Verify the install: `sg --version`
 - (Ubuntu only) `jq` is required for config parsing.
 
+## Plugin (Claude Code)
+
+The simplest path on Claude Code is the in-repo marketplace:
+
+```
+/plugin marketplace add songsub-cha/css-claude
+/plugin install css@css-claude
+```
+
+Bump `version` in `.claude-plugin/plugin.json` on each release so installed users receive updates. The platform scripts below remain fully supported and install the same commands and agents.
+
 ## Windows
 
 ```powershell

@@ -17,7 +17,7 @@ Run the full CSS pipeline. Three approval gates: Gate 1 is implicit (brainstormi
    - No `--session` → derive slug from idea (kebab-case, collision-suffixed if needed), init session, update `_active.json`.
    - Set `session.master_flow = true`.
    - A newly initialized session starts with `kind:"epic"` and `single_phase:false` (skeleton plan eligible for `/css:phase`); a kind-less legacy session stays a single-session.
-   - **GitHub tracking init**: define `GHS() { bash "${CSS_LIB:-$HOME/.claude/css/lib}/gh_sync.sh" "$@"; }`. Set `gh_on = ("$(GHS enabled --session <slug>)" == "1")`. If `gh_on`, run `GHS init-issue --session <slug>` (idempotent — creates the issue + adds it to the user Projects board, or reuses the stored issue on resume).
+   - **GitHub tracking init**: resolve the CSS root for both install modes, then define the helper — `CSS_ROOT="${CLAUDE_PLUGIN_ROOT}"; CSS_ROOT="${CSS_ROOT:-$HOME/.claude/css}"; GHS() { bash "${CSS_LIB:-$CSS_ROOT/lib}/gh_sync.sh" "$@"; }` (in plugin mode `${CLAUDE_PLUGIN_ROOT}` is substituted inline; in script mode it is empty and falls back to `$HOME/.claude/css`). Set `gh_on = ("$(GHS enabled --session <slug>)" == "1")`. If `gh_on`, run `GHS init-issue --session <slug>` (idempotent — creates the issue + adds it to the user Projects board, or reuses the stored issue on resume).
 
 3. **Acquire lock**.
 

@@ -207,7 +207,16 @@ See [`docs/specs/2026-05-27-css-pipeline-design.md`](docs/specs/2026-05-27-css-p
 
 ## Installation
 
-Install via the platform script:
+Install as a plugin (Claude Code):
+
+```
+/plugin marketplace add songsub-cha/css-claude
+/plugin install css@css-claude
+```
+
+Bump `version` in `plugin.json` on each release so users receive updates.
+
+Or install via the platform script (still supported):
 
 - Windows: `powershell -ExecutionPolicy Bypass -File scripts\install.ps1`
 - Ubuntu 22.04: `bash scripts/install.sh`
@@ -220,8 +229,10 @@ See [`docs/installation.md`](docs/installation.md) for details.
 ```
 css-claude/
 ├── README.md
+├── .claude-plugin/  # plugin.json + marketplace.json (plugin distribution)
 ├── commands/      # → ~/.claude/commands/css/
 ├── agents/        # → ~/.claude/agents/css/
+├── i18n/            # Korean (.ko.md) reference copies of commands/agents
 ├── lib/           # → ~/.claude/css/lib/ (gh_sync.sh — GitHub tracking)
 ├── config/        # default settings
 ├── scripts/       # install / uninstall scripts (Windows + Ubuntu)

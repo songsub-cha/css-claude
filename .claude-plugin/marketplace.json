@@ -1,0 +1,12 @@
+{
+  "name": "css-claude",
+  "description": "CSS (Claude Super System) — idea-to-PR software-development pipeline for Claude Code.",
+  "owner": { "name": "songsub-cha", "email": "sub1904@gmail.com" },
+  "plugins": [
+    {
+      "name": "css",
+      "source": "./",
+      "description": "Idea to PR software-development pipeline for Claude Code."
+    }
+  ]
+}

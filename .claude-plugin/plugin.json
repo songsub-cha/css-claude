@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "css",
+  "displayName": "CSS — Claude Super System",
+  "version": "0.1.0",
+  "description": "Idea to PR pipeline: spec, plan, review, TDD execute, verify, docs, PR — with domain-specialist agents and human approval gates.",
+  "author": { "name": "songsub-cha", "email": "sub1904@gmail.com" },
+  "homepage": "https://github.com/songsub-cha/css-claude",
+  "repository": "https://github.com/songsub-cha/css-claude",
+  "license": "SEE LICENSE IN LICENSE",
+  "keywords": ["pipeline", "tdd", "automation", "agents", "workflow", "code-review"]
+}
