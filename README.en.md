@@ -10,12 +10,13 @@ Status: **v0.1.0**. Personal-use pipeline. See [`docs/installation.md`](docs/ins
 
 ## Overview
 
-Give it an idea and it runs all the way through: spec → plan → review → TDD implementation → verify → document → PR. Eighteen specialized agents are dispatched stage by stage, with human approval gates at the high-stakes decision points.
+Give it an idea and it runs all the way through: spec → plan → review → TDD implementation → verify → document → PR, with post-merge cleanup handled by `/css:clean`. Twenty-one specialized agents are dispatched stage by stage, with human approval gates at the high-stakes decision points.
 
 ```
 /css:interview  →  /css:plan  →  /css:phase  →  /css:review  →  /css:execute  →  /css:verify  →  /css:document  →  /css:pr
                                                                                                                         ↑
                                                          /css:ship  ──── runs the whole pipeline with 3 approval gates ─┘
+                                                                                    (post-merge cleanup: /css:clean)
 ```
 
 ### Pipeline + agent topology
@@ -77,8 +78,10 @@ flowchart TD
     end
 
     END([🎉 PR created])
+    CLEAN["🧹 css:clean\npost-merge worktree/branch teardown"]
 
     START --> S1 --> S2 --> S25 --> S3 --> GATE2 --> S4 --> S5 --> S6 --> GATE3 --> S7 --> END
+    END -.->|after merge| CLEAN
 ```
 
 ### Stage-by-stage detail
@@ -148,6 +151,7 @@ Or run it stage by stage:
 
 ```
 /css:interview → /css:plan → /css:phase → /css:review → /css:execute → /css:verify → /css:document → /css:pr
+(after the PR merges) /css:clean
 ```
 
 ### Codex App / CLI
@@ -158,7 +162,7 @@ Install first: `bash scripts/install-codex.sh` (Windows: `scripts\install-codex.
 $css-ship "<idea>"
 ```
 
-Stage by stage: `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, `$css-pr`.
+Stage by stage: `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, `$css-pr`. Post-merge cleanup: `$css-clean`.
 
 - **Parallel specialists** (optional): add `multi_agent = true` under `[features]` in `~/.codex/config.toml`. Without it, specialists run sequentially in one agent (same result).
 - **Approval gates**: presented as plain-text questions (no structured UI) that wait for your reply.
@@ -187,6 +191,7 @@ Running `/css:ship "<idea>"` mirrors pipeline progress to **GitHub Issues + Proj
 ## Key features
 
 - **Idea → PR automation**: with explicit human approval gates at the important decision points
+- **Post-merge cleanup**: `/css:clean` tears down the worktree/local branch with dirty/unpushed/unmerged safety checks
 - **TDD enforced**: the execute stage requires ≥85% test coverage
 - **Cache-first execution**: the review stage's Rich Specs are reused in execute — minimizing repeat specialist calls
 - **Automatic language detection**: JS/TS, Python, Go, Rust, Java (Maven), Java/Kotlin (Gradle, including Android Compose)
