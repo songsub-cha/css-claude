@@ -32,7 +32,7 @@ class LiveInstallTests(unittest.TestCase):
             summary = install(REPO_ROOT, codex_home, skills_home=skills_home)
             n_cmds = len([p for p in (REPO_ROOT / "commands").glob("*.md") if "." not in p.stem])
             n_agents = len([p for p in (REPO_ROOT / "agents").glob("*.md") if "." not in p.stem])
-            self.assertEqual(n_cmds, 9)
+            self.assertEqual(n_cmds, 10)
             self.assertEqual(summary["skills"], n_cmds)
             self.assertEqual(summary["agents"], n_agents)
 

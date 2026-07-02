@@ -23,6 +23,7 @@ setup() {
   export CSS_ROOT="$SANDBOX"
   export PATH="$SANDBOX/bin:$PATH"
   unset FAKE_ISSUE_VIEW
+  unset FAKE_ISSUE_COMMENTS
 }
 teardown() { rm -rf "$SANDBOX"; }
 run() { bash "$SCRIPT" "$@"; }            # stdout passthrough
@@ -120,10 +121,11 @@ test_adr_numbers_and_persists() {
 }
 test_gate_open_mentions_and_labels() {
   setup; seed_issue
-  export FAKE_ISSUE_VIEW='{"comments":[{"createdAt":"2026-06-15T00:00:00Z","body":"gate"}]}'
+  export FAKE_ISSUE_COMMENTS='[{"created_at":"2026-06-15T00:00:00Z","body":"gate"}]'
   run gate-open --session demo --gate 2
   assert_contains "mention" "$(ghlog)" "@tester"
   assert_contains "gate label" "$(ghlog)" "--add-label css:awaiting-approval"
+  assert_contains "REST baseline query" "$(ghlog)" "api --paginate repos/owner/repo/issues/42/comments?per_page=100"
   local at; at="$(jq -r '.github.gate2.opened_at' "$CSS_ROOT/.claude/css/sessions/demo.json")"
   assert_eq "baseline stored" "$at" "2026-06-15T00:00:00Z"
   teardown
@@ -131,15 +133,16 @@ test_gate_open_mentions_and_labels() {
 test_gate_wait_returns_new_reply() {
   setup; seed_issue
   jq '.github.gate2={opened_at:"2026-06-15T00:00:00Z"}' "$CSS_ROOT/.claude/css/sessions/demo.json" > t && mv t "$CSS_ROOT/.claude/css/sessions/demo.json"
-  export FAKE_ISSUE_VIEW='{"comments":[{"createdAt":"2026-06-15T00:00:00Z","body":"gate"},{"createdAt":"2026-06-15T00:05:00Z","body":"approve please"}]}'
+  export FAKE_ISSUE_COMMENTS='[{"created_at":"2026-06-15T00:00:00Z","body":"gate"},{"created_at":"2026-06-15T00:05:00Z","body":"approve please"}]'
   local out; out="$(run gate-wait --session demo --gate 2 --timeout 1)"
   assert_eq "reply body" "$out" "approve please"
+  assert_contains "REST since query" "$(ghlog)" "api repos/owner/repo/issues/42/comments?since=2026-06-15T00:00:00Z&per_page=100"
   teardown
 }
 test_gate_wait_empty_on_timeout() {
   setup; seed_issue
   jq '.github.gate2={opened_at:"2026-06-15T00:00:00Z"}' "$CSS_ROOT/.claude/css/sessions/demo.json" > t && mv t "$CSS_ROOT/.claude/css/sessions/demo.json"
-  export FAKE_ISSUE_VIEW='{"comments":[{"createdAt":"2026-06-15T00:00:00Z","body":"gate"}]}'
+  export FAKE_ISSUE_COMMENTS='[{"created_at":"2026-06-15T00:00:00Z","body":"gate"}]'
   local out; out="$(run gate-wait --session demo --gate 2 --timeout 1)"
   assert_eq "empty output" "$out" ""
   teardown

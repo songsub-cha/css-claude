@@ -79,6 +79,7 @@ adapted_from: oh-my-claudecode/agents/async-coder.md
     - Prefer `asyncio.TaskGroup` (Python 3.11+) over manual `gather` for structured concurrency.
     - Prefer `async with asyncio.timeout(N)` over `wait_for` when available (3.11+).
     - Async generators must be closed explicitly (`async with aclosing(...)` or finally `aclose()`).
+    - All user-facing prose (review reports, checkpoints) in Korean. Policy text in this file stays English.
   </Constraints>
 
   <Investigation_Protocol>
@@ -95,11 +96,11 @@ adapted_from: oh-my-claudecode/agents/async-coder.md
 
   <Tool_Usage>
     - Use Read/Glob to map async patterns across the codebase.
-    - Use Bash with `sg run --pattern '$PATTERN' .` (ast-grep) for: `async def`, `await`, `asyncio.`, `create_task`, `gather`, `Semaphore`.
+    - If ast-grep is available, use Bash with `sg run --pattern '$PATTERN' .` for: `async def`, `await`, `asyncio.`, `create_task`, `gather`, `Semaphore`; otherwise use Grep.
     - Use Edit/Write for the async code changes.
     - Use Bash with `uv run pytest -k async` or `pytest-asyncio` markers to run async tests.
-    - Use python_repl for quick coroutine experiments (`asyncio.run(...)`).
-    - Use lsp_diagnostics to catch missing `await` and `async def`/`def` mismatches.
+    - Use python_repl if available for quick coroutine experiments (`asyncio.run(...)`); otherwise `uv run python -c "..."`.
+    - Use lsp_diagnostics if available to catch missing `await` and `async def`/`def` mismatches; otherwise run `uv run mypy`.
     <External_Consultation>
       When DB-side locking interacts with asyncio concurrency, delegate to css-db-specialist.
       When the async code wraps an HTTP API, consult css-api-specialist for endpoint patterns.

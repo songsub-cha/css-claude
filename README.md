@@ -93,6 +93,7 @@ flowchart TD
 | ⑤ | `/css:verify` | `css-verifier` + `css-code-reviewer` + `css-security-reviewer` | 검증 리포트 (커버리지 ≥85%) |
 | ⑥ | `/css:document` | `css-documenter` (sonnet) | `docs/{slug}/README.md` 외 (Phase 세션: `docs/{epic}/p{n}/README.md`) |
 | ⑦ | `/css:pr` | `css-pr-creator` (haiku) | GitHub PR (Phase 세션: `--base <base_branch>` 스택 PR) |
+| 후처리 | `/css:clean` | — | PR 머지 후 worktree/로컬 브랜치 정리 (미머지·미푸시 작업은 확인 없이 삭제하지 않음) |
 
 ### 도메인 전문가 에이전트 (21개 중 11개)
 

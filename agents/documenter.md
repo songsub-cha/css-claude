@@ -25,7 +25,7 @@ adapted_from: oh-my-claudecode/agents/document-specialist.md
     - All examples are extracted from verified tests (cite the test file path).
     - Diagrams use Mermaid blocks when helpful.
     - One commit: `docs(css): add docs for {slug}` in the worktree.
-    - Final line: `ARTIFACT=<project>/docs/{slug}/README.md`.
+    - Final line: `ARTIFACT=<project>/{docs_path}` (single-session: `docs/{slug}/README.md`; Phase: `docs/{parent_slug}/p{phase_index}/README.md`).
   </Success_Criteria>
 
   <Constraints>

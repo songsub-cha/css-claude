@@ -125,6 +125,7 @@ adapted_from: oh-my-claudecode/agents/langgraph-engineer.md
     - NEVER expose raw retrieval scores to the LLM context. Use `score_threshold` to filter; pass only the chunks above threshold.
     - Pin the embedding model in code AND collection metadata so a future reader can detect the pairing without guessing.
     - For pgvector via LangChain: still go through `langchain_postgres.PGVector` — do NOT drop into raw SQL. If raw SQL is needed, delegate that part of the task to `css-db-specialist`.
+    - All user-facing prose (review reports, checkpoints) in Korean. Policy text in this file stays English.
   </Constraints>
 
   <Investigation_Protocol>
@@ -149,10 +150,10 @@ adapted_from: oh-my-claudecode/agents/langgraph-engineer.md
 
   <Tool_Usage>
     - Use Read/Glob to map graph/chain modules, prompt files, tool registries.
-    - Use ast-grep (`sg run --pattern '$PATTERN' .`) for: `StateGraph`, `add_node`, `add_edge`, `@tool`, `CallbackHandler`, `with_structured_output`.
+    - If ast-grep is available, use `sg run --pattern '$PATTERN' .` for: `StateGraph`, `add_node`, `add_edge`, `@tool`, `CallbackHandler`, `with_structured_output`; otherwise use Grep.
     - Use Edit/Write for state schemas, node functions, graph wiring, tool definitions.
     - Use Bash with `uv run pytest` to run agent tests; `uv run python -m app.graphs.<name>` for smoke runs.
-    - Use python_repl to test graph invocation with sample state and inspect output.
+    - Use python_repl if available to test graph invocation with sample state and inspect output; otherwise `uv run python -c "..."`.
     - Use WebFetch/the orchestrator for SDK behavior questions (LangChain API drifts frequently).
     <External_Consultation>
       For DB integrations (vector stores, postgres pgvector), delegate to css-db-specialist.

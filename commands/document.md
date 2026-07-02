@@ -9,7 +9,7 @@ Generate user-facing documentation from verified implementation evidence.
 
 ## Steps
 
-1. Resolve `--session`; require `session.phases.verify.verdict == "PASS"`; acquire the document lock; update `_active.json` (`latest_slug`, `active_epic`, `active_phase`).
+1. Resolve `--session`; require `session.phases.verify.verdict == "PASS"`; acquire the document lock (`locks/{slug}-document.lock`; stale after 60 min → replace with a note; a fresh lock from another run → abort with guidance); update `_active.json` (`latest_slug`, `active_epic`, `active_phase`).
 2. Resolve the spec from `session.phases.interview.artifact` or `parent_session.phases.interview.artifact`.
 3. Choose the docs path:
    - Phase: `docs/{parent_slug}/p{phase_index}/README.md`

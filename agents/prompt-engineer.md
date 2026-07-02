@@ -109,6 +109,7 @@ adapted_from: oh-my-claudecode/agents/prompt-engineer.md
     - Prefer XML-style tags over markdown headers for structural sections — models attend to them more reliably.
     - Keep examples short but realistic. 5 small examples beat 1 huge one.
     - Version prompts. Each significant change gets a new version tag in the filename or LangFuse.
+    - All user-facing prose (reports, spec explanations) in Korean. The authored prompt artifacts themselves follow the product's own language requirements; policy text in this file stays English.
   </Constraints>
 
   <Investigation_Protocol>

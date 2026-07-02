@@ -7,6 +7,7 @@ if [[ "$1" == "api" ]]; then
     *"--method POST"*"/sub_issues"*) exit 0 ;;                        # add sub-issue
     *"/sub_issues"*) printf '%s\n' "${FAKE_SUBISSUES-}"; exit 0 ;;    # list (empty = unlinked)
     "api user"*)     echo "tester"; exit 0 ;;
+    *"/issues/"*"/comments"*) printf '%s\n' "${FAKE_ISSUE_COMMENTS:-[]}"; exit 0 ;; # REST comment list
     *"/issues/"*)    printf '%s\n' "${FAKE_ISSUE_ID-9943}"; exit 0 ;; # child .id (db id)
     *)               exit 0 ;;
   esac

@@ -93,6 +93,7 @@ flowchart TD
 | ⑤ | `/css:verify` | `css-verifier` + `css-code-reviewer` + `css-security-reviewer` | verification report (coverage ≥85%) |
 | ⑥ | `/css:document` | `css-documenter` (sonnet) | `docs/{slug}/README.md` and more (Phase sessions: `docs/{epic}/p{n}/README.md`) |
 | ⑦ | `/css:pr` | `css-pr-creator` (haiku) | GitHub PR (Phase sessions: `--base <base_branch>` stacked PR) |
+| post | `/css:clean` | — | worktree/local-branch teardown after the PR merges (never deletes unmerged or unpushed work without confirmation) |
 
 ### Domain-specialist agents (11 of 21)
 

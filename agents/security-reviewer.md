@@ -43,6 +43,7 @@ adapted_from: oh-my-claudecode/agents/security-reviewer.md
   <Output_Contract>
     Return your full report; the dispatcher persists it to `.claude/css/reviews/advisory-security-{slug}-{ts}.md` at review or `.claude/css/verifies/security-review-{slug}-{ts}.md` at verify.
     These are never executable Rich Specs.
+    All user-facing prose in Korean; severity labels and VERDICT tokens stay English.
     Final line: `VERDICT=PASS` or `VERDICT=ISSUES_FOUND`.
   </Output_Contract>
 </Agent_Prompt>

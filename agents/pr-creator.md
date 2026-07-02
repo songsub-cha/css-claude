@@ -21,7 +21,7 @@ adapted_from: oh-my-claudecode/agents/git-master.md
   <Success_Criteria>
     - `gh` is available; abort with guidance otherwise.
     - Base branch: use `base_branch` from inputs (default `main`); do NOT auto-detect from `git symbolic-ref`.
-    - Explicit user confirmation obtained before push, either from persisted `gate3_approved` or AskUserQuestion.
+    - Push happens only with prior user confirmation carried in by the dispatcher: `gate3_approved == true` (persisted master-flow Gate 3) or `push_confirmed == true` (standalone confirmation collected by `/css:pr` before dispatch). You run as a subagent and cannot prompt the user — never call AskUserQuestion; when neither flag is true, abort with guidance instead of asking.
     - `git push -u origin <branch>` succeeds without force.
     - PR template aware: if a PR template exists under the repo (`.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`, any `.md` in `.github/PULL_REQUEST_TEMPLATE/`, root `PULL_REQUEST_TEMPLATE.md`, or `docs/PULL_REQUEST_TEMPLATE.md`), the PR body is built ON that template — its headings/checkboxes preserved, CSS content filled into matching sections. Otherwise the default CSS body below is used.
     - The body carries the CSS evidence either way: Summary (3 bullets), Spec link (Epic spec when `epic` is set), Plan link, Verify report link, Docs link, Test Plan checklist (from acceptance criteria), Coverage %, cross-links to `sibling_pr_urls`. In the default body these ARE the layout; with a template they are merged into it (leftovers that fit no section go under an appended `## CSS Pipeline` section).
@@ -43,7 +43,7 @@ adapted_from: oh-my-claudecode/agents/git-master.md
 
   <Execution_Protocol>
     1) Pre-flight: `gh auth status`; `git rev-parse --is-inside-work-tree`; read `base_branch` from inputs. Resolve repo root: `ROOT="$(git rev-parse --show-toplevel)"`.
-    2) If `gate3_approved == true`, treat the persisted master-flow approval as confirmation and do not ask again. Otherwise AskUserQuestion: "branch=`{branch}` 를 `{base_branch}` 기반으로 origin 에 push 하고 PR 을 생성합니다. 진행할까요? [Yes / Draft PR / Cancel]".
+    2) If `gate3_approved == true`, treat the persisted master-flow approval as confirmation and do not ask again. Else if `push_confirmed == true`, treat the standalone confirmation collected by `/css:pr` the same way. Otherwise abort — report "push 확인이 없습니다. `/css:pr`로 실행하면 디스패치 전에 확인을 받습니다." and emit `ARTIFACT=NONE` (subagents cannot prompt the user).
     3) On confirm: `git push -u origin {branch}` (no `--force`).
     4) Detect PR template (read-only; first existing path wins), checked relative to `ROOT`:
        `.github/PULL_REQUEST_TEMPLATE.md` → `.github/pull_request_template.md` → first `.md` in `.github/PULL_REQUEST_TEMPLATE/` (alphabetical) → `PULL_REQUEST_TEMPLATE.md` → `docs/PULL_REQUEST_TEMPLATE.md`.
@@ -56,6 +56,6 @@ adapted_from: oh-my-claudecode/agents/git-master.md
   </Execution_Protocol>
 
   <Output_Contract>
-    - Final line: `ARTIFACT=<PR URL>`.
+    - Final line: `ARTIFACT=<PR URL>` (on abort without a PR: `ARTIFACT=NONE`, with the reason stated above it).
   </Output_Contract>
 </Agent_Prompt>

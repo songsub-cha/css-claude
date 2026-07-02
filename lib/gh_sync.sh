@@ -41,6 +41,15 @@ cfg() { # cfg <jq-filter> <default>
   local v; v="$(jq -r "$1 // empty" "$p" 2>/dev/null || true)"
   [[ -n "$v" ]] && printf '%s' "$v" || printf '%s' "${2:-}"
 }
+writable_config_path() { # config writes never target the bundled plugin copy
+  local p="${CSS_CONFIG:-$HOME/.claude/css/config.json}"
+  if [[ ! -f "$p" ]]; then
+    mkdir -p "$(dirname "$p")"
+    local src; src="$(config_path)"
+    if [[ -f "$src" && "$src" != "$p" ]]; then cp "$src" "$p"; else printf '{}\n' > "$p"; fi
+  fi
+  printf '%s' "$p"
+}
 session_file() { printf '%s' "${CSS_ROOT:-$PWD}/.claude/css/sessions/$1.json"; }
 sess() { jq -r "$2 // empty" "$(session_file "$1")" 2>/dev/null || true; }
 sess_set() { # sess_set <slug> <jq-expr>
@@ -72,7 +81,7 @@ ensure_board() {
   gh project field-create "$BOARD_NUMBER" --owner "$BOARD_OWNER" --name 'CSS Stage' \
     --data-type SINGLE_SELECT \
     --single-select-options 'Interview,Plan,Review,Execute,Verify,Document,PR,Done' >/dev/null
-  local p; p="$(config_path)"; local tmp="$p.tmp.$$"
+  local p; p="$(writable_config_path)"; local tmp="$p.tmp.$$"
   jq --argjson n "$BOARD_NUMBER" --arg o "$BOARD_OWNER" \
      '.github.project_number=$n | .github.project_owner=(.github.project_owner // $o)' \
      "$p" > "$tmp" && mv "$tmp" "$p"
@@ -225,7 +234,16 @@ cmd_gate_open() {
     "$who" "$gate" "$label" "$desc" "$draft")"
   gh issue comment "$num" --body "$body" >/dev/null
   gh issue edit "$num" --add-label css:awaiting-approval >/dev/null 2>&1 || true
-  local base; base="$(gh issue view "$num" --json comments 2>/dev/null | jq -r '.comments[-1].createdAt // empty')"
+  # Baseline = the newest comment's timestamp. `gh issue view --json comments`
+  # returns at most the first 100 comments, so on long threads (doc chunks
+  # inflate them) it would pick an old comment and gate-wait would then treat
+  # pre-gate comments as the reply. Prefer the paginated REST list.
+  local repo base=""; repo="$(repo_slug "$slug")"
+  if [[ -n "$repo" ]]; then
+    base="$(gh api --paginate "repos/$repo/issues/$num/comments?per_page=100" 2>/dev/null \
+      | jq -rs 'flatten | map(.created_at) | max // empty')"
+  fi
+  [[ -n "$base" ]] || base="$(gh issue view "$num" --json comments 2>/dev/null | jq -r '.comments[-1].createdAt // empty')"
   [[ -n "$base" ]] || base="$(date -u +%FT%TZ)"
   sess_set "$slug" ".github.gate$gate = {opened_at: \"$base\"}"
 }
@@ -235,10 +253,19 @@ cmd_gate_wait() {
   local num; num="$(sess "$slug" '.github.issue_number')"; [[ -n "$num" ]] || return 0
   local since; since="$(sess "$slug" ".github.gate$gate.opened_at")"
   local interval; interval="$(cfg '.github.poll_interval_sec' '20')"
+  local repo; repo="$(repo_slug "$slug")"
+  local query="per_page=100"; [[ -n "$since" ]] && query="since=$since&per_page=100"
   local elapsed=0 reply
   while [[ $elapsed -lt $timeout ]]; do
-    reply="$(gh issue view "$num" --json comments 2>/dev/null \
-      | jq -r --arg s "$since" '[.comments[]? | select(.createdAt > $s)] | .[0].body // empty')"
+    if [[ -n "$repo" ]]; then
+      # REST `since` filters server-side and is immune to the 100-comment cap
+      # of `gh issue view --json comments` on long threads.
+      reply="$(gh api "repos/$repo/issues/$num/comments?$query" 2>/dev/null \
+        | jq -r --arg s "$since" '[.[]? | select(.created_at > $s)] | .[0].body // empty')"
+    else
+      reply="$(gh issue view "$num" --json comments 2>/dev/null \
+        | jq -r --arg s "$since" '[.comments[]? | select(.createdAt > $s)] | .[0].body // empty')"
+    fi
     if [[ -n "$reply" ]]; then printf '%s\n' "$reply"; return 0; fi
     [[ "$interval" -gt 0 ]] && sleep "$interval"
     elapsed=$(( elapsed + interval + 1 ))

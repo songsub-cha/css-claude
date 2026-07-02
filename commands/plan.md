@@ -11,7 +11,7 @@ Translate the approved spec into a skeleton Epic plan or an executable detailed 
 
 1. Parse `--session` and `--from`; otherwise resolve `_active.json.latest_slug`.
 2. Resolve the spec in this order: `--from`, `session.phases.interview.artifact`, then `parent_session.phases.interview.artifact`. Stop if none exists.
-3. Acquire the plan lock, update `_active.json` (`latest_slug`, `active_epic`, `active_phase`), and echo `[css:plan @ slug={slug}]`.
+3. Acquire the plan lock (`locks/{slug}-plan.lock`; stale after 60 min → replace with a note; a fresh lock from another run → abort with guidance), update `_active.json` (`latest_slug`, `active_epic`, `active_phase`), and echo `[css:plan @ slug={slug}]`.
 4. Determine the level:
    - Multi-Phase candidate: `kind == "epic"` AND `single_phase != true` -> skeleton plan with coarse tasks, batches, rough file targets, `task_count`, and `batch_count`.
    - `kind == "phase"`, `single_phase == true`, or kind-less legacy session -> detailed bite-sized TDD plan with exact files, complete code, dependencies, and executable verification commands.
