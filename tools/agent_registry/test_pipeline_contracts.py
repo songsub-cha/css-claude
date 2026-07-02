@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import re
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+
+_RICH_SPEC_BLOCK = re.compile(
+    r"<CSS_Rich_Spec_Contract>.*?</CSS_Rich_Spec_Contract>", re.DOTALL)
 
 
 def read(rel: str) -> str:
@@ -101,6 +105,24 @@ class SpecialistContractTests(unittest.TestCase):
         text = read("agents/prompt-engineer.md")
         self.assertIn("deterministic local acceptance harness", text)
         self.assertIn("VERDICT=LOOPBACK_TO_PLAN", text)
+
+    def test_rich_spec_contract_blocks_are_identical(self):
+        # The 13-field executable contract is copied verbatim into every domain
+        # specialist. Any drift between copies silently forks the pipeline
+        # contract, so all blocks must stay byte-identical.
+        blocks: dict[str, str] = {}
+        for p in sorted((ROOT / "agents").glob("*.md")):
+            m = _RICH_SPEC_BLOCK.search(p.read_text(encoding="utf-8"))
+            if m:
+                blocks[p.name] = m.group(0)
+        self.assertGreaterEqual(
+            len(blocks), 10, f"expected 10+ specialists with a contract block, got {sorted(blocks)}")
+        canonical_name = sorted(blocks)[0]
+        canonical = blocks[canonical_name]
+        for name, block in sorted(blocks.items()):
+            self.assertEqual(
+                block, canonical,
+                f"{name} CSS_Rich_Spec_Contract drifted from {canonical_name}")
 
     def test_leaf_reviewers_are_write_blocked_and_orchestrator_persists(self):
         # Pure advisory leaves cannot touch the filesystem at all; they return

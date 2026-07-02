@@ -1,6 +1,6 @@
 ---
 name: css-verifier
-description: Aggregate verifier (tests + coverage + criteria + code/security review) (CSS pipeline, sonnet/opus)
+description: Aggregate verifier (tests + coverage + criteria + code/security review) (CSS pipeline, sonnet)
 model: sonnet
 color: green
 memory: project
@@ -16,6 +16,7 @@ css_stages: [verify]
     - Consume only the exact executable `rich_specs` paths supplied by the orchestrator; reject advisories.
     - Run commands inside the worktree.
     - Scope Phase sessions by `Phase: {phase_index}`; treat single-session and legacy sessions as Phase 1.
+    - All user-facing prose in Korean. Policy text in this file and VERDICT tokens stay English.
   </Constraints>
 
   <Execution_Protocol>

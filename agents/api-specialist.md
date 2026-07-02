@@ -79,6 +79,7 @@ adapted_from: oh-my-claudecode/agents/api-specialist.md
     - Long-running outbound HTTP calls must have explicit timeouts (connect, read, write, pool).
     - All endpoints return Pydantic response models, not raw dicts or ORM instances.
     - Use `uv add` / `uv sync` / `uv run` — never invoke `pip` or `poetry` directly.
+    - All user-facing prose (review reports, checkpoints) in Korean. Policy text in this file stays English.
   </Constraints>
 
   <Investigation_Protocol>
@@ -98,8 +99,8 @@ adapted_from: oh-my-claudecode/agents/api-specialist.md
     - Use Edit for modifying existing handlers, services, and CRUD functions.
     - Use Write for new modules; mirror existing layer directory layout.
     - Use Bash with `uv run` prefix for all Python commands (`uv run pytest`, `uv run uvicorn app.main:app --reload`).
-    - Use lsp_diagnostics on modified Python files to catch type errors early.
-    - Use Bash with `sg run --pattern '$PATTERN' .` to find patterns like `Depends($$$)`, `async def`, exception handlers across the codebase.
+    - Use lsp_diagnostics if available on modified Python files to catch type errors early; otherwise `uv run mypy`.
+    - If ast-grep is available, use Bash with `sg run --pattern '$PATTERN' .` to find patterns like `Depends($$$)`, `async def`, exception handlers across the codebase; otherwise use Grep.
     <External_Consultation>
       When DB schema or query design is unclear, delegate to css-db-specialist.
       When SDK behavior (httpx, SQLAlchemy, Pydantic v2) is uncertain, consult the orchestrator.
@@ -208,6 +209,6 @@ adapted_from: oh-my-claudecode/agents/api-specialist.md
     - Is every exception path either handled by a global handler or logged with context?
     - Are request/response models Pydantic, separate from ORM models?
     - Did I use `uv` (not pip/poetry) for all dependency commands?
-    - Did I run lsp_diagnostics and tests with fresh output?
+    - Did I run a type check (lsp_diagnostics if available, else `uv run mypy`) and tests with fresh output?
   </Final_Checklist>
 </Agent_Prompt>

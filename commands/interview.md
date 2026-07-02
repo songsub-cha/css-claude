@@ -16,13 +16,15 @@ Run a deep, Socratic brainstorming session to turn an idea into a CSS spec. Wrap
    - Else generate a new kebab-case slug from the idea (e.g. "JWT auth middleware" → `jwt-auth-middleware`). If the generated slug collides with an existing session file, append a numeric suffix.
    - Initialize `<project>/.claude/css/sessions/<slug>.json` if new, or load it if resuming.
    - New sessions MUST start with `kind:"epic"` and `single_phase:false` so the first plan is a skeleton eligible for `/css:phase`. Do not add these fields while merely resuming a kind-less legacy session; legacy sessions retain the detailed single-session compatibility path.
-   - **Capture repo metadata** (NEW):
+   - **Capture repo metadata** (whenever the fields are absent — new sessions and resumed legacy sessions alike):
      - `repo_root = git -C <project> rev-parse --show-toplevel`
      - `repo_name = basename(repo_root)`
-     - Write to session JSON: `session.repo_root`, `session.repo_name`.
+     - `base_branch = git -C <project> rev-parse --abbrev-ref HEAD` (fallback `main` when detached or not a git repo) — worktree creation and the PR base default to this later.
+     - Write to session JSON: `session.repo_root`, `session.repo_name`, `session.base_branch`.
      - If `git rev-parse` fails (not a git repo), use `repo_root = <project>`, `repo_name = basename(<project>)` and continue.
+   - **Load pipeline config** (when `session.config` is absent): deep-merge the user config `~/.claude/css/config.json` (if present) over the bundled `config/default-config.json` (under the plugin dir in plugin mode, `~/.claude/css/` in script mode). If neither is readable, use the documented defaults: `verify.coverage_threshold` 85, `review.max_loopback_attempts` 2, `verify.max_loopback_attempts` 3, `execute.tdd_self_heal_max` 2. Store the merged object as `session.config` and initialize `session.retries = {review: 0, verify: 0}` — downstream stages read both.
    - Update `<project>/.claude/css/sessions/_active.json` with `{"latest_slug": "<slug>"}`.
-   - Acquire phase lock.
+   - Acquire the interview lock: `<project>/.claude/css/locks/{slug}-interview.lock` with `{acquired_at}` (stale after 60 min → replace with a note; a fresh lock from another run → abort with guidance).
 
 3. **Verify superpowers is enabled**: read `~/.claude/settings.json`. If `enabledPlugins["superpowers@claude-plugins-official"]` is not true, abort with: "CSS requires the superpowers plugin. Enable via /plugin and retry."
 
@@ -34,7 +36,7 @@ Run a deep, Socratic brainstorming session to turn an idea into a CSS spec. Wrap
    ```
    Pass the idea text as the user's initial request inside the invoked skill's context. **Important override**: when brainstorming reaches its terminal "Invoke writing-plans skill" step, do NOT auto-invoke writing-plans. CSS calls `/css:plan` as a separate stage to keep each command independently runnable. Tell brainstorming: "Stop after the user-approves-spec gate; CSS will continue from there."
 
-   **Minimum questioning depth**: instruct brainstorming to ask **at least 10** substantive questions to fully concretize the idea before drafting the spec. Do not shortcut to the spec with fewer — keep probing requirements, scope, edge cases, and design trade-offs until the idea is concrete.
+   **Minimum questioning depth**: instruct brainstorming to keep probing requirements, scope, edge cases, and design trade-offs until the idea is concrete — typically **at least 10** substantive questions for feature/Epic-scale ideas. A genuinely small, already-concrete idea may need fewer, but never shortcut to the spec while scope, edge cases, or trade-offs remain open.
 
 6. **On brainstorming completion**:
    - Locate the spec file written by brainstorming (typically `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`).

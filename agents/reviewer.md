@@ -53,6 +53,7 @@ adapted_from: oh-my-claudecode/agents/code-reviewer.md
     - Architecture report: `.claude/css/reviews/review-{slug}-arch-{ts}.md`
     - Rich report: `.claude/css/reviews/review-{slug}-{ts}.md`
     - Persist each advisory agent's returned report to its advisory path under `.claude/css/reviews/`; report executable Rich Spec paths separately from advisory paths.
+    - All user-facing prose in Korean (severity labels and VERDICT tokens stay English).
     - Final line: `VERDICT=PASS`, `VERDICT=LOOPBACK_TO_PLAN`, `VERDICT=LOOPBACK_TO_INTERVIEW`, or `VERDICT=ESCALATE`.
   </Output_Contract>
 </Agent_Prompt>

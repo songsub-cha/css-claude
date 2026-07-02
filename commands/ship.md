@@ -17,9 +17,10 @@ Run the full CSS pipeline. Three approval gates: Gate 1 is implicit (brainstormi
    - No `--session` → derive slug from idea (kebab-case, collision-suffixed if needed), init session, update `_active.json`.
    - Set `session.master_flow = true`.
    - A newly initialized session starts with `kind:"epic"` and `single_phase:false` (skeleton plan eligible for `/css:phase`); a kind-less legacy session stays a single-session.
-   - **GitHub tracking init**: resolve the CSS root for both install modes, then define the helper — `CSS_ROOT="${CLAUDE_PLUGIN_ROOT}"; CSS_ROOT="${CSS_ROOT:-$HOME/.claude/css}"; GHS() { bash "${CSS_LIB:-$CSS_ROOT/lib}/gh_sync.sh" "$@"; }` (in plugin mode `${CLAUDE_PLUGIN_ROOT}` is substituted inline; in script mode it is empty and falls back to `$HOME/.claude/css`). Set `gh_on = ("$(GHS enabled --session <slug>)" == "1")`. If `gh_on`, run `GHS init-issue --session <slug>` (idempotent — creates the issue + adds it to the user Projects board, or reuses the stored issue on resume).
+   - Canonical session-state reference: `docs/session-schema.md` in the CSS source/plugin directory (every field, its writer, and its readers). Commands remain self-contained — consult it only when a field name or owner is ambiguous.
+   - **GitHub tracking init**: resolve the CSS install dir for both install modes, then define the helper — `CSS_PLUGIN_DIR="${CLAUDE_PLUGIN_ROOT}"; CSS_PLUGIN_DIR="${CSS_PLUGIN_DIR:-$HOME/.claude/css}"; GHS() { bash "${CSS_LIB:-$CSS_PLUGIN_DIR/lib}/gh_sync.sh" "$@"; }` (in plugin mode `${CLAUDE_PLUGIN_ROOT}` is substituted inline; in script mode it is empty and falls back to `$HOME/.claude/css`). Shell state does not persist between Bash tool calls — re-define this helper in **every** Bash invocation that uses `GHS`. Never name or `export` the install dir as `CSS_ROOT`: gh_sync.sh reads `CSS_ROOT` as the *project* root for session-file lookup, and exporting the install dir under that name silently breaks every session read. Always run `GHS` from the project root. Set `gh_on = ("$(GHS enabled --session <slug>)" == "1")`. If `gh_on`, run `GHS init-issue --session <slug>` (idempotent — creates the issue + adds it to the user Projects board, or reuses the stored issue on resume).
 
-3. **Acquire lock**.
+3. **Acquire lock**. Lock convention (shared by every stage command): `<project>/.claude/css/locks/{slug}-{stage}.lock` containing `{acquired_at}`. A lock older than 60 minutes is stale — replace it and note the takeover. A fresh lock from another run → abort with guidance instead of proceeding. Release the lock on every exit path, including loopbacks and cancels.
 
 ### GitHub stage sync (when `gh_on`)
 
@@ -47,7 +48,7 @@ These run only when `gh_on`; otherwise they are skipped and the pipeline behaves
 
 6. **Stage 3 — review (loop)** *(single-Phase / legacy path)*:
    - Invoke `/css:review --session <slug>`.
-   - On `LOOPBACK_TO_PLAN`, the review command itself loops back to plan up to 2 attempts.
+   - On `LOOPBACK_TO_PLAN`, the review command itself loops back to plan up to `session.config.review.max_loopback_attempts` (default 2) attempts.
    - On `LOOPBACK_TO_INTERVIEW`, ask user to confirm before re-entering interview.
    - On `ESCALATE`, stop and surface options.
    - If `gh_on` and review produced a notable architectural decision or non-trivial verdict rationale, post it: `GHS adr --session <slug> --title "<short>" --context "<why>" --decision "<what>" --consequences "<tradeoffs>"` (post only decisions that matter; the helper numbers them ADR-1, ADR-2, … and de-dupes on resume).
@@ -97,7 +98,7 @@ These run only when `gh_on`; otherwise they are skipped and the pipeline behaves
 
 9. **Stage 5 — verify (loop)** *(single-Phase / legacy path)*:
    - Invoke `/css:verify --session <slug>`.
-   - On `LOOPBACK_TO_EXECUTE`, the verify command itself loops back to execute up to 3 attempts.
+   - On `LOOPBACK_TO_EXECUTE`, the verify command itself loops back to execute up to `session.config.verify.max_loopback_attempts` (default 3) attempts.
    - On `ESCALATE`, stop with options.
 
 10. **Stage 6 — document** *(single-Phase / legacy path)*: invoke `/css:document --session <slug>`.
@@ -147,17 +148,22 @@ These run only when `gh_on`; otherwise they are skipped and the pipeline behaves
    For each child slug in topological order (by `phase_index`, respecting `depends_on`):
    a. `/css:plan --session <child>` (kind=phase → detailed) → `/css:review --session <child>` (kind=phase → rich-specs for this Phase).
    b. **Gate 2 (per Phase)** — AskUserQuestion: "Phase {idx} '{label}' execute 시작. base=`{base_branch}`. [Yes / Show / Skip / Cancel]".
+      - Yes → persist to the **child** session before continuing: `gates.gate2_pre_execute = {state:"approved", source:"terminal_ask", approved_at: now()}` (same shape as step 7 — `/css:execute` checks this gate).
+      - Show → print the Phase plan summary and its Rich Spec paths, then ask again.
+      - Skip → mark the child session's remaining stages skipped; Phases that declare it in `depends_on` are skipped too (their base branch never materializes); continue with the next runnable Phase.
+      - Cancel → release locks and exit.
    c. `/css:execute --session <child>` → `/css:verify --session <child>` → `/css:document --session <child>`.
    d. **Gate 3 (per Phase)** — AskUserQuestion: "Phase {idx} PR 생성 (base=`{base_branch}`). [Yes / Draft / Cancel]".
+      - Yes / Draft → persist to the **child** session: `gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", approved_at: now(), draft: (answer == "Draft")}` (`/css:pr` requires this gate under master flow). Cancel → skip the PR for this Phase and continue.
    e. `/css:pr --session <child> --base <base_branch>`.
-   Independent Phases (disjoint `depends_on`) MAY be dispatched in separate sessions for parallel runs.
+   Independent Phases (disjoint `depends_on`) MAY be dispatched in separate sessions for parallel runs — in that case pass `--session` explicitly to every stage invocation: `_active.json` is a last-writer-wins convenience pointer and must not be relied on while more than one run is active.
 
 14. **Finalize**: mark all phases completed.
     - If `gh_on`, run `GHS finalize --session <slug>` (label `css:done` + board `Done`).
-    - Release lock, print summary: "Pipeline 완료. PR: `<URL>`. 산출물: `<paths>`."
+    - Release lock, print summary: "Pipeline 완료. PR: `<URL>`. 산출물: `<paths>`. PR 머지 후 `/css:clean --session <slug>` 으로 worktree/브랜치를 정리할 수 있습니다."
 
 <self_check>
-- [ ] All 7 phases recorded as completed in session
+- [ ] All pipeline stages (interview→pr, including phasing when applicable) recorded as completed in session
 - [ ] Each gate prompt was shown when applicable
 - [ ] PR URL captured
 - [ ] Lock released

@@ -82,6 +82,7 @@ adapted_from: oh-my-claudecode/agents/db-specialist.md
     - ARQ: every job must be idempotent. Pass entity IDs, not entity payloads, when possible.
     - ARQ: configure `max_tries`, `job_timeout`, and `keep_result` explicitly per task.
     - Never store secrets, PII, or large blobs in Redis without encryption + retention policy.
+    - All user-facing prose (review reports, checkpoints) in Korean. Policy text in this file stays English.
   </Constraints>
 
   <Investigation_Protocol>
@@ -98,9 +99,9 @@ adapted_from: oh-my-claudecode/agents/db-specialist.md
 
   <Tool_Usage>
     - Use Read/Glob to locate models, migrations, and data access modules.
-    - Use Bash with `sg run --pattern '$PATTERN' .` (ast-grep) for patterns like `select($$$)`, `redis.`, `arq.`, raw SQL strings.
+    - If ast-grep is available, use Bash with `sg run --pattern '$PATTERN' .` for patterns like `select($$$)`, `redis.`, `arq.`, raw SQL strings; otherwise use Grep.
     - Use Bash for: `alembic revision --autogenerate`, `alembic upgrade head`, `alembic downgrade -1`, `psql -c "EXPLAIN ..."`, `redis-cli`.
-    - Use python_repl for ad-hoc query plan analysis and data shape checks.
+    - Use python_repl if available for ad-hoc query plan analysis and data shape checks; otherwise `uv run python -c "..."`.
     - Use Edit/Write for migration files, model definitions, and CRUD/query modules.
     <External_Consultation>
       When API layer integration is unclear, delegate to css-api-specialist.
@@ -279,7 +280,7 @@ adapted_from: oh-my-claudecode/agents/db-specialist.md
     - Are cache keys versioned and TTLs explicit?
     - Are ARQ jobs idempotent with retry policy configured?
     - Did I use TIMESTAMPTZ and NUMERIC for time and money?
-    - Did I run lsp_diagnostics and migration up/down cycles?
+    - Did I run a type check (lsp_diagnostics if available, else the stack's type-check command) and migration up/down cycles?
   </Final_Checklist>
   <CSS_Data_Verification_Profiles>
     Choose commands from the detected stack; never force Python tooling onto another ecosystem.

@@ -90,6 +90,7 @@ adapted_from: oh-my-claudecode/agents/infra-engineer.md
     - Multi-arch builds: declare `--platform linux/amd64,linux/arm64` when targets vary.
     - nginx: prefer `proxy_pass` to upstream blocks with `keepalive`. Always set `proxy_read_timeout`, `proxy_send_timeout`, `client_max_body_size`.
     - CI: pin action versions to full SHAs for security-sensitive workflows (deploy, release).
+    - All user-facing prose (review reports, checkpoints) in Korean. Policy text in this file stays English.
   </Constraints>
 
   <Investigation_Protocol>
@@ -110,7 +111,7 @@ adapted_from: oh-my-claudecode/agents/infra-engineer.md
     - Use Grep for: image tags, env var usage, secret patterns, port assignments.
     - Use Edit for surgical changes, Write for new files.
     - Use Bash for: `docker build`, `docker compose config`, `nginx -t -c <file>`, `kubectl apply --dry-run=server -f <file>`, `helm template`, `yamllint`, `hadolint Dockerfile`.
-    - Use lsp_diagnostics on YAML where the LSP supports it.
+    - Use lsp_diagnostics on YAML if available and the LSP supports it; otherwise rely on `yamllint`.
     <External_Consultation>
       For application port/health endpoint details, consult css-api-specialist or css-ui-engineer.
       For DB connection requirements (ports, env vars, init scripts), consult css-db-specialist.
