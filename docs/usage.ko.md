@@ -10,7 +10,7 @@ git 프로젝트 어디서든:
 /css:ship "<아이디어>"
 ```
 
-파이프라인이 interview → plan → review → execute → verify → document → pr 순서로 진행되며, 3개의 승인 게이트가 있습니다.
+파이프라인이 interview → plan → phase → review → execute → verify → document → pr 순서로 진행되며, 3개의 승인 게이트가 있습니다.
 
 ## 단독 커맨드
 
@@ -25,6 +25,7 @@ git 프로젝트 어디서든:
 /css:verify --session <slug>
 /css:document --session <slug>
 /css:pr --session <slug>
+/css:clean --session <slug>    # PR 머지 후 정리
 ```
 
 `--session`은 생략 가능합니다. 생략하면 CSS가 `<project>/.claude/css/sessions/_active.json`에서 가장 최근 세션을 자동으로 찾습니다.
@@ -38,7 +39,7 @@ $css-ship "<아이디어>"
 $css-review --session <slug>
 ```
 
-전체 목록은 `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, `$css-pr`입니다. Skill invocation 뒤의 텍스트는 커맨드의 `$ARGUMENTS`로 해석하며, 실행 동작은 `~/.codex/css/RUNTIME.md`가 규정합니다.
+전체 목록은 `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, `$css-pr`, `$css-clean`입니다. Skill invocation 뒤의 텍스트는 커맨드의 `$ARGUMENTS`로 해석하며, 실행 동작은 `~/.codex/css/RUNTIME.md`가 규정합니다.
 
 ## 멀티 세션 동시 실행
 
@@ -69,3 +70,13 @@ $css-review --session <slug>
 
 - `Ctrl+C`는 언제든 안전합니다. 세션 상태가 유지됩니다.
 - `/css:ship --session <slug>` (또는 `--session`을 붙인 단독 커맨드)로 재시작하면 중단된 단계부터 자동으로 이어집니다.
+
+## 정리
+
+PR이 머지되면 워크트리와 로컬 브랜치를 정리할 수 있습니다:
+
+```
+/css:clean --session <slug>
+```
+
+dirty 변경·미푸시 커밋·미머지 PR이 있으면 확인 없이 삭제하지 않습니다. `--keep-branch`로 로컬 브랜치를 남길 수 있고, 원격 브랜치는 건드리지 않습니다.

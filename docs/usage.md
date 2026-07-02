@@ -25,6 +25,7 @@ Each stage can also be run independently with `--session`:
 /css:verify --session <slug>
 /css:document --session <slug>
 /css:pr --session <slug>
+/css:clean --session <slug>    # post-merge cleanup
 ```
 
 `--session` is optional. If omitted, CSS automatically picks the most recent session from `<project>/.claude/css/sessions/_active.json`.
@@ -38,7 +39,7 @@ $css-ship "<idea>"
 $css-review --session <slug>
 ```
 
-The full set is `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, and `$css-pr`. Skill invocation text is treated as the command's `$ARGUMENTS`; execution details are governed by `~/.codex/css/RUNTIME.md`.
+The full set is `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, `$css-pr`, and `$css-clean`. Skill invocation text is treated as the command's `$ARGUMENTS`; execution details are governed by `~/.codex/css/RUNTIME.md`.
 
 ## Concurrent multi-session
 
@@ -69,3 +70,13 @@ Each invocation generates an independent slug and is isolated in its own session
 
 - `Ctrl+C` is always safe. Session state is preserved.
 - Restarting with `/css:ship --session <slug>` (or any standalone command with `--session`) automatically resumes from the interrupted stage.
+
+## Cleanup
+
+Once the PR has merged, tear down the worktree and local branch:
+
+```
+/css:clean --session <slug>
+```
+
+It never deletes dirty changes, unpushed commits, or an unmerged PR without asking first. Use `--keep-branch` to keep the local branch; the remote branch is never touched.
