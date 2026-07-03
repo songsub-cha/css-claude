@@ -4,6 +4,7 @@ printf '%s\n' "$*" >> "${GH_LOG:?GH_LOG unset}"
 # `gh api` routing (sub-issues, REST issue lookup). Emits the post -q value.
 if [[ "$1" == "api" ]]; then
   case "$*" in
+    *"--jq .has_wiki"*) printf '%s\n' "${FAKE_HAS_WIKI-true}"; exit 0 ;;   # repo wiki flag
     *"--method POST"*"/sub_issues"*) exit 0 ;;                        # add sub-issue
     *"/sub_issues"*) printf '%s\n' "${FAKE_SUBISSUES-}"; exit 0 ;;    # list (empty = unlinked)
     "api user"*)     echo "tester"; exit 0 ;;

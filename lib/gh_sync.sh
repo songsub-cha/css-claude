@@ -340,6 +340,34 @@ cmd_link_child() {
   gh issue edit "$enum" --body "$cur"$'\n'"$(printf -- '- [ ] Phase %s — %s #%s' "$idx" "$label" "$cnum")" >/dev/null
 }
 
+# --- wiki-publish ---------------------------------------------------------
+# One-way mirror: docs/project/ -> GitHub Wiki. Never a hard failure — every
+# unavailable precondition logs one line and exits 0 (same fallback philosophy
+# as the rest of this helper). CSS_WIKI_URL overrides the remote (test seam).
+cmd_wiki_publish() {
+  parse_opts "$@"; local sha="${OPT[sha]:-HEAD}"
+  local src="${CSS_ROOT:-$PWD}/docs/project"
+  [[ -d "$src" ]] || { log "wiki-publish: docs/project 없음 — skip"; return 0; }
+  local url="${CSS_WIKI_URL:-}" repo=""
+  if [[ -z "$url" ]]; then
+    gh_enabled || { log "wiki-publish: gh 사용 불가 — skip"; return 0; }
+    repo="$(gh repo view --json nameWithOwner -q '.nameWithOwner' 2>/dev/null || echo '')"
+    [[ -n "$repo" ]] || { log "wiki-publish: repo 식별 실패 — skip"; return 0; }
+    if [[ "$(gh api "repos/$repo" --jq '.has_wiki' 2>/dev/null)" != "true" ]]; then
+      log "wiki-publish: 이 repo는 Wiki 비활성(설정 꺼짐 또는 private+Free 요금제) — skip"; return 0
+    fi
+    url="https://github.com/$repo.wiki.git"
+  fi
+  local tmp; tmp="$(mktemp -d)"; local wt="$tmp/wiki"
+  if ! git clone -q "$url" "$wt" 2>/dev/null; then
+    log "wiki-publish: wiki repo clone 실패 — 미초기화 wiki면 웹 UI에서 첫 페이지 생성 후 재실행. skip"
+    rm -rf "$tmp"; return 0
+  fi
+  publish_wiki_tree "$src" "$wt" "$sha"   # Task 3에서 구현
+  rm -rf "$tmp"
+}
+publish_wiki_tree() { :; }   # Task 3에서 대체
+
 main() {
   local sub="${1:-}"; shift || true
   case "$sub" in
@@ -355,6 +383,7 @@ main() {
     pr-link)       cmd_pr_link "$@" ;;
     finalize)      cmd_finalize "$@" ;;
     link-child)    cmd_link_child "$@" ;;
+    wiki-publish)  cmd_wiki_publish "$@" ;;
     __test_status) __test_status "$@" ;;
     __test_config_path) __test_config_path "$@" ;;
     -h|--help|"") usage; exit 2 ;;
