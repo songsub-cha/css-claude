@@ -9,8 +9,8 @@ die() { log "ERROR: $*"; exit 1; }
 usage() {
   cat >&2 <<'USAGE'
 gh_sync.sh <subcommand> [--flag value ...]
-  enabled | init-issue | comment | set-state | adr
-  gate-open | gate-wait | gate-close | pr-link | finalize | link-child
+  enabled | init-issue | comment | set-state | adr | adr-list
+  gate-open | gate-wait | gate-close | pr-link | finalize | link-child | wiki-publish
 USAGE
 }
 
@@ -220,6 +220,17 @@ cmd_adr() {
   sess_set "$slug" ".github.adrs += [{n:$n, title:\"${OPT[title]}\", posted_at:\"$(date -u +%FT%TZ)\"}]"
 }
 
+# --- adr-list -----------------------------------------------------------------
+cmd_adr_list() { # print full ADR comment bodies from the issue (bootstrap backfill)
+  parse_opts "$@"; local slug="${OPT[session]}"
+  gh_enabled || return 0
+  local num; num="$(sess "$slug" '.github.issue_number')"; [[ -n "$num" ]] || return 0
+  local repo; repo="$(repo_slug "$slug")"; [[ -n "$repo" ]] || return 0
+  gh api --paginate "repos/$repo/issues/$num/comments?per_page=100" 2>/dev/null \
+    | jq -rs 'flatten | map(select(.body | startswith("### 🏛️ ADR-")) | .body) | join("\n\n")' \
+    || true
+}
+
 # --- gates --------------------------------------------------------------------
 cmd_gate_open() {
   parse_opts "$@"; local slug="${OPT[session]}" gate="${OPT[gate]}"
@@ -337,6 +348,7 @@ main() {
     comment)       cmd_comment "$@" ;;
     set-state)     cmd_set_state "$@" ;;
     adr)           cmd_adr "$@" ;;
+    adr-list)      cmd_adr_list "$@" ;;
     gate-open)     cmd_gate_open "$@" ;;
     gate-wait)     cmd_gate_wait "$@" ;;
     gate-close)    cmd_gate_close "$@" ;;

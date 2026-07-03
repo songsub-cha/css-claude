@@ -225,8 +225,27 @@ test_config_path_resolution() {
   rm -rf "$sb"
 }
 
+test_adr_list_prints_only_adr_bodies() {
+  setup; seed_issue
+  export FAKE_ISSUE_COMMENTS='[{"created_at":"t1","body":"### 🏛️ ADR-1: pick X\n- **Context**: c1"},{"created_at":"t2","body":"not an adr"},{"created_at":"t3","body":"### 🏛️ ADR-2: pick Y\n- **Context**: c2"}]'
+  local out; out="$(run adr-list --session demo)"
+  assert_contains "adr1 body" "$out" "ADR-1: pick X"
+  assert_contains "adr2 body" "$out" "ADR-2: pick Y"
+  assert_not_contains "non-adr excluded" "$out" "not an adr"
+  unset FAKE_ISSUE_COMMENTS
+  teardown
+}
+test_adr_list_empty_when_tracking_off() {
+  setup; seed_issue
+  jq '.github.tracking_enabled=false' "$CSS_CONFIG" > "$CSS_CONFIG.x" && mv "$CSS_CONFIG.x" "$CSS_CONFIG"
+  local out rc=0; out="$(run adr-list --session demo)" || rc=$?
+  assert_eq "exit 0" "$rc" "0"
+  assert_eq "empty output" "$out" ""
+  teardown
+}
+
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_init_issue_ensures_labels test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records test_pr_link_comments_and_sets_pr test_finalize_sets_done test_link_child_creates_subissue test_link_child_subissue_idempotent test_link_child_appends_checklist test_config_path_resolution )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_init_issue_ensures_labels test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records test_pr_link_comments_and_sets_pr test_finalize_sets_done test_link_child_creates_subissue test_link_child_subissue_idempotent test_link_child_appends_checklist test_config_path_resolution test_adr_list_prints_only_adr_bodies test_adr_list_empty_when_tracking_off )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]
