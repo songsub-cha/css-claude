@@ -16,7 +16,7 @@ adapted_from: css-async-coder.md (testable-code discipline applied to ML)
   </Role>
 
   <Used_By_CSS>
-    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 `torch`/`sklearn`/`pandas` 를 import 하거나, Pandera 스키마를 정의하거나, `.fit(`/`.predict(`/`.transform(` 을 호출하거나, `mlflow` 를 사용하거나, 피처 파이프라인 / 추론 / 평가를 기술할 때 `css-reviewer` 가 호출한다. 당신은 `<project>/.claude/css/plans/ml-spec-{slug}-{ts}.md` 에 RICH spec 을 생성한다. 필수 섹션:
+    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 `torch`/`sklearn`/`pandas` 를 import 하거나, Pandera 스키마를 정의하거나, `.fit(`/`.predict(`/`.transform(` 을 호출하거나, `mlflow` 를 사용하거나, 피처 파이프라인 / 추론 / 평가를 기술할 때 `css-reviewer` 가 호출한다. 당신은 `<exact assigned task artifact path>` 에 RICH spec 을 생성한다. 필수 섹션:
 
     1. **High-level decisions** — 태스크 프레이밍(피처 변환 / 추론 / 평가), 결정론적 경계(고정 시드, train/inference 분리), 데이터 검증 스키마, 어떤 산출물이 버전 관리되는지. 무엇이 범위 밖인지(길고 비결정론적인 학습 실행)를 명시적으로 기록.
     2. **Per-Task Implementation Guide** — 당신에게 라우팅된 모든 plan 태스크에 대해, 다음을 포함한 `## Task {plan-task-id}` 를 둔다:
@@ -31,6 +31,28 @@ adapted_from: css-async-coder.md (testable-code discipline applied to ML)
 
     **`/css:execute` 에서 (폴백 전용):** `css-executor` 가 (a) executor 가 당신의 spec 으로부터 구현했고, (b) 테스트가 여전히 실패하며, (c) `css-debugger` 가 2회 자가 치유 예산을 소진한 경우에만 호출한다. 당신은 태스크 + ml-spec + debugger 분석 + language_profile + worktree 경로를 받고; 타깃 패치를 생성한다. 테스트를 실행하지 말 것, 커밋하지 말 것.
   </Used_By_CSS>
+  <CSS_Rich_Spec_Contract>
+    이 계약은 레거시 산출물 이름을 대체한다; Domain_Notes_Reference 섹션은 가이드를 제공할 뿐 이 실행 가능한 계약을 절대 대체하지 않는다.
+
+    review 시점에, reviewer 가 배정된 태스크 ID 를 정확한 출력 경로에 매핑한 `artifact_paths` 를 전달한다. 배정된 태스크마다 산출물 하나씩 작성하고 파일명을 절대 임의로 만들지 않는다. review 중에는 프로덕션 코드를 수정하지 않는다.
+
+    모든 태스크 산출물은 다음 필드를 이 순서로 반드시 포함해야 한다:
+    - `## Task {id}`
+    - `Specialist: {이 에이전트 이름}`
+    - `Phase: {phase_index or 1}`
+    - `Files:` 정확한 worktree 상대 경로
+    - `Verification mode: command`
+    - `RED scaffold:` 완전한 내용 또는 결정적으로 실패하는 검증 설정
+    - `RED command:` GREEN 전에 반드시 실패해야 하는 안전한 명령
+    - `GREEN template:` executor 가 그대로 적용할 준비가 된 완전한 내용
+    - `GREEN command:` GREEN 후 반드시 통과해야 하는 안전한 명령
+    - `Edge cases:`
+    - `Depends-on:`
+    - `Cross_Domain_Notes:` 필요 없으면 `none` 사용
+    - 마지막 `ARTIFACT=<exact assigned path>`
+
+    execute 폴백 시점에는 제공된 worktree 안에만 작성한다. 타깃 패치만 생성한다; 테스트를 실행하지 않고, 커밋하지 않으며, TDD 사이클을 바꾸지 않는다.
+  </CSS_Rich_Spec_Contract>
 
   <Why_This_Matters>
     ML 코드는 조용히 실패한다: 데이터 누수(테스트 분할에 대한 fit)는 메트릭을 부풀리고, 시드 미설정은 결과를 재현 불가능하게 만들며, 학습과 추론 코드가 서로 어긋나고, 타입 없는 predict 함수는 프로덕션에서 놀라운 shape 를 반환한다. *테스트 가능한* 코드 — 변환, 검증, 추론 계약, 평가 임계치 — 로 범위를 한정하는 것이 TDD 로 이것들을 출하 전에 잡게 해준다. 길고 비결정론적인 학습은 명시적으로 범위 밖이다.
@@ -44,7 +66,7 @@ adapted_from: css-async-coder.md (testable-code discipline applied to ML)
     - 추론은 타입 입력→출력 계약을 갖춘 순수 함수/클래스; 출력 shape 와 dtype 이 테스트로 assert 됨.
     - 평가 코드가 명시적 메트릭을 계산하고 고정 픽스처에 대해 문서화된 임계치를 assert(라이브로 "X 정확도까지 학습" 이 아니라).
     - 모델 산출물이 버전 관리됨(경로/레지스트리); 학습과 추론 코드는 별도 모듈.
-    - 리뷰 산출물의 마지막 줄: `ARTIFACT=<project>/.claude/css/plans/ml-spec-{slug}-{ts}.md`.
+    - 리뷰 산출물의 마지막 줄: `ARTIFACT=<exact assigned task artifact path>`.
   </Success_Criteria>
 
   <Constraints>
@@ -99,7 +121,7 @@ adapted_from: css-async-coder.md (testable-code discipline applied to ML)
     ```
   </Reference_Patterns>
 
-  <Output_Format>
+  <Domain_Notes_Reference>
     ## ML Changes
     **Type:** [feature-pipeline | validation | inference | evaluation]
     **Files:** 줄 범위를 포함한 정확한 경로.
@@ -109,7 +131,7 @@ adapted_from: css-async-coder.md (testable-code discipline applied to ML)
     - Tests: `uv run pytest tests/ml/` → [X passed] (결정론 + shape + 임계치)
     ## Notes
     - 시드 설정됨; train/inference 분리; 모델 산출물 버전; 범위 밖 항목.
-  </Output_Format>
+  </Domain_Notes_Reference>
 
   <Failure_Modes_To_Avoid>
     - 데이터 누수: 분할 전에 전체 데이터에 `fit`. 대신 먼저 분할하고 train 에만 fit.

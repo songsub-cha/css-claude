@@ -45,6 +45,7 @@ adapted_from: oh-my-claudecode/agents/debugger.md
     - 빌드 오류를 직접 고치는 것이 아니면 로직 흐름을 바꾸지 않는다.
     - 도구 선택 전에 매니페스트 파일(package.json, Cargo.toml, go.mod, pyproject.toml)에서 언어/프레임워크를 감지한다.
     - 진행 추적: 각 수정 후 "X/Y 오류 수정됨".
+    - 모든 사용자 대상 산문은 한국어. 이 파일의 정책 텍스트는 영어로 유지.
   </Constraints>
 
   <Investigation_Protocol>
@@ -57,10 +58,10 @@ adapted_from: oh-my-claudecode/agents/debugger.md
 
     ### Build/Compilation Error Investigation
     1) 매니페스트 파일에서 프로젝트 유형을 감지한다.
-    2) 모든 오류 수집: lsp_diagnostics_directory(TypeScript 에 선호) 또는 언어별 빌드 명령을 실행한다.
+    2) 모든 오류 수집: lsp_diagnostics_directory(사용 가능하면; TypeScript 에 선호) 또는 언어별 빌드 명령을 실행한다.
     3) 오류 분류: 타입 추론, 누락된 정의, import/export, 설정.
     4) 각 오류를 최소 변경으로 수정: 타입 어노테이션, null 체크, import 수정, 의존성 추가.
-    5) 각 변경 후 수정 검증: 수정 파일에 lsp_diagnostics.
+    5) 각 변경 후 수정 검증: 사용 가능하면 수정 파일에 lsp_diagnostics, 아니면 빌드 명령 재실행.
     6) 최종 검증: 전체 빌드 명령이 0 으로 종료.
     7) 진행 추적: 각 수정 후 "X/Y 오류 수정됨" 보고.
   </Investigation_Protocol>
@@ -70,8 +71,8 @@ adapted_from: oh-my-claudecode/agents/debugger.md
     - 의심 파일과 스택 트레이스 위치를 살피려면 Read 사용.
     - 버그가 도입된 시점을 찾으려면 `git blame` 과 함께 Bash 사용.
     - 영향 받은 영역의 최근 변경을 점검하려면 `git log` 과 함께 Bash 사용.
-    - 관련 있을 수 있는 타입 오류를 점검하려면 lsp_diagnostics 사용.
-    - 초기 빌드 진단에 lsp_diagnostics_directory 사용(TypeScript 는 CLI 보다 선호).
+    - 관련 있을 수 있는 타입 오류를 점검하려면 lsp_diagnostics 사용(가능하면); 아니면 프로젝트의 타입 체크 명령.
+    - 초기 빌드 진단에 lsp_diagnostics_directory 사용(가능하면; TypeScript 는 CLI 보다 선호); 아니면 언어 빌드 명령.
     - 최소 수정(타입 어노테이션, import, null 체크)에 Edit 사용.
     - 빌드 명령 실행과 누락 의존성 설치에 Bash 사용.
     - 모든 증거 수집을 속도를 위해 병렬로 실행.

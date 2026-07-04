@@ -16,9 +16,10 @@ argument-hint: "[--session <name>] <idea>"
    - `--session` 제공 + 파일 없음 → 초기화.
    - `--session` 없음 → 아이디어로부터 슬러그 도출(kebab-case, 필요 시 충돌 접미사), 세션 초기화, `_active.json` 갱신.
    - `session.master_flow = true` 로 설정.
-   - **GitHub 추적 초기화**: `GHS() { bash "${CSS_LIB:-$HOME/.claude/css/lib}/gh_sync.sh" "$@"; }` 를 정의한다. `gh_on = ("$(GHS enabled --session <slug>)" == "1")` 로 설정한다. `gh_on` 이면 `GHS init-issue --session <slug>` 를 실행한다(멱등적 — 이슈를 생성하고 사용자 Projects 보드에 추가하거나, resume 시 저장된 이슈를 재사용).
+   - Canonical 세션 상태 참조: CSS 소스/플러그인 디렉토리의 `docs/session-schema.md`(모든 필드, 작성자, 독자). 커맨드는 자체 완결적으로 유지된다 — 필드명이나 소유자가 모호할 때만 참조한다.
+   - **GitHub 추적 초기화**: 두 설치 모드 모두를 위해 CSS 설치 디렉토리를 해석한 뒤 헬퍼를 정의한다 — `CSS_PLUGIN_DIR="${CLAUDE_PLUGIN_ROOT}"; CSS_PLUGIN_DIR="${CSS_PLUGIN_DIR:-$HOME/.claude/css}"; GHS() { bash "${CSS_LIB:-$CSS_PLUGIN_DIR/lib}/gh_sync.sh" "$@"; }`(플러그인 모드에서는 `${CLAUDE_PLUGIN_ROOT}` 가 인라인으로 치환되고; 스크립트 모드에서는 비어 있어 `$HOME/.claude/css` 로 폴백). Bash 툴 호출 사이에는 셸 상태가 유지되지 않는다 — `GHS` 를 사용하는 **모든** Bash 호출에서 이 헬퍼를 재정의한다. 설치 디렉토리를 절대 `CSS_ROOT` 라는 이름으로 명명하거나 `export` 하지 않는다: gh_sync.sh 는 `CSS_ROOT` 를 세션 파일 조회를 위한 *프로젝트* 루트로 읽으며, 그 이름으로 설치 디렉토리를 export 하면 모든 세션 읽기가 조용히 깨진다. `GHS` 는 항상 프로젝트 루트에서 실행한다. `gh_on = ("$(GHS enabled --session <slug>)" == "1")` 로 설정한다. `gh_on` 이면 `GHS init-issue --session <slug>` 를 실행한다(멱등적 — 이슈를 생성하고 사용자 Projects 보드에 추가하거나, resume 시 저장된 이슈를 재사용).
 
-3. **락 획득**.
+3. **락 획득**. 락 규약(모든 스테이지 커맨드가 공유): `<project>/.claude/css/locks/{slug}-{stage}.lock` 에 `{acquired_at}` 을 담는다. 60분보다 오래된 락은 stale — 교체하고 인수(takeover) 사실을 남긴다. 다른 실행의 신선한 락 → 진행 대신 안내와 함께 중단. loopback 과 취소를 포함한 모든 종료 경로에서 락을 해제한다.
 
 ### GitHub 스테이지 동기화 (`gh_on` 일 때)
 
@@ -46,7 +47,7 @@ argument-hint: "[--session <name>] <idea>"
 
 6. **Stage 3 — review (loop)** *(단일 Phase / 레거시 경로)*:
    - `/css:review --session <slug>` 호출.
-   - `LOOPBACK_TO_PLAN` 시, review 명령 자체가 최대 2회까지 plan 으로 되돌아간다.
+   - `LOOPBACK_TO_PLAN` 시, review 명령 자체가 `session.config.review.max_loopback_attempts`(기본 2)까지 plan 으로 되돌아간다.
    - `LOOPBACK_TO_INTERVIEW` 시, interview 재진입 전에 사용자에게 확인을 받는다.
    - `ESCALATE` 시, 중단하고 옵션을 노출한다.
    - `gh_on` 이고 review 가 주목할 만한 아키텍처 결정이나 사소하지 않은 판정 근거를 만들었다면 게시한다: `GHS adr --session <slug> --title "<short>" --context "<why>" --decision "<what>" --consequences "<tradeoffs>"`(중요한 결정만 게시; 헬퍼가 ADR-1, ADR-2, … 로 번호를 매기고 resume 시 중복을 제거).
@@ -96,7 +97,7 @@ argument-hint: "[--session <name>] <idea>"
 
 9. **Stage 5 — verify (loop)** *(단일 Phase / 레거시 경로)*:
    - `/css:verify --session <slug>` 호출.
-   - `LOOPBACK_TO_EXECUTE` 시, verify 명령 자체가 최대 3회까지 execute 로 되돌아간다.
+   - `LOOPBACK_TO_EXECUTE` 시, verify 명령 자체가 `session.config.verify.max_loopback_attempts`(기본 3)까지 execute 로 되돌아간다.
    - `ESCALATE` 시, 옵션과 함께 중단.
 
 10. **Stage 6 — document** *(단일 Phase / 레거시 경로)*: `/css:document --session <slug>` 호출.
@@ -146,17 +147,22 @@ argument-hint: "[--session <name>] <idea>"
    각 자식 슬러그에 대해 위상 순서(topological order)대로(`phase_index` 기준, `depends_on` 준수):
    a. `/css:plan --session <child>` (kind=phase → detailed) → `/css:review --session <child>` (kind=phase → 이 Phase 의 rich-spec).
    b. **Gate 2 (Phase 별)** — AskUserQuestion: "Phase {idx} '{label}' execute 시작. base=`{base_branch}`. [Yes / Show / Skip / Cancel]".
+      - Yes → 계속하기 전에 **자식** 세션에 영속화: `gates.gate2_pre_execute = {state:"approved", source:"terminal_ask", approved_at: now()}`(7단계와 같은 형태 — `/css:execute` 가 이 게이트를 확인).
+      - Show → Phase plan 요약과 그 Rich Spec 경로를 출력한 뒤 다시 묻는다.
+      - Skip → 자식 세션의 남은 스테이지를 skipped 로 표시; `depends_on` 에서 이를 선언한 Phase 들도 함께 건너뜀(그 base 브랜치는 만들어지지 않음); 다음으로 실행 가능한 Phase 로 계속.
+      - Cancel → 락을 해제하고 종료.
    c. `/css:execute --session <child>` → `/css:verify --session <child>` → `/css:document --session <child>`.
    d. **Gate 3 (Phase 별)** — AskUserQuestion: "Phase {idx} PR 생성 (base=`{base_branch}`). [Yes / Draft / Cancel]".
+      - Yes / Draft → **자식** 세션에 영속화: `gates.gate3_pre_pr = {state:"approved", source:"terminal_ask", approved_at: now(), draft: (answer == "Draft")}`(마스터 플로우에서 `/css:pr` 이 이 게이트를 요구). Cancel → 이 Phase 의 PR 을 건너뛰고 계속.
    e. `/css:pr --session <child> --base <base_branch>`.
-   독립적인 Phase(서로소인 `depends_on`)는 병렬 실행을 위해 별도 세션으로 디스패치할 수 있다(MAY).
+   독립적인 Phase(서로소인 `depends_on`)는 병렬 실행을 위해 별도 세션으로 디스패치할 수 있다(MAY) — 그 경우 모든 스테이지 호출에 `--session` 을 명시적으로 전달한다: `_active.json` 은 last-writer-wins 편의 포인터이며 둘 이상의 실행이 동시에 활성일 때는 의존해서는 안 된다.
 
 14. **마무리(Finalize)**: 모든 phase 를 completed 로 표시한다.
     - `gh_on` 이면 `GHS finalize --session <slug>`(라벨 `css:done` + 보드 `Done`) 를 실행한다.
-    - 락을 해제하고 요약을 출력한다: "Pipeline 완료. PR: `<URL>`. 산출물: `<paths>`."
+    - 락을 해제하고 요약을 출력한다: "Pipeline 완료. PR: `<URL>`. 산출물: `<paths>`. PR 머지 후 `/css:clean --session <slug>` 으로 worktree/브랜치를 정리할 수 있습니다."
 
 <self_check>
-- [ ] All 7 phases recorded as completed in session
+- [ ] All pipeline stages (interview→pr, including phasing when applicable) recorded as completed in session
 - [ ] Each gate prompt was shown when applicable
 - [ ] PR URL captured
 - [ ] Lock released

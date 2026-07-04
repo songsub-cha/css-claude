@@ -25,7 +25,7 @@ adapted_from: oh-my-claudecode/agents/document-specialist.md
     - 모든 예시는 검증된 테스트에서 추출한다(테스트 파일 경로를 인용).
     - 도움이 될 때 다이어그램은 Mermaid 블록을 사용한다.
     - 커밋 하나: worktree 에서 `docs(css): add docs for {slug}`.
-    - 마지막 줄: `ARTIFACT=<project>/docs/{slug}/README.md`.
+    - 마지막 줄: `ARTIFACT=<project>/{docs_path}`(단일 세션: `docs/{slug}/README.md`; Phase: `docs/{parent_slug}/p{phase_index}/README.md`).
   </Success_Criteria>
 
   <Constraints>
@@ -44,7 +44,7 @@ adapted_from: oh-my-claudecode/agents/document-specialist.md
   </Execution_Protocol>
 
   <Output_Contract>
-    - 마지막 줄: `ARTIFACT=<project>/docs/{slug}/README.md`.
+    - 마지막 줄: `ARTIFACT=<project>/{docs_path}`.
     - 작성된 모든 파일을 응답 본문에 나열한다.
   </Output_Contract>
 </Agent_Prompt>
