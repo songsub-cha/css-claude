@@ -26,6 +26,7 @@ Each stage can also be run independently with `--session`:
 /css:document --session <slug>
 /css:pr --session <slug>
 /css:clean --session <slug>    # post-merge cleanup
+/css:wiki                      # (anytime) refresh docs/project/ living docs + Wiki mirror
 ```
 
 `--session` is optional. If omitted, CSS automatically picks the most recent session from `<project>/.claude/css/sessions/_active.json`.
@@ -80,3 +81,20 @@ Once the PR has merged, tear down the worktree and local branch:
 ```
 
 It never deletes dirty changes, unpushed commits, or an unmerged PR without asking first. Use `--keep-branch` to keep the local branch; the remote branch is never touched.
+
+## Project docs (/css:wiki)
+
+Independent of the per-slug snapshots (`docs/<slug>/`), keeps `docs/project/` as the
+**current-state** documentation (feature SoT, architecture, data schema, operations, ADRs).
+Runs anytime, session-free; commits that bypassed the pipeline are picked up via git diff.
+
+```
+/css:wiki                # bootstrap when docs/project/ is absent, incremental otherwise
+/css:wiki --init         # force a full rebuild
+/css:wiki --no-publish   # stop after the in-repo commit (skip the Wiki mirror)
+```
+
+- Changes land only after a per-page summary + approval gate, committed scoped to `docs/project/`.
+- The sync baseline is the `css:last-synced` marker in the `docs/project/README.md` footer.
+- When the GitHub Wiki is unavailable (private repo on the Free plan, uninitialized wiki,
+  unauthenticated gh), only the mirror is skipped — everything else works the same.

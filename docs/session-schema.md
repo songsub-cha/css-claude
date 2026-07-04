@@ -20,6 +20,9 @@ same change that adds or renames a field.
 | `verifies/` | Verify aggregate + persisted code/security review reports |
 | `locks/{slug}-{stage}.lock` | Stage locks (see Locking) |
 
+`/css:wiki` is session-independent: it **reads** session files (ADR backfill) but never
+writes them and never updates `_active.json`. Its lock is `locks/_project-wiki.lock`.
+
 ## Session fields
 
 | Field | Written by | Notes |
