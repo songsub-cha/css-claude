@@ -4,7 +4,7 @@
 
 **CSS — Claude Super System**: [Claude Code](https://claude.com/claude-code)를 위한 개인용 글로벌 소프트웨어 개발 자동화 파이프라인.
 
-상태: **v0.1.0**. 개인 사용 파이프라인. 설치 방법은 [`docs/installation.ko.md`](docs/installation.ko.md)를 참고하세요.
+상태: **v0.2.0**. 개인 사용 파이프라인. 설치 방법은 [`docs/installation.ko.md`](docs/installation.ko.md)를 참고하세요.
 
 ---
 
@@ -99,7 +99,7 @@ flowchart TD
 | 후처리 | `/css:clean` | — | PR 머지 후 worktree/로컬 브랜치 정리 (미머지·미푸시 작업은 확인 없이 삭제하지 않음) |
 | 보조 | `/css:wiki` | `css-doc-curator` (sonnet) | `docs/project/` 살아있는 문서(기능 SoT·아키텍처·스키마·운영·ADR) 갱신 + GitHub Wiki 미러 (`--init` 부트스트랩, `--no-publish` 미러 생략) |
 
-### 도메인 전문가 에이전트 (21개 중 11개)
+### 도메인 전문가 에이전트 (22개 중 11개)
 
 review 단계에서 Rich Spec을 생성하고, execute 단계에서는 캐시 미스 시에만 fallback으로 호출됩니다 (비용 절감 ~40–50%).
 

@@ -4,7 +4,7 @@
 
 **CSS — Claude Super System**: a personal, global software-development automation pipeline for [Claude Code](https://claude.com/claude-code).
 
-Status: **v0.1.0**. Personal-use pipeline. See [`docs/installation.md`](docs/installation.md) for setup.
+Status: **v0.2.0**. Personal-use pipeline. See [`docs/installation.md`](docs/installation.md) for setup.
 
 ---
 
@@ -99,7 +99,7 @@ flowchart TD
 | post | `/css:clean` | — | worktree/local-branch teardown after the PR merges (never deletes unmerged or unpushed work without confirmation) |
 | aux | `/css:wiki` | `css-doc-curator` (sonnet) | Curates `docs/project/` living docs (feature SoT, architecture, schema, ops, ADRs) + read-only GitHub Wiki mirror (`--init` bootstrap, `--no-publish` to skip the mirror) |
 
-### Domain-specialist agents (11 of 21)
+### Domain-specialist agents (11 of 22)
 
 They author Rich Specs in the review stage and are only called as a fallback on a cache miss during execute (~40–50% cost savings).
 
