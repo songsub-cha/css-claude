@@ -15,13 +15,16 @@ argument-hint: "[--session <name>] <idea>"
    - `--session <name>` 이 주어졌고 `<project>/.claude/css/sessions/<name>.json` 이 존재하면 → 이어서 진행(resume).
    - 그렇지 않으면 아이디어로부터 새 kebab-case 슬러그를 생성한다(예: "JWT auth middleware" → `jwt-auth-middleware`). 생성된 슬러그가 기존 세션 파일과 충돌하면 숫자 접미사를 붙인다.
    - 새 세션이면 `<project>/.claude/css/sessions/<slug>.json` 을 초기화하고, 이어서 진행하는 경우면 로드한다.
-   - **저장소(repo) 메타데이터 수집** (NEW):
+   - 새 세션은 반드시 `kind:"epic"` 과 `single_phase:false` 로 시작해 첫 plan 이 `/css:phase` 대상인 스켈레톤이 되게 한다. kind 없는 레거시 세션을 단순히 resume 할 때는 이 필드들을 추가하지 않는다; 레거시 세션은 상세 단일 세션 호환 경로를 유지한다.
+   - **저장소(repo) 메타데이터 수집** (필드가 없을 때마다 — 새 세션과 resume 되는 레거시 세션 모두):
      - `repo_root = git -C <project> rev-parse --show-toplevel`
      - `repo_name = basename(repo_root)`
-     - 세션 JSON 에 기록: `session.repo_root`, `session.repo_name`.
+     - `base_branch = git -C <project> rev-parse --abbrev-ref HEAD`(detached 이거나 git 저장소가 아니면 폴백 `main`) — 이후 worktree 생성과 PR base 의 기본값이 된다.
+     - 세션 JSON 에 기록: `session.repo_root`, `session.repo_name`, `session.base_branch`.
      - `git rev-parse` 가 실패하면(git 저장소가 아님) `repo_root = <project>`, `repo_name = basename(<project>)` 을 사용하고 계속 진행한다.
+   - **파이프라인 config 로드** (`session.config` 이 없을 때): 사용자 config `~/.claude/css/config.json`(있으면)을 번들 `config/default-config.json`(플러그인 모드에서는 플러그인 디렉토리 아래, 스크립트 모드에서는 `~/.claude/css/`) 위에 deep-merge 한다. 둘 다 읽을 수 없으면 문서화된 기본값을 사용한다: `verify.coverage_threshold` 85, `review.max_loopback_attempts` 2, `verify.max_loopback_attempts` 3, `execute.tdd_self_heal_max` 2. 병합된 객체를 `session.config` 로 저장하고 `session.retries = {review: 0, verify: 0}` 을 초기화한다 — 다운스트림 단계가 둘 다 읽는다.
    - `<project>/.claude/css/sessions/_active.json` 을 `{"latest_slug": "<slug>"}` 로 갱신한다.
-   - phase 락(lock)을 획득한다.
+   - interview 락을 획득한다: `<project>/.claude/css/locks/{slug}-interview.lock` 에 `{acquired_at}` 을 담는다(60분 경과 시 stale → 안내와 함께 교체; 다른 실행의 신선한 락 → 안내와 함께 중단).
 
 3. **superpowers 활성화 여부 확인**: `~/.claude/settings.json` 을 읽는다. `enabledPlugins["superpowers@claude-plugins-official"]` 이 true 가 아니면 다음 메시지로 중단한다: "CSS requires the superpowers plugin. Enable via /plugin and retry."
 

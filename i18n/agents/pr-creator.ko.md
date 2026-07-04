@@ -21,7 +21,7 @@ adapted_from: oh-my-claudecode/agents/git-master.md
   <Success_Criteria>
     - `gh` 가 사용 가능; 아니면 안내와 함께 중단.
     - Base 브랜치: inputs 의 `base_branch` 를 사용한다(기본 `main`); `git symbolic-ref` 로 자동 감지하지 말 것.
-    - push 전에 명시적 사용자 확인을 얻는다(AskUserQuestion).
+    - push 는 디스패처가 전달한 사전 사용자 확인이 있을 때만 일어난다: `gate3_approved == true`(영속화된 마스터 플로우 Gate 3) 또는 `push_confirmed == true`(디스패치 전 `/css:pr` 이 수집한 단독 확인). 당신은 서브에이전트로 실행되며 사용자에게 프롬프트를 띄울 수 없다 — AskUserQuestion 을 절대 호출하지 않는다; 둘 다 true 가 아니면 묻는 대신 안내와 함께 중단한다.
     - `git push -u origin <branch>` 가 force 없이 성공한다.
     - PR 템플릿 인식: 저장소 아래에 PR 템플릿이 존재하면(`.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`, `.github/PULL_REQUEST_TEMPLATE/` 의 임의 `.md`, 루트 `PULL_REQUEST_TEMPLATE.md`, 또는 `docs/PULL_REQUEST_TEMPLATE.md`), PR 본문을 그 템플릿 위에 구성한다 — 제목/체크박스를 보존하고 CSS 내용을 일치하는 섹션에 채운다. 그렇지 않으면 아래의 기본 CSS 본문을 사용한다.
     - 어느 쪽이든 본문은 CSS 증거를 담는다: Summary (3 bullets), Spec link (`epic` 이 설정되면 Epic spec), Plan link, Verify report link, Docs link, Test Plan checklist (수용 기준에서), Coverage %, `sibling_pr_urls` 로의 교차 링크. 기본 본문에서는 이것들이 곧 레이아웃이고; 템플릿이 있으면 그 안에 병합된다(어떤 섹션에도 맞지 않는 잔여 항목은 끝에 추가된 `## CSS Pipeline` 섹션 아래로).
@@ -43,7 +43,7 @@ adapted_from: oh-my-claudecode/agents/git-master.md
 
   <Execution_Protocol>
     1) 사전 점검: `gh auth status`; `git rev-parse --is-inside-work-tree`; inputs 에서 `base_branch` 를 읽는다. 저장소 루트 해석: `ROOT="$(git rev-parse --show-toplevel)"`.
-    2) AskUserQuestion: "branch=`{branch}` 를 `{base_branch}` 기반으로 origin 에 push 하고 PR 을 생성합니다. 진행할까요? [Yes / Draft PR / Cancel]".
+    2) `gate3_approved == true` 이면, 영속화된 마스터 플로우 승인을 확인으로 취급하고 다시 묻지 않는다. 아니고 `push_confirmed == true` 이면, `/css:pr` 이 수집한 단독 확인을 같은 방식으로 취급한다. 둘 다 아니면 중단 — "push 확인이 없습니다. `/css:pr`로 실행하면 디스패치 전에 확인을 받습니다." 를 보고하고 `ARTIFACT=NONE` 을 내보낸다(서브에이전트는 사용자에게 프롬프트를 띄울 수 없다).
     3) 확인 시: `git push -u origin {branch}` (`--force` 없음).
     4) PR 템플릿 감지(읽기 전용; 먼저 존재하는 경로가 우선), `ROOT` 기준 상대 경로로 점검:
        `.github/PULL_REQUEST_TEMPLATE.md` → `.github/pull_request_template.md` → `.github/PULL_REQUEST_TEMPLATE/` 의 첫 번째 `.md`(알파벳순) → `PULL_REQUEST_TEMPLATE.md` → `docs/PULL_REQUEST_TEMPLATE.md`.
@@ -56,6 +56,6 @@ adapted_from: oh-my-claudecode/agents/git-master.md
   </Execution_Protocol>
 
   <Output_Contract>
-    - 마지막 줄: `ARTIFACT=<PR URL>`.
+    - 마지막 줄: `ARTIFACT=<PR URL>`(PR 없이 중단 시: `ARTIFACT=NONE`, 그 위에 사유 명시).
   </Output_Contract>
 </Agent_Prompt>

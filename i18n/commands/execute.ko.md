@@ -5,98 +5,36 @@ argument-hint: "[--session <name>] [--plan <plan-path>] [--resume]"
 
 # /css:execute
 
-git worktree 를 생성하거나 연결한 뒤, executor 를 배치 단위로 TDD 로 구동한다. GREEN 은 `/css:review` 에서 생성된 rich-spec 산출물을 활용한다(cache-first); 전문가는 제한된 폴백(fallback)으로만 재호출된다.
+격리된 worktree 안에서 엄격한 Red-Green-Refactor TDD 를 사용해 태스크 단위 Rich Spec 을 구현한다.
 
 ## 단계
 
-1. **인자 파싱**: `--session`, `--plan`, `--resume`, `--phase <n>` (선택; 해석된 세션이 `kind:"phase"` 이면 `phase_index` 에서 `n` 을 추론).
-
-2. **세션 해석**. `--session` 이 없으면 `_active.json` 에서 기본값을 가져온다.
-
-3. **plan 경로 해석** (`/css:review` 와 동일한 규칙).
-
-4. `session.language_profile` 이 설정되어 있지 않으면 **언어 프로파일 감지**. spec(섹션: Language Detection Logic)의 감지 로직을 실행한다. 해석된 프로파일을 세션에 기록한다.
-
-5. **사전 점검(Pre-flight): rich-spec 준비 상태 확인**:
-   - `kind:"phase"` 세션: `<project>/.claude/css/plans/{parent_slug}-p{phase_index}-T*.md` 를 나열한다.
-   - 레거시 세션: `<project>/.claude/css/plans/*-spec-{slug}-*.md` 를 나열한다.
-   - 전문가에게 라우팅된 모든 plan 태스크에 대해, 해당 산출물에 `RED scaffold:` + `GREEN template:` 을 가진 `## Task {id}` 섹션이 있고 `Phase: {phase_index}` 로 태그되어 있는지 확인한다.
-   - 누락된 것이 있으면 → "rich-spec 누락. `/css:review` 를 먼저 통과시켜주세요 (verdict=PASS)." 로 중단한다.
-
-6. **worktree 설정** (`--resume` 가 아닌 경우):
-   - 저장소 이름 계산: `basename $(git rev-parse --show-toplevel)`.
-   - `kind:"phase"` 세션: worktree 경로 = `../{repo}-css-{parent_slug}-p{phase_index}`; 브랜치 = `css/{parent_slug}/p{phase_index}`; Phase 세션에서 읽은 `base_branch` 로부터 생성.
-   - 레거시 세션: worktree 경로 = `../{repo}-css-{slug}`; 브랜치 = `css/{slug}`; base = 현재 브랜치.
-   - 경로가 이미 존재하면: 사용자에게 질문 "기존 worktree 가 있습니다. [재사용 / 새로 만들기 / 취소]".
-   - 새로 만드는 경우: `git worktree add <path> -b <branch> <base_branch>`.
-   - 세션에 `phases.execute.worktree = <path>`, `phases.execute.branch = <branch>`, `phases.execute.base_branch = <base_branch>` 를 기록한다.
-
-7. **마스터 플로우 가드** + **Gate 2 확인**:
-   - **마스터 플로우 가드** (NEW):
-     - `session.master_flow == true` 이고 `session.gates.gate2_pre_execute.state != "approved"` 이면 중단한다:
-       "Gate 2가 승인되지 않았습니다. `/css:ship --session <name>`을 통해 진행하세요."
-     - `master_flow == true` 이고 승인된 상태이면 프롬프트 없이 진행한다.
-   - **AskUserQuestion (마스터 플로우 Gate 2)** — `/css:ship` 의 일부로 호출되었고(즉 `session.master_flow == true`) gate2_pre_execute.state 가 아직 "approved" 가 아닌 경우에만:
-     "Plan 검증 완료. worktree '`<path>`' 생성 후 execute 를 시작합니다. 배치 N개, 작업 M개. 진행할까요? [Yes / Show plan / Cancel]"
-
-8. **헤더 출력**: `[css:execute @ slug={slug}]`.
-
-9. **executor 디스패치**:
-
-   ```
-   Task(
-     subagent_type="css-executor",
-     description="css execute: {slug}",
-     prompt="""
-     <inputs>
-     plan: {plan path}
-     worktree: {worktree path}
-     branch: {branch}
-     base_branch: {base_branch}
-     phase_index: {phase_index or null}
-     language_profile: {profile object}
-     session: <project>/.claude/css/sessions/{slug}.json
-     rich_specs_dir: <project>/.claude/css/plans/
-     </inputs>
-     <task>
-     첫 번째 동작 — 파일 읽기 전: `cd {worktree path} && pwd`.
-     디렉토리 진입 실패 시 VERDICT=ESCALATE로 중단.
-     이후 모든 파일 경로는 {worktree path} 기준 상대 경로다.
-     절대 경로가 {worktree path}로 시작하지 않는 파일은 쓰거나 편집하거나 삭제하지 않는다.
-
-     Implement the plan task-by-task using strict Red-Green-Refactor TDD with the cache-first protocol:
-       - RED: copy the matching rich-spec section's RED scaffold to the worktree, run, must fail.
-       - GREEN: copy the matching rich-spec section's GREEN template, run tests.
-       - On failure: css-debugger × 2 → specialist fallback × 1 → abort.
-       - REFACTOR: css-code-simplifier (read-only suggestions).
-       - COMMIT: per-task, on css/{slug}, with CSS-Slug / CSS-Task / CSS-Specialist-Spec / CSS-Specialist-Fallback trailers as applicable. No Claude/AI attribution in the message — no "Co-Authored-By: Claude" trailer, no "🤖 Generated with [Claude Code]" line.
-     Per-batch user checkpoints via AskUserQuestion. Coverage measured after each batch; below threshold → css-test-engineer (max 2 rounds).
-     Index all rich-spec artifacts under rich_specs_dir before starting (build task_id → (spec_path, anchor) map).
-     </task>
-     <output_contract>
-     Write exec log to: <project>/.claude/css/executions/exec-log-{slug}-{ts}.md (for kind:"phase", use exec-log-{parent_slug}-p{phase_index}-{ts}.md)
-     Log MUST record cache_miss_count per slug.
-     Final line: VERDICT=PASS | VERDICT=ESCALATE | VERDICT=PAUSE
-     </output_contract>
-     """
-   )
-   ```
-
-9b. **락 및 active 추적**: 락 키 = `locks/{slug}-execute.lock` (`kind:"phase"` 인 경우 `slug` 는 자식 슬러그 — 형제 Phase 마다 구분되며 충돌 없음). `_active.json` 갱신 시 `active_epic`(`parent_slug` 또는 자신)과 `active_phase`(`phase_index` 또는 null)도 함께 설정한다.
-
-10. **판정 파싱**:
-    - `PASS` → 세션: `phases.execute.status = completed`. 다음 단계를 안내한다.
-    - `ESCALATE` → 사용자에게 사유를 노출하고 옵션 제시 [배치 재시도 / 수용하고 계속 / 중단].
-    - `PAUSE` → 사용자가 취소함. `--resume` 를 위해 상태를 보존한다.
-
-11. **락 해제**.
+1. `--session`, `--plan`, `--resume`, 선택적 `--phase` 를 파싱한다; 세션과 상세 plan 을 해석한다.
+2. language profile 이 없으면 해석한다. 기존 프로젝트 스크립트를 보존한다:
+   - `pyproject.toml`/`uv.lock`: Python, `uv run pytest`, `uv run pytest --cov`
+   - `package.json`: Node/TypeScript, 기존 테스트·커버리지 스크립트
+   - `pom.xml`: Maven, `./mvnw test` 또는 `mvn test`
+   - `build.gradle[.kts]`: Gradle, `./gradlew test`
+   - `go.mod`: Go, `go test ./...`, `go test -cover ./...`
+   - 그 외에는 테스트와 커버리지 명령을 물어본 뒤 저장한다.
+3. `session.phases.review.rich_specs` 에서 실행 가능한 Rich Spec 을 해석한다. 없을 때만 Phase `{parent_slug}-p{phase_index}-T*.md`, single-session `{slug}-T*.md`, 그다음 레거시 `*-spec-{slug}-*.md` 로 폴백한다.
+4. 라우팅된 모든 태스크를 사전 점검(pre-flight)한다. `/css:review` 로부터 온, canonical 필드를 모두 갖춘 advisory 아닌 산출물 정확히 하나를 요구한다; `Phase: {phase_index or 1}` 을 요구한다.
+5. `session.base_branch`(interview 에서 캡처; 폴백 `main`)로부터 잘라낸 격리 worktree 와 브랜치를 생성하거나 재개한다. Phase 경로/브랜치는 `../{repo}-css-{parent_slug}-p{phase_index}` 와 `css/{parent_slug}/p{phase_index}`; single-session 경로/브랜치는 `../{repo}-css-{slug}` 와 `css/{slug}`. worktree 부모 디렉터리는 설정되어 있으면 `session.config.execute.worktree_parent`, 아니면 `..`. 참고: 형제(`..`) worktree 는 프로젝트 디렉터리 밖에 위치하므로 Claude Code 가 그곳의 쓰기에 권한 승인을 요구할 수 있다 — worktree 경로를 사전 승인(추가 작업 디렉터리 / `--add-dir`)하거나, `worktree_parent` 를 `.worktrees` 로 설정해 worktree 를 저장소 안에 유지한다(`.worktrees/` 가 git-ignore 되었는지 확인). worktree, 브랜치, base_branch 를 세션에 기록한다. 해석된 worktree 밖의 모든 쓰기를 거부한다.
+6. 마스터 플로우에 대해 Gate 2 를 강제한다 — `session.master_flow == true` 이면 `session.gates.gate2_pre_execute.state == "approved"` 를 요구한다; 아니면 중단한다: "Gate 2가 승인되지 않았습니다. `/css:ship --session <name>`으로 진행하세요."(단독 non-master 실행은 게이트가 필요 없다 — 사용자가 execute 를 직접 호출했다). execute 락을 획득하고(`locks/{slug}-execute.lock`; 60분 경과 시 stale → 안내와 함께 교체; 다른 실행의 신선한 락 → 안내와 함께 중단), `_active.json`(`latest_slug`, `active_epic`, `active_phase`)을 갱신하고, 정확한 `rich_specs` 목록과 함께 `css-executor` 를 디스패치한다. executor 는 서브에이전트이며 사용자에게 프롬프트를 띄울 수 없다; `VERDICT=PAUSE` 시 그 사유를 노출하고, 여기서 사용자에게 묻고, `--resume` 으로 재디스패치한다. 어떤 쓰기 전에도 worktree 로 `cd` 하고 검증하도록(`pwd` 가 일치해야 함; 불일치 시 ESCALATE) 지시하고, 모든 변경과 `git` 명령을 그 안에 유지하도록 하며, 절대 force-push, hard-reset, 추적 경로에 대한 `rm -rf`, `chmod 777` 을 하지 않도록 한다.
+7. 각 태스크에 대해:
+   - `RED scaffold` 를 적용하고, `RED command` 를 실행하며, 0 이 아닌 종료 코드를 요구한다.
+   - `GREEN template` 을 적용하고, `GREEN command` 를 실행하며, 0 종료 코드를 요구한다.
+   - 태스크별 명령이 없는 레거시 산출물에만 `language_profile.test_command` 를 사용한다.
+   - 제한된 debugger(최대 `session.config.execute.tdd_self_heal_max` 회, 기본 2)를 사용한 뒤 전문가 폴백 사다리를 사용한다; 전문가는 worktree 안에만 쓰고 절대 테스트하거나 커밋하지 않는다.
+   - 리팩터하고, 검증을 재실행하고, CSS-* trailer 만으로 태스크를 커밋한다(Claude/AI 귀속 없음).
+8. 각 배치 후 전체 테스트와 커버리지를 실행한다; cache_miss_count 와 함께 실행 로그를 작성한다(캐시 미스 = Rich Spec 템플릿이 그대로 통하지 않아 폴백 전문가를 호출해야 했던 태스크); 최종 판정으로부터 세션 상태를 갱신하고 `phases.execute.commit_count` 와 `phases.execute.test_summary = {tests, passed, coverage_pct}` 를 기록한다(gh_sync stage-summary 코멘트가 이를 읽는다); 락을 해제한다.
 
 <self_check>
-- [ ] Worktree path recorded in session
-- [ ] Branch css/{slug} created and contains task commits
-- [ ] exec-log file exists with cache_miss_count recorded
-- [ ] Coverage measured and recorded
-- [ ] `git -C <main-project-root> status` 에 예상치 못한 수정 사항 없음
+- [ ] 정확히 기록된 Rich Spec 이 인덱싱되었고 advisory 는 제외됨
+- [ ] 모든 태스크가 RED 와 GREEN 명령을 실행함
+- [ ] Executor 가 쓰기 전에 worktree cwd(Step 0)를 검증함
+- [ ] worktree 경로와 브랜치가 기록됨
+- [ ] 메인 워킹 트리에 예기치 않은 변경이 없음
 </self_check>
 
 $ARGUMENTS
