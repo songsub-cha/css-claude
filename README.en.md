@@ -4,13 +4,13 @@
 
 **CSS — Claude Super System**: a personal, global software-development automation pipeline for [Claude Code](https://claude.com/claude-code).
 
-Status: **v0.1.0**. Personal-use pipeline. See [`docs/installation.md`](docs/installation.md) for setup.
+Status: **v0.2.0**. Personal-use pipeline. See [`docs/installation.md`](docs/installation.md) for setup.
 
 ---
 
 ## Overview
 
-Give it an idea and it runs all the way through: spec → plan → review → TDD implementation → verify → document → PR, with post-merge cleanup handled by `/css:clean`. Twenty-one specialized agents are dispatched stage by stage, with human approval gates at the high-stakes decision points.
+Give it an idea and it runs all the way through: spec → plan → review → TDD implementation → verify → document → PR, with post-merge cleanup handled by `/css:clean`. Twenty-two specialized agents are dispatched stage by stage, with human approval gates at the high-stakes decision points.
 
 ```
 /css:interview  →  /css:plan  →  /css:phase  →  /css:review  →  /css:execute  →  /css:verify  →  /css:document  →  /css:pr
@@ -97,8 +97,9 @@ flowchart TD
 | ⑥ | `/css:document` | `css-documenter` (sonnet) | `docs/{slug}/README.md` and more (Phase sessions: `docs/{epic}/p{n}/README.md`) |
 | ⑦ | `/css:pr` | `css-pr-creator` (haiku) | GitHub PR (Phase sessions: `--base <base_branch>` stacked PR) |
 | post | `/css:clean` | — | worktree/local-branch teardown after the PR merges (never deletes unmerged or unpushed work without confirmation) |
+| aux | `/css:wiki` | `css-doc-curator` (sonnet) | Curates `docs/project/` living docs (feature SoT, architecture, schema, ops, ADRs) + read-only GitHub Wiki mirror (`--init` bootstrap, `--no-publish` to skip the mirror) |
 
-### Domain-specialist agents (11 of 21)
+### Domain-specialist agents (11 of 22)
 
 They author Rich Specs in the review stage and are only called as a fallback on a cache miss during execute (~40–50% cost savings).
 
@@ -162,7 +163,7 @@ Install first: `bash scripts/install-codex.sh` (Windows: `scripts\install-codex.
 $css-ship "<idea>"
 ```
 
-Stage by stage: `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, `$css-pr`. Post-merge cleanup: `$css-clean`.
+Stage by stage: `$css-interview`, `$css-plan`, `$css-phase`, `$css-review`, `$css-execute`, `$css-verify`, `$css-document`, `$css-pr`. Post-merge cleanup: `$css-clean`. Project doc curation: `$css-wiki`.
 
 - **Parallel specialists** (optional): add `multi_agent = true` under `[features]` in `~/.codex/config.toml`. Without it, specialists run sequentially in one agent (same result).
 - **Approval gates**: presented as plain-text questions (no structured UI) that wait for your reply.
@@ -192,6 +193,7 @@ Running `/css:ship "<idea>"` mirrors pipeline progress to **GitHub Issues + Proj
 
 - **Idea → PR automation**: with explicit human approval gates at the important decision points
 - **Post-merge cleanup**: `/css:clean` tears down the worktree/local branch with dirty/unpushed/unmerged safety checks
+- **Living project docs**: `/css:wiki` updates `docs/project/` (feature SoT, ADRs, architecture, schema, ops) from git diffs and publishes a read-only GitHub Wiki mirror — covering non-pipeline commits and pre-existing projects
 - **TDD enforced**: the execute stage requires ≥85% test coverage
 - **Cache-first execution**: the review stage's Rich Specs are reused in execute — minimizing repeat specialist calls
 - **Automatic language detection**: JS/TS, Python, Go, Rust, Java (Maven), Java/Kotlin (Gradle, including Android Compose)

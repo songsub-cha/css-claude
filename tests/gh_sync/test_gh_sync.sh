@@ -225,8 +225,119 @@ test_config_path_resolution() {
   rm -rf "$sb"
 }
 
+test_adr_list_prints_only_adr_bodies() {
+  setup; seed_issue
+  export FAKE_ISSUE_COMMENTS='[{"created_at":"t1","body":"### 🏛️ ADR-1: pick X\n- **Context**: c1"},{"created_at":"t2","body":"not an adr"},{"created_at":"t3","body":"### 🏛️ ADR-2: pick Y\n- **Context**: c2"}]'
+  local out; out="$(run adr-list --session demo)"
+  assert_contains "adr1 body" "$out" "ADR-1: pick X"
+  assert_contains "adr2 body" "$out" "ADR-2: pick Y"
+  assert_not_contains "non-adr excluded" "$out" "not an adr"
+  unset FAKE_ISSUE_COMMENTS
+  teardown
+}
+test_adr_list_empty_when_tracking_off() {
+  setup; seed_issue
+  jq '.github.tracking_enabled=false' "$CSS_CONFIG" > "$CSS_CONFIG.x" && mv "$CSS_CONFIG.x" "$CSS_CONFIG"
+  local out rc=0; out="$(run adr-list --session demo)" || rc=$?
+  assert_eq "exit 0" "$rc" "0"
+  assert_eq "empty output" "$out" ""
+  teardown
+}
+
+test_wiki_publish_skips_without_docs_dir() {
+  setup
+  local out rc=0; out="$(run wiki-publish --sha abc1234 2>&1)" || rc=$?
+  assert_eq "exit 0 (no docs)" "$rc" "0"
+  assert_contains "skip reason" "$out" "docs/project"
+  teardown
+}
+test_wiki_publish_skips_when_wiki_disabled() {
+  setup
+  mkdir -p "$CSS_ROOT/docs/project"; printf '# home\n' > "$CSS_ROOT/docs/project/README.md"
+  export FAKE_HAS_WIKI=false
+  local out rc=0; out="$(run wiki-publish --sha abc1234 2>&1)" || rc=$?
+  assert_eq "exit 0 (wiki off)" "$rc" "0"
+  assert_contains "wiki off reason" "$out" "Wiki"
+  unset FAKE_HAS_WIKI
+  teardown
+}
+test_wiki_publish_skips_on_clone_failure() {
+  setup
+  mkdir -p "$CSS_ROOT/docs/project"; printf '# home\n' > "$CSS_ROOT/docs/project/README.md"
+  export CSS_WIKI_URL="$SANDBOX/no-such-remote.wiki.git"
+  local out rc=0; out="$(run wiki-publish --sha abc1234 2>&1)" || rc=$?
+  assert_eq "exit 0 (clone fail)" "$rc" "0"
+  assert_contains "clone fail reason" "$out" "clone"
+  unset CSS_WIKI_URL
+  teardown
+}
+
+seed_wiki_remote() { # local bare repo standing in for <repo>.wiki.git (already initialized)
+  WIKI_REMOTE="$SANDBOX/remote.wiki.git"
+  git init -q --bare "$WIKI_REMOTE"
+  local w="$SANDBOX/wseed"; git init -q "$w"
+  ( cd "$w" && printf 'seed\n' > Home.md && printf 'keep me\n' > Foreign-Page.md \
+    && git add -A && git -c user.name=t -c user.email=t@t.t commit -qm seed \
+    && git push -q "$WIKI_REMOTE" HEAD:refs/heads/master )
+  export CSS_WIKI_URL="$WIKI_REMOTE"
+}
+seed_project_docs() {
+  mkdir -p "$CSS_ROOT/docs/project/features" "$CSS_ROOT/docs/project/data" "$CSS_ROOT/docs/project/decisions"
+  cat > "$CSS_ROOT/docs/project/README.md" <<'EOF'
+# 데모 프로젝트 문서
+[아키텍처](architecture.md) [기능](features/README.md)
+<!-- css:last-synced: abc1234 2026-07-03 -->
+EOF
+  printf '# 아키텍처\n' > "$CSS_ROOT/docs/project/architecture.md"
+  printf '# 기능 인덱스\n[auth](auth.md)\n' > "$CSS_ROOT/docs/project/features/README.md"
+  printf '# auth\n[스키마](../data/schema.md) [인덱스](README.md)\n' > "$CSS_ROOT/docs/project/features/auth.md"
+  printf '# 스키마\n' > "$CSS_ROOT/docs/project/data/schema.md"
+  printf '# ADR-0001: X\n' > "$CSS_ROOT/docs/project/decisions/ADR-0001-x.md"
+}
+assert_file() { if [[ -f "$2" ]]; then PASS=$((PASS+1)); else FAIL=$((FAIL+1)); printf 'FAIL %s\n  missing file: %s\n' "$1" "$2"; fi; }
+
+test_wiki_publish_maps_pages_and_pushes() {
+  setup; seed_wiki_remote; seed_project_docs
+  run wiki-publish --sha abc1234
+  local chk="$SANDBOX/check"; git clone -q "$WIKI_REMOTE" "$chk"
+  assert_file "Home" "$chk/Home.md"
+  assert_file "Architecture" "$chk/Architecture.md"
+  assert_file "Features index" "$chk/Features.md"
+  assert_file "Features-auth" "$chk/Features-auth.md"
+  assert_file "Data-Schema" "$chk/Data-Schema.md"
+  assert_file "ADR page" "$chk/ADR-0001-x.md"
+  assert_contains "banner" "$(cat "$chk/Architecture.md")" "DO NOT EDIT"
+  assert_contains "root link"    "$(cat "$chk/Home.md")" "](Architecture)"
+  assert_contains "root subdir link" "$(cat "$chk/Home.md")" "](Features)"
+  assert_contains "updir link"   "$(cat "$chk/Features-auth.md")" "](Data-Schema)"
+  assert_contains "sibling link" "$(cat "$chk/Features-auth.md")" "](Features)"
+  assert_contains "sidebar entry" "$(cat "$chk/_Sidebar.md")" "Features-auth"
+  assert_contains "footer sha" "$(cat "$chk/_Footer.md")" "abc1234"
+  assert_contains "foreign page kept" "$(cat "$chk/Foreign-Page.md")" "keep me"
+  unset CSS_WIKI_URL
+  teardown
+}
+test_wiki_publish_noop_when_unchanged() {
+  setup; seed_wiki_remote; seed_project_docs
+  run wiki-publish --sha abc1234
+  local out; out="$(run wiki-publish --sha abc1234 2>&1)"
+  assert_contains "no-change skip" "$out" "변경 없음"
+  unset CSS_WIKI_URL
+  teardown
+}
+test_wiki_publish_reports_push_failure() {
+  setup; seed_wiki_remote; seed_project_docs
+  printf '#!/bin/sh\nexit 1\n' > "$WIKI_REMOTE/hooks/pre-receive"
+  chmod +x "$WIKI_REMOTE/hooks/pre-receive"
+  local out rc=0; out="$(run wiki-publish --sha abc1234 2>&1)" || rc=$?
+  assert_eq "exit 0 on push failure" "$rc" "0"
+  assert_contains "failure reported" "$out" "발행 실패"
+  unset CSS_WIKI_URL
+  teardown
+}
+
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_init_issue_ensures_labels test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records test_pr_link_comments_and_sets_pr test_finalize_sets_done test_link_child_creates_subissue test_link_child_subissue_idempotent test_link_child_appends_checklist test_config_path_resolution )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_init_issue_ensures_labels test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records test_pr_link_comments_and_sets_pr test_finalize_sets_done test_link_child_creates_subissue test_link_child_subissue_idempotent test_link_child_appends_checklist test_config_path_resolution test_adr_list_prints_only_adr_bodies test_adr_list_empty_when_tracking_off test_wiki_publish_skips_without_docs_dir test_wiki_publish_skips_when_wiki_disabled test_wiki_publish_skips_on_clone_failure test_wiki_publish_maps_pages_and_pushes test_wiki_publish_noop_when_unchanged test_wiki_publish_reports_push_failure )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]

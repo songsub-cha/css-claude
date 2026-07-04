@@ -9,8 +9,8 @@ die() { log "ERROR: $*"; exit 1; }
 usage() {
   cat >&2 <<'USAGE'
 gh_sync.sh <subcommand> [--flag value ...]
-  enabled | init-issue | comment | set-state | adr
-  gate-open | gate-wait | gate-close | pr-link | finalize | link-child
+  enabled | init-issue | comment | set-state | adr | adr-list
+  gate-open | gate-wait | gate-close | pr-link | finalize | link-child | wiki-publish
 USAGE
 }
 
@@ -220,6 +220,17 @@ cmd_adr() {
   sess_set "$slug" ".github.adrs += [{n:$n, title:\"${OPT[title]}\", posted_at:\"$(date -u +%FT%TZ)\"}]"
 }
 
+# --- adr-list -----------------------------------------------------------------
+cmd_adr_list() { # print full ADR comment bodies from the issue (bootstrap backfill)
+  parse_opts "$@"; local slug="${OPT[session]}"
+  gh_enabled || return 0
+  local num; num="$(sess "$slug" '.github.issue_number')"; [[ -n "$num" ]] || return 0
+  local repo; repo="$(repo_slug "$slug")"; [[ -n "$repo" ]] || return 0
+  gh api --paginate "repos/$repo/issues/$num/comments?per_page=100" 2>/dev/null \
+    | jq -rs 'flatten | map(select(.body | startswith("### 🏛️ ADR-")) | .body) | join("\n\n")' \
+    || true
+}
+
 # --- gates --------------------------------------------------------------------
 cmd_gate_open() {
   parse_opts "$@"; local slug="${OPT[session]}" gate="${OPT[gate]}"
@@ -329,6 +340,103 @@ cmd_link_child() {
   gh issue edit "$enum" --body "$cur"$'\n'"$(printf -- '- [ ] Phase %s — %s #%s' "$idx" "$label" "$cnum")" >/dev/null
 }
 
+# --- wiki-publish ---------------------------------------------------------
+# One-way mirror: docs/project/ -> GitHub Wiki. Never a hard failure — every
+# unavailable precondition logs one line and exits 0 (same fallback philosophy
+# as the rest of this helper). CSS_WIKI_URL overrides the remote (test seam).
+wiki_page_name() { # <relpath under docs/project/> -> wiki filename ('' = unmapped, skip)
+  case "$1" in
+    README.md)                     echo "Home.md" ;;
+    architecture.md)               echo "Architecture.md" ;;
+    features/README.md)            echo "Features.md" ;;
+    features/*.md)                 echo "Features-$(basename "$1")" ;;
+    data/schema.md)                echo "Data-Schema.md" ;;
+    data/migrations.md)            echo "Data-Migrations.md" ;;
+    operations/runbook.md)         echo "Ops-Runbook.md" ;;
+    operations/configuration.md)   echo "Ops-Configuration.md" ;;
+    operations/troubleshooting.md) echo "Ops-Troubleshooting.md" ;;
+    decisions/README.md)           echo "ADR-Index.md" ;;
+    decisions/*.md)                basename "$1" ;;
+    *)                             echo "" ;;
+  esac
+}
+rewrite_links() { # <relpath> <infile> — docs/project 내부 상호 링크를 Wiki 페이지명으로
+  local rel="$1" f="$2" dir; dir="$(dirname "$rel")"
+  local sed_args=() r page base
+  for r in "${WIKI_RELS[@]}"; do
+    page="$(wiki_page_name "$r")"; [[ -n "$page" ]] || continue
+    base="${page%.md}"
+    if [[ "$dir" == "." ]]; then
+      sed_args+=( -e "s#](${r})#](${base})#g" )
+    else
+      sed_args+=( -e "s#](../${r})#](${base})#g" )
+      [[ "$(dirname "$r")" == "$dir" ]] && sed_args+=( -e "s#]($(basename "$r"))#](${base})#g" )
+    fi
+  done
+  if [[ ${#sed_args[@]} -gt 0 ]]; then sed "${sed_args[@]}" "$f"; else cat "$f"; fi
+}
+make_sidebar() { # sorted page list — 접두어(ADR-/Data-/Features/Ops-)가 곧 카테고리 그룹
+  printf '## 프로젝트 문서\n- [Home](Home)\n'
+  local rel page base
+  for rel in "${WIKI_RELS[@]}"; do
+    page="$(wiki_page_name "$rel")"
+    [[ -n "$page" && "$page" != "Home.md" ]] || continue
+    base="${page%.md}"
+    printf -- '- [%s](%s)\n' "$base" "$base"
+  done | sort -u
+}
+publish_wiki_tree() { # <src> <wiki worktree> <sha>
+  local src="$1" wt="$2" sha="$3"
+  local banner='> ⚠️ DO NOT EDIT — `docs/project/`에서 미러된 페이지입니다. 수정은 repo에서 하세요.'
+  WIKI_RELS=()
+  local f rel page
+  while IFS= read -r f; do WIKI_RELS+=( "${f#"$src"/}" ); done < <(find "$src" -name '*.md' | sort)
+  # 소유 네임스페이스를 지우고 재생성(rename-safe). 그 외 페이지는 보존.
+  rm -f "$wt"/Home.md "$wt"/Architecture.md "$wt"/Features*.md "$wt"/Data-*.md \
+        "$wt"/Ops-*.md "$wt"/ADR-*.md "$wt"/_Sidebar.md "$wt"/_Footer.md
+  for rel in "${WIKI_RELS[@]}"; do
+    page="$(wiki_page_name "$rel")"
+    [[ -n "$page" ]] || { log "wiki-publish: 매핑 없는 파일 — skip $rel"; continue; }
+    { printf '%s\n\n' "$banner"; rewrite_links "$rel" "$src/$rel"; } > "$wt/$page"
+  done
+  make_sidebar > "$wt/_Sidebar.md"
+  printf 'mirrored from `docs/project/` @ %s\n' "$sha" > "$wt/_Footer.md"
+  if [[ -z "$(git -C "$wt" status --porcelain)" ]]; then
+    log "wiki-publish: 변경 없음 — push 생략"; return 0
+  fi
+  git -C "$wt" add -A
+  git -C "$wt" -c user.name="css-wiki" -c user.email="css-wiki@local" \
+    commit -qm "docs: sync from docs/project @ $sha" || { log "wiki-publish: commit 실패"; return 1; }
+  git -C "$wt" push -q origin HEAD || { log "wiki-publish: push 실패"; return 1; }
+  log "wiki-publish: 발행 완료 @ $sha"
+}
+cmd_wiki_publish() {
+  parse_opts "$@"; local sha="${OPT[sha]:-HEAD}"
+  local src="${CSS_ROOT:-$PWD}/docs/project"
+  [[ -d "$src" ]] || { log "wiki-publish: docs/project 없음 — skip"; return 0; }
+  local url="${CSS_WIKI_URL:-}" repo=""
+  if [[ -z "$url" ]]; then
+    gh_enabled || { log "wiki-publish: gh 사용 불가 — skip"; return 0; }
+    repo="$(gh repo view --json nameWithOwner -q '.nameWithOwner' 2>/dev/null || echo '')"
+    [[ -n "$repo" ]] || { log "wiki-publish: repo 식별 실패 — skip"; return 0; }
+    if [[ "$(gh api "repos/$repo" --jq '.has_wiki' 2>/dev/null)" != "true" ]]; then
+      log "wiki-publish: 이 repo는 Wiki 비활성(설정 꺼짐 또는 private+Free 요금제) — skip"; return 0
+    fi
+    url="https://github.com/$repo.wiki.git"
+  fi
+  local tmp; tmp="$(mktemp -d)"; local wt="$tmp/wiki"
+  # autocrlf=false: 미러는 byte-deterministic해야 no-change 감지가 동작한다
+  # (Windows autocrlf=true면 LF 재작성이 phantom-modified로 보임).
+  if ! git clone -q -c core.autocrlf=false "$url" "$wt" 2>/dev/null; then
+    log "wiki-publish: wiki repo clone 실패 — 미초기화 wiki면 웹 UI에서 첫 페이지 생성 후 재실행. skip"
+    rm -rf "$tmp"; return 0
+  fi
+  if ! publish_wiki_tree "$src" "$wt" "$sha"; then
+    log "wiki-publish: 발행 실패 — skip"
+  fi
+  rm -rf "$tmp"
+}
+
 main() {
   local sub="${1:-}"; shift || true
   case "$sub" in
@@ -337,12 +445,14 @@ main() {
     comment)       cmd_comment "$@" ;;
     set-state)     cmd_set_state "$@" ;;
     adr)           cmd_adr "$@" ;;
+    adr-list)      cmd_adr_list "$@" ;;
     gate-open)     cmd_gate_open "$@" ;;
     gate-wait)     cmd_gate_wait "$@" ;;
     gate-close)    cmd_gate_close "$@" ;;
     pr-link)       cmd_pr_link "$@" ;;
     finalize)      cmd_finalize "$@" ;;
     link-child)    cmd_link_child "$@" ;;
+    wiki-publish)  cmd_wiki_publish "$@" ;;
     __test_status) __test_status "$@" ;;
     __test_config_path) __test_config_path "$@" ;;
     -h|--help|"") usage; exit 2 ;;
