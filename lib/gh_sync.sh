@@ -406,8 +406,8 @@ publish_wiki_tree() { # <src> <wiki worktree> <sha>
   fi
   git -C "$wt" add -A
   git -C "$wt" -c user.name="css-wiki" -c user.email="css-wiki@local" \
-    commit -qm "docs: sync from docs/project @ $sha"
-  git -C "$wt" push -q origin HEAD
+    commit -qm "docs: sync from docs/project @ $sha" || { log "wiki-publish: commit 실패"; return 1; }
+  git -C "$wt" push -q origin HEAD || { log "wiki-publish: push 실패"; return 1; }
   log "wiki-publish: 발행 완료 @ $sha"
 }
 cmd_wiki_publish() {
