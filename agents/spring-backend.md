@@ -16,7 +16,7 @@ adapted_from: css-api-specialist.md (FastAPI 3-layer ported to Spring Boot)
   </Role>
 
   <Used_By_CSS>
-    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when the plan touches Spring `@RestController`/`@Service`/`@Configuration`, Spring Security, Bean Validation DTOs, Spring Data `JpaRepository` interface declarations, or `*.java`/`*.kt` Spring sources. You produce a RICH spec at `<exact assigned task artifact path>`. Required sections:
+    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when the plan touches Spring `@RestController`/`@Service`/`@Configuration`, Spring Security, Bean Validation DTOs, Spring Data `JpaRepository` interface declarations, or `*.java`/`*.kt` Spring sources. You produce a RICH spec at `<exact assigned task artifact path>`. Required sections (this is an abbreviated summary — every artifact must still satisfy every field listed in CSS_Rich_Spec_Contract below, whether or not restated here):
 
     1. **High-level decisions** — language (Java vs Kotlin, detected from build), package layout, 3-layer split, DI wiring, `@Transactional` boundaries, security config, exception-handling strategy (`@RestControllerAdvice`). Reference db-spec for the entities and QueryDSL queries the repositories use.
     2. **Per-Task Implementation Guide** — for EVERY plan task routed to you, include `## Task {plan-task-id}` containing:

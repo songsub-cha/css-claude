@@ -23,9 +23,9 @@ plan 을 감사하고 구현 전에 태스크 단위 실행 가능 Rich Spec 을
 6. 모든 실행 가능한 태스크 산출물은 다음을 포함해야 한다:
    `## Task {id}`, `Specialist:`, `Phase: {phase_index or 1}`, `Files:`, `Verification mode: command`, `RED scaffold:`, `RED command:`, `GREEN template:`, `GREEN command:`, `Edge cases:`, `Depends-on:`, `Cross_Domain_Notes:`, 그리고 마지막 `ARTIFACT=<path>`.
 7. advisory 는 별도로 디스패치한다; 이 리뷰어들은 쓸 수 없으므로 반환된 각 리포트를 `.claude/css/reviews/` 아래 저장한다:
-   - `css-architect` — 모듈 경계, 새 아키텍처, 또는 대규모 리팩터.
+   - `css-architect` — 모듈 경계, 새 아키텍처, 또는 대규모 리팩터. 구체적으로: 태스크가 기존 모듈 3개 이상을 건드리거나, 새 모듈 간 의존성을 도입하거나, 다른 태스크가 의존하는 공개 인터페이스를 바꿀 때. 해당 여부가 불명확하면 그래도 디스패치한다 — advisory 호출은 저렴하고 놓친 리뷰는 그렇지 않다.
    - `css-security-reviewer` — 인증, 권한 부여, 시크릿, 의존성, 결제, 파일 업로드, 또는 보안 민감 입력.
-   advisory 경로는 실행 가능한 Rich Spec 이 아니다. CRITICAL/HIGH 보안 설계 발견 사항은 `LOOPBACK_TO_PLAN` 을 유발한다.
+   advisory 경로는 실행 가능한 Rich Spec 이 아니다. CRITICAL/HIGH 보안 설계 발견 사항(본문 스캔이 아니라 advisory 의 `VERDICT=ISSUES_FOUND critical=<n> high=<n> ...` 마지막 줄에서 읽음)은 `LOOPBACK_TO_PLAN` 을 유발한다.
 8. 모드별 리뷰 리포트를 작성하고 최종 판정을 파싱한다.
 9. PASS 시 `phases.review.status`, `verdict`, `level`, `artifact`, 정확한 실행 가능 `rich_specs`, 별도의 `advisories`, 그리고 심각도 개수를 `phases.review.findings = {critical, high, medium, low}` 로 기록한다(gh_sync stage-summary 코멘트가 이를 읽는다). loopback 시 `retries.review` 를 증가시키고 필요한 이전 단계를 호출한다. 락을 해제한다.
 

@@ -16,7 +16,7 @@ adapted_from: oh-my-claudecode/agents/api-specialist.md
   </Role>
 
   <Used_By_CSS>
-    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when the plan touches FastAPI endpoints/services/CRUD, Pydantic schemas, or Python REST/GraphQL (Strawberry/Ariadne). (Non-Python backends route to css-node-backend / css-spring-backend.) You produce a RICH spec artifact at `<exact assigned task artifact path>` containing everything the executor needs at GREEN — NOT just high-level decisions. Required sections:
+    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when the plan touches FastAPI endpoints/services/CRUD, Pydantic schemas, or Python REST/GraphQL (Strawberry/Ariadne). (Non-Python backends route to css-node-backend / css-spring-backend.) You produce a RICH spec artifact at `<exact assigned task artifact path>` containing everything the executor needs at GREEN — NOT just high-level decisions. Required sections (this is an abbreviated summary — every artifact must still satisfy every field listed in CSS_Rich_Spec_Contract below, whether or not restated here):
 
     1. **High-level decisions** — API style (REST/GraphQL/gRPC/tRPC), 3-layer split, dependency injection wiring, exception handler additions.
     2. **Per-Task Implementation Guide** — for EVERY plan task the Dispatch Table routes to you, include a subsection with anchor `## Task {plan-task-id}` containing:

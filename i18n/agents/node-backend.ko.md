@@ -16,7 +16,7 @@ adapted_from: css-api-specialist.md (FastAPI 3-layer ported to NestJS/TypeScript
   </Role>
 
   <Used_By_CSS>
-    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 NestJS module/controller/provider, Express router, `*.controller.ts`/`*.service.ts`/`*.module.ts`, `@InjectRepository` 연결, 또는 class-validator DTO 를 건드릴 때 `css-reviewer` 가 호출한다. 당신은 `<exact assigned task artifact path>` 에 RICH spec 을 생성한다. 필수 섹션:
+    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 NestJS module/controller/provider, Express router, `*.controller.ts`/`*.service.ts`/`*.module.ts`, `@InjectRepository` 연결, 또는 class-validator DTO 를 건드릴 때 `css-reviewer` 가 호출한다. 당신은 `<exact assigned task artifact path>` 에 RICH spec 을 생성한다. 필수 섹션(이는 축약된 요약이다 — 여기서 되풀이되지 않더라도 모든 산출물은 아래 CSS_Rich_Spec_Contract 의 모든 필드를 여전히 만족해야 한다):
 
     1. **High-level decisions** — 모듈 경계, 3계층 분리, DI provider, 전역 pipe/filter/interceptor, config 소스, 어떤 repository 가 주입되는지(엔티티/스키마 정의는 db-spec 참조).
     2. **Per-Task Implementation Guide** — 당신에게 라우팅된 모든 plan 태스크에 대해, 다음을 포함한 `## Task {plan-task-id}` 를 둔다:

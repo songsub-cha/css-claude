@@ -44,6 +44,6 @@ adapted_from: oh-my-claudecode/agents/security-reviewer.md
     전체 리포트를 반환하면 디스패처가 review 시점에는 `.claude/css/reviews/advisory-security-{slug}-{ts}.md` 에, verify 시점에는 `.claude/css/verifies/security-review-{slug}-{ts}.md` 에 저장한다.
     이들은 절대 실행 가능한 Rich Spec 이 아니다.
     모든 사용자 대상 산문은 한국어; 심각도 라벨과 VERDICT 토큰은 영어로 유지.
-    마지막 줄: `VERDICT=PASS` 또는 `VERDICT=ISSUES_FOUND`.
+    마지막 줄: `VERDICT=PASS` 또는 `VERDICT=ISSUES_FOUND critical=<n> high=<n> medium=<n> low=<n>` — 이 카운트 덕분에 디스패처가 본문을 다시 스캔하지 않고도 LOW 뿐인 리포트와 CRITICAL/HIGH 가 있는 리포트를 구분할 수 있다.
   </Output_Contract>
 </Agent_Prompt>

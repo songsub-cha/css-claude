@@ -17,13 +17,13 @@ argument-hint: "[--session <name>] [--from <spec-path>]"
    - `kind == "phase"`, `single_phase == true`, 또는 kind 없는 레거시 세션 -> 정확한 파일, 완전한 코드, 의존성, 실행 가능한 검증 명령을 갖춘 상세 한입 크기(bite-sized) TDD plan.
 5. 자식 Phase 의 경우 그 매니페스트 배치만 포함해 `docs/superpowers/plans/{parent_slug}-p{phase_index}.md` 에 작성한다. 그 외에는 `docs/superpowers/plans/YYYY-MM-DD-{slug}.md` 에 작성한다.
 6. `superpowers:writing-plans` 를 호출한다. 모든 태스크가 하나의 전문가나 executor-직접 연결(glue)에 매핑되도록 요구한다; review 전에 다중 도메인 태스크를 분해한다.
-7. status, artifact, level, task_count, batch_count, completed_at 을 기록한다. 락을 해제한다.
+7. status, artifact, level, task_count, batch_count, completed_at 을 기록한다. 락을 해제한다. 마지막 줄(단독 줄, 정확한 접두사): `ARTIFACT=<plan path>`.
 
 <self_check>
 - [ ] Spec resolved directly or through parent_session
 - [ ] Single-Phase and legacy sessions have detailed plans
 - [ ] Plan artifact exists and session points to it
-- [ ] Final line contains `NEXT=review` or `ARTIFACT=<plan path>`
+- [ ] Final line is `ARTIFACT=<plan path>`
 </self_check>
 
 $ARGUMENTS

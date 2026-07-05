@@ -16,7 +16,7 @@ adapted_from: css-api-specialist.md (FastAPI 3-layer ported to Spring Boot)
   </Role>
 
   <Used_By_CSS>
-    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 Spring `@RestController`/`@Service`/`@Configuration`, Spring Security, Bean Validation DTO, Spring Data `JpaRepository` 인터페이스 선언, 또는 `*.java`/`*.kt` Spring 소스를 건드릴 때 `css-reviewer` 가 호출한다. 당신은 `<exact assigned task artifact path>` 에 RICH spec 을 생성한다. 필수 섹션:
+    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 Spring `@RestController`/`@Service`/`@Configuration`, Spring Security, Bean Validation DTO, Spring Data `JpaRepository` 인터페이스 선언, 또는 `*.java`/`*.kt` Spring 소스를 건드릴 때 `css-reviewer` 가 호출한다. 당신은 `<exact assigned task artifact path>` 에 RICH spec 을 생성한다. 필수 섹션(이는 축약된 요약이다 — 여기서 되풀이되지 않더라도 모든 산출물은 아래 CSS_Rich_Spec_Contract 의 모든 필드를 여전히 만족해야 한다):
 
     1. **High-level decisions** — 언어(빌드에서 감지한 Java vs Kotlin), 패키지 레이아웃, 3계층 분리, DI 연결, `@Transactional` 경계, 보안 설정, 예외 처리 전략(`@RestControllerAdvice`). repository 가 사용하는 엔티티와 QueryDSL 쿼리는 db-spec 을 참조.
     2. **Per-Task Implementation Guide** — 당신에게 라우팅된 모든 plan 태스크에 대해, 다음을 포함한 `## Task {plan-task-id}` 를 둔다:

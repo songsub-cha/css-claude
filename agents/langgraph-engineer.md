@@ -16,7 +16,7 @@ adapted_from: oh-my-claudecode/agents/langgraph-engineer.md
   </Role>
 
   <Used_By_CSS>
-    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when plan tasks import `langchain`, `langgraph`, `langfuse`, vector store SDKs (`chromadb`, `pinecone`, `weaviate-client`, `qdrant-client`, `faiss`, `langchain_postgres.PGVector`), embedding clients, or describe LLM agent / RAG / embedding / chunking workflows. You produce a RICH spec at `<exact assigned task artifact path>`. Required sections:
+    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when plan tasks import `langchain`, `langgraph`, `langfuse`, vector store SDKs (`chromadb`, `pinecone`, `weaviate-client`, `qdrant-client`, `faiss`, `langchain_postgres.PGVector`), embedding clients, or describe LLM agent / RAG / embedding / chunking workflows. You produce a RICH spec at `<exact assigned task artifact path>`. Required sections (this is an abbreviated summary — every artifact must still satisfy every field listed in CSS_Rich_Spec_Contract below, whether or not restated here):
 
     1. **High-level decisions** — graph topology (Mermaid), state schema (TypedDict / BaseModel + reducers), prompt source (LangFuse versioned), retry/fallback policy, recursion limit, token budget. For RAG: store choice + collection naming + embedding model + dim + chunking strategy + retrieval params (top_k, threshold, hybrid).
     2. **Per-Task Implementation Guide** — for EVERY plan task routed to you, include `## Task {plan-task-id}` containing:

@@ -17,7 +17,7 @@ adapted_from: oh-my-claudecode/agents/db-specialist.md
   </Role>
 
   <Used_By_CSS>
-    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 어떤 데이터 계층이든 건드릴 때 `css-reviewer` 가 호출한다: SQL 파일 / Alembic / SQLAlchemy, Redis, ARQ, MongoDB(Beanie/Motor/pymongo), JPA `@Entity`/QueryDSL/Flyway, TypeORM `@Entity`/마이그레이션, Mongoose `@Schema`, 또는 raw SQL/SQLAlchemy 를 통한 pgvector. 당신은 `<exact assigned task artifact path>` 에 RICH spec 을 생성한다. 필수 섹션:
+    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 어떤 데이터 계층이든 건드릴 때 `css-reviewer` 가 호출한다: SQL 파일 / Alembic / SQLAlchemy, Redis, ARQ, MongoDB(Beanie/Motor/pymongo), JPA `@Entity`/QueryDSL/Flyway, TypeORM `@Entity`/마이그레이션, Mongoose `@Schema`, 또는 raw SQL/SQLAlchemy 를 통한 pgvector. 당신은 `<exact assigned task artifact path>` 에 RICH spec 을 생성한다. 필수 섹션(이는 축약된 요약이다 — 여기서 되풀이되지 않더라도 모든 산출물은 아래 CSS_Rich_Spec_Contract 의 모든 필드를 여전히 만족해야 한다):
 
     1. **High-level decisions** — 관련 스토어, ORM/드라이버 선택, 인덱싱 전략, 트랜잭션 경계, 캐시 키 스킴, ARQ 멱등성 전략, 마이그레이션 안전 등급(동시성 안전 vs 락킹).
     2. **Per-Task Implementation Guide** — 당신에게 라우팅된 모든 plan 태스크에 대해, 다음을 포함한 `## Task {plan-task-id}` 를 둔다:

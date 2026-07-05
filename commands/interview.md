@@ -23,7 +23,7 @@ Run a deep, Socratic brainstorming session to turn an idea into a CSS spec. Wrap
      - Write to session JSON: `session.repo_root`, `session.repo_name`, `session.base_branch`.
      - If `git rev-parse` fails (not a git repo), use `repo_root = <project>`, `repo_name = basename(<project>)` and continue.
    - **Load pipeline config** (when `session.config` is absent): deep-merge the user config `~/.claude/css/config.json` (if present) over the bundled `config/default-config.json` (under the plugin dir in plugin mode, `~/.claude/css/` in script mode). If neither is readable, use the documented defaults: `verify.coverage_threshold` 85, `review.max_loopback_attempts` 2, `verify.max_loopback_attempts` 3, `execute.tdd_self_heal_max` 2. Store the merged object as `session.config` and initialize `session.retries = {review: 0, verify: 0}` — downstream stages read both.
-   - Update `<project>/.claude/css/sessions/_active.json` with `{"latest_slug": "<slug>"}`.
+   - Update `<project>/.claude/css/sessions/_active.json` with `{"latest_slug": "<slug>", "active_epic": "<slug>", "active_phase": null}` (a new session is always an Epic at this point, so `active_epic` is itself).
    - Acquire the interview lock: `<project>/.claude/css/locks/{slug}-interview.lock` with `{acquired_at}` (stale after 60 min → replace with a note; a fresh lock from another run → abort with guidance).
 
 3. **Verify superpowers is enabled**: read `~/.claude/settings.json`. If `enabledPlugins["superpowers@claude-plugins-official"]` is not true, abort with: "CSS requires the superpowers plugin. Enable via /plugin and retry."
@@ -36,7 +36,7 @@ Run a deep, Socratic brainstorming session to turn an idea into a CSS spec. Wrap
    ```
    Pass the idea text as the user's initial request inside the invoked skill's context. **Important override**: when brainstorming reaches its terminal "Invoke writing-plans skill" step, do NOT auto-invoke writing-plans. CSS calls `/css:plan` as a separate stage to keep each command independently runnable. Tell brainstorming: "Stop after the user-approves-spec gate; CSS will continue from there."
 
-   **Minimum questioning depth**: instruct brainstorming to keep probing requirements, scope, edge cases, and design trade-offs until the idea is concrete — typically **at least 10** substantive questions for feature/Epic-scale ideas. A genuinely small, already-concrete idea may need fewer, but never shortcut to the spec while scope, edge cases, or trade-offs remain open.
+   **Minimum questioning depth**: instruct brainstorming to keep probing requirements, scope, edge cases, and design trade-offs until the idea is concrete — typically **at least 10** substantive questions for feature/Epic-scale ideas, and **never fewer than 3** even for a genuinely small, already-concrete change. Never shortcut to the spec while scope, edge cases, or trade-offs remain open.
 
 6. **On brainstorming completion**:
    - Locate the spec file written by brainstorming (typically `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`).
@@ -45,12 +45,13 @@ Run a deep, Socratic brainstorming session to turn an idea into a CSS spec. Wrap
 
 7. **Release lock** and announce next step:
    "Spec 작성 완료: `<spec path>`. 다음 단계: `/css:plan` 또는 `/css:ship --session <slug>`로 진행."
+   Final line (its own line, exact prefix): `ARTIFACT=<spec path>`.
 
 <self_check>
 - [ ] Artifact written by brainstorming (spec markdown file exists)
 - [ ] session file (sessions/{slug}.json) phase status updated to completed
 - [ ] _active.json.latest_slug updated
-- [ ] Final line contains NEXT=plan or ARTIFACT=<spec path>
+- [ ] Final line is `ARTIFACT=<spec path>`
 - [ ] No policy violations
 </self_check>
 

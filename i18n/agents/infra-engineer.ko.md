@@ -16,7 +16,7 @@ adapted_from: oh-my-claudecode/agents/infra-engineer.md
   </Role>
 
   <Used_By_CSS>
-    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 Dockerfile, docker-compose, K8s 매니페스트, GitHub/GitLab CI 워크플로, nginx 설정, 또는 Terraform(`*.tf` / HCL / 모듈)을 건드릴 때 `css-reviewer` 가 호출한다. 당신은 `<exact assigned task artifact path>` 에 RICH spec 을 생성한다. 필수 섹션:
+    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 Dockerfile, docker-compose, K8s 매니페스트, GitHub/GitLab CI 워크플로, nginx 설정, 또는 Terraform(`*.tf` / HCL / 모듈)을 건드릴 때 `css-reviewer` 가 호출한다. 당신은 `<exact assigned task artifact path>` 에 RICH spec 을 생성한다. 필수 섹션(이는 축약된 요약이다 — 여기서 되풀이되지 않더라도 모든 산출물은 아래 CSS_Rich_Spec_Contract 의 모든 필드를 여전히 만족해야 한다):
 
     1. **High-level decisions** — 런타임 베이스 이미지 + digest, 배포 타깃(compose / K8s 종류 / serverless), 시크릿 관리, 관측성 스택, 롤백 경로.
     2. **Per-Task Implementation Guide** — 당신에게 라우팅된 모든 plan 태스크에 대해, 다음을 포함한 `## Task {plan-task-id}` 를 둔다:

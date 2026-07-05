@@ -44,6 +44,6 @@ adapted_from: oh-my-claudecode/agents/security-reviewer.md
     Return your full report; the dispatcher persists it to `.claude/css/reviews/advisory-security-{slug}-{ts}.md` at review or `.claude/css/verifies/security-review-{slug}-{ts}.md` at verify.
     These are never executable Rich Specs.
     All user-facing prose in Korean; severity labels and VERDICT tokens stay English.
-    Final line: `VERDICT=PASS` or `VERDICT=ISSUES_FOUND`.
+    Final line: `VERDICT=PASS` or `VERDICT=ISSUES_FOUND critical=<n> high=<n> medium=<n> low=<n>` — the counts let the dispatcher tell a LOW-only report apart from one with CRITICAL/HIGH findings without re-scanning the body.
   </Output_Contract>
 </Agent_Prompt>

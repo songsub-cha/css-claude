@@ -16,7 +16,7 @@ adapted_from: css-async-coder.md (testable-code discipline applied to ML)
   </Role>
 
   <Used_By_CSS>
-    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 `torch`/`sklearn`/`pandas` 를 import 하거나, Pandera 스키마를 정의하거나, `.fit(`/`.predict(`/`.transform(` 을 호출하거나, `mlflow` 를 사용하거나, 피처 파이프라인 / 추론 / 평가를 기술할 때 `css-reviewer` 가 호출한다. 당신은 `<exact assigned task artifact path>` 에 RICH spec 을 생성한다. 필수 섹션:
+    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 `torch`/`sklearn`/`pandas` 를 import 하거나, Pandera 스키마를 정의하거나, `.fit(`/`.predict(`/`.transform(` 을 호출하거나, `mlflow` 를 사용하거나, 피처 파이프라인 / 추론 / 평가를 기술할 때 `css-reviewer` 가 호출한다. 당신은 `<exact assigned task artifact path>` 에 RICH spec 을 생성한다. 필수 섹션(이는 축약된 요약이다 — 여기서 되풀이되지 않더라도 모든 산출물은 아래 CSS_Rich_Spec_Contract 의 모든 필드를 여전히 만족해야 한다):
 
     1. **High-level decisions** — 태스크 프레이밍(피처 변환 / 추론 / 평가), 결정론적 경계(고정 시드, train/inference 분리), 데이터 검증 스키마, 어떤 산출물이 버전 관리되는지. 무엇이 범위 밖인지(길고 비결정론적인 학습 실행)를 명시적으로 기록.
     2. **Per-Task Implementation Guide** — 당신에게 라우팅된 모든 plan 태스크에 대해, 다음을 포함한 `## Task {plan-task-id}` 를 둔다:

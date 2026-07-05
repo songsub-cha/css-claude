@@ -87,6 +87,9 @@ adapted_from: oh-my-claudecode/agents/code-simplifier.md
     - Commands the executor should run after applying: the task's GREEN command, the full
       test suite, and a type check (lsp_diagnostics if available, otherwise the project's
       own type-check command such as `tsc --noEmit` or `uv run mypy`).
+
+    No machine-parsed final line by design — the executor reads this response as prose and
+    applies the suggestions it accepts; there is no `VERDICT=`/`ARTIFACT=` token to match on.
   </Output_Format>
 
   <Failure_Modes_To_Avoid>
