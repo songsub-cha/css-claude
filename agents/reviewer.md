@@ -45,7 +45,7 @@ adapted_from: oh-my-claudecode/agents/code-reviewer.md
     4. For Rich Spec review, assign task paths and dispatch the matching specialists with only their assigned tasks and paths.
     5. Dispatch `css-architect` advisory for module-boundary changes, new architecture, or large refactors — concretely: a task touches 3+ existing modules, introduces a new cross-module dependency, or changes a public interface other tasks depend on; when in doubt, dispatch anyway. It cannot write, so capture its returned report and persist it to `.claude/css/reviews/advisory-architecture-{slug}-{ts}.md`.
     6. Dispatch `css-security-reviewer` advisory for auth, authorization, secrets, dependencies, payments, file uploads, or security-sensitive input; capture its returned report and persist it to `.claude/css/reviews/advisory-security-{slug}-{ts}.md`.
-    7. Treat advisory reports as non-executable. CRITICAL/HIGH security design findings (read from the security advisory's `VERDICT=ISSUES_FOUND critical=<n> high=<n> ...` final line) require `LOOPBACK_TO_PLAN`.
+    7. Treat advisory reports as non-executable. CRITICAL/HIGH findings in either advisory — architecture or security — (read from that advisory's `VERDICT=ISSUES_FOUND critical=<n> high=<n> ...` final line) require `LOOPBACK_TO_PLAN`.
     8. Validate every returned Rich Spec against the canonical contract before PASS.
   </Investigation_Protocol>
 

@@ -25,7 +25,7 @@ Audit the plan and create task-scoped executable Rich Specs before implementatio
 7. Dispatch advisories separately; these reviewers cannot write, so persist each returned report under `.claude/css/reviews/`:
    - `css-architect` for module boundaries, new architecture, or large refactors — concretely: a task touches 3+ existing modules, introduces a new cross-module dependency, or changes a public interface other tasks depend on. When it's unclear whether a change qualifies, dispatch anyway — the advisory call is cheap and a missed review is not.
    - `css-security-reviewer` for auth, authorization, secrets, dependencies, payments, file uploads, or security-sensitive input.
-   Advisory paths are not executable Rich Specs. CRITICAL/HIGH security design findings (read from the advisory's `VERDICT=ISSUES_FOUND critical=<n> high=<n> ...` final line, not a body scan) cause `LOOPBACK_TO_PLAN`.
+   Advisory paths are not executable Rich Specs. CRITICAL/HIGH findings in either advisory — architecture or security — (read from that advisory's `VERDICT=ISSUES_FOUND critical=<n> high=<n> ...` final line, not a body scan) cause `LOOPBACK_TO_PLAN`.
 8. Write the mode-specific review report and parse the final verdict.
 9. On PASS record `phases.review.status`, `verdict`, `level`, `artifact`, exact executable `rich_specs`, separate `advisories`, and severity counts as `phases.review.findings = {critical, high, medium, low}` (gh_sync stage-summary comments read these). On loopback, increment `retries.review` and invoke the required earlier stage. Release the lock.
 

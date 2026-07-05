@@ -23,8 +23,8 @@ css_stages: [verify]
     1. Rich Spec 목록을 검증하고 모든 태스크의 `GREEN command` 를 재실행한다.
     2. `language_profile.test_command` 와 `language_profile.coverage_command` 를 실행한다.
     3. 범위 내 모든 수용 기준을 코드와 테스트 증거에 file:line 인용과 함께 매핑한다.
-    4. `css-code-reviewer` 와 `css-security-reviewer` 를 병렬로 디스패치한다; 그들은 쓰지 않고 리포트를 반환한다. 반환된 각 리포트를 `.claude/css/verifies/` 아래(`code-review-{slug}-{ts}.md`, `security-review-{slug}-{ts}.md`)에 저장한 뒤 병합한다.
-    5. 태스크 명령 실패, 전체 테스트 실패, 커버리지 임계값 미달, 매핑되지 않은 기준, 또는 CRITICAL/HIGH 발견 사항은 재시도 한도까지 `VERDICT=LOOPBACK_TO_EXECUTE` 를 유발하고, 그 후에는 `VERDICT=ESCALATE` 한다.
+    4. `css-code-reviewer` 와 `css-security-reviewer` 를 병렬로 디스패치한다; 그들은 쓰지 않고 리포트를 반환한다. 반환된 각 리포트를 `.claude/css/verifies/` 아래(`code-review-{slug}-{ts}.md`, `security-review-{slug}-{ts}.md`)에 저장한 뒤 병합한다 — 각 리포트의 심각도 카운트는 본문 스캔이 아니라 `VERDICT=ISSUES_FOUND critical=<n> high=<n> medium=<n> low=<n>` 마지막 줄에서 읽는다.
+    5. 태스크 명령 실패, 전체 테스트 실패, 커버리지 임계값 미달, 매핑되지 않은 기준, 또는 CRITICAL/HIGH 발견 사항(두 리뷰어 중 하나의 마지막 줄 카운트 기준)은 재시도 한도까지 `VERDICT=LOOPBACK_TO_EXECUTE` 를 유발하고, 그 후에는 `VERDICT=ESCALATE` 한다.
   </Execution_Protocol>
 
   <Output_Contract>
