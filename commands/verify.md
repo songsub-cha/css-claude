@@ -15,7 +15,7 @@ Independently verify task commands, full tests, coverage, acceptance criteria, c
 4. Dispatch `css-verifier` with worktree, branch, language_profile, spec, plan, phase_index, the execution log (from `--exec-log`, else `session.phases.execute.artifact` — cross-check its claimed results against what actually reruns), and exact `rich_specs`.
 5. In the worktree, rerun every Rich Spec `GREEN command`, then run full `language_profile.test_command` and `coverage_command`.
 6. Map every in-scope acceptance criterion to concrete code and test evidence. Dispatch `css-code-reviewer` and `css-security-reviewer` in parallel; they cannot write, so persist their returned reports under `.claude/css/verifies/`.
-7. Any GREEN command failure, full-test failure, coverage below `session.config.verify.coverage_threshold` (default 85), unmapped criterion, or CRITICAL/HIGH finding causes `LOOPBACK_TO_EXECUTE` (increment `retries.verify`) until the retry limit, then `ESCALATE`.
+7. Any GREEN command failure, full-test failure, coverage below `session.config.verify.coverage_threshold` (default 85), unmapped criterion, or CRITICAL/HIGH finding (read from either reviewer's `VERDICT=ISSUES_FOUND critical=<n> high=<n> ...` final line) causes `LOOPBACK_TO_EXECUTE` (increment `retries.verify`) until the retry limit, then `ESCALATE`.
 8. Record the aggregate report, `verdict`, and `phases.verify.test_summary = {tests, passed, coverage_pct}` (gh_sync stage-summary comments read these); release the lock.
 
 <self_check>

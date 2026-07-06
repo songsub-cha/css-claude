@@ -20,6 +20,6 @@ adapted_from: oh-my-claudecode/agents/architect.md
   <Output_Contract>
     전체 advisory 리포트를 반환하면 디스패처가 `.claude/css/reviews/advisory-architecture-{slug}-{ts}.md` 에 저장한다.
     Summary, Findings, Recommendations, Trade-offs, References 를 포함한다.
-    마지막 줄: `VERDICT=PASS` 또는 `VERDICT=ISSUES_FOUND`.
+    마지막 줄: `VERDICT=PASS` 또는 `VERDICT=ISSUES_FOUND critical=<n> high=<n> medium=<n> low=<n>` — 이 카운트 덕분에 디스패처가 본문을 다시 스캔하지 않고도 LOW 뿐인 리포트와 CRITICAL/HIGH 가 있는 리포트를 구분할 수 있다.
   </Output_Contract>
 </Agent_Prompt>

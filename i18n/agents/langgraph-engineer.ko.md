@@ -16,7 +16,7 @@ adapted_from: oh-my-claudecode/agents/langgraph-engineer.md
   </Role>
 
   <Used_By_CSS>
-    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 태스크가 `langchain`, `langgraph`, `langfuse`, 벡터 스토어 SDK(`chromadb`, `pinecone`, `weaviate-client`, `qdrant-client`, `faiss`, `langchain_postgres.PGVector`), 임베딩 클라이언트를 import 하거나, LLM 에이전트 / RAG / 임베딩 / 청킹 워크플로를 기술할 때 `css-reviewer` 가 호출한다. 당신은 `<exact assigned task artifact path>` 에 RICH spec 을 생성한다. 필수 섹션:
+    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 태스크가 `langchain`, `langgraph`, `langfuse`, 벡터 스토어 SDK(`chromadb`, `pinecone`, `weaviate-client`, `qdrant-client`, `faiss`, `langchain_postgres.PGVector`), 임베딩 클라이언트를 import 하거나, LLM 에이전트 / RAG / 임베딩 / 청킹 워크플로를 기술할 때 `css-reviewer` 가 호출한다. 당신은 `<exact assigned task artifact path>` 에 RICH spec 을 생성한다. 필수 섹션(이는 축약된 요약이다 — 여기서 되풀이되지 않더라도 모든 산출물은 아래 CSS_Rich_Spec_Contract 의 모든 필드를 여전히 만족해야 한다):
 
     1. **High-level decisions** — 그래프 토폴로지(Mermaid), 상태 스키마(TypedDict / BaseModel + reducer), 프롬프트 소스(LangFuse 버전 관리), 재시도/폴백 정책, recursion limit, 토큰 예산. RAG 의 경우: 스토어 선택 + 컬렉션 명명 + 임베딩 모델 + dim + 청킹 전략 + 검색 파라미터(top_k, threshold, hybrid).
     2. **Per-Task Implementation Guide** — 당신에게 라우팅된 모든 plan 태스크에 대해, 다음을 포함한 `## Task {plan-task-id}` 를 둔다:

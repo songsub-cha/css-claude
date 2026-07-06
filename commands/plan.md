@@ -17,13 +17,13 @@ Translate the approved spec into a skeleton Epic plan or an executable detailed 
    - `kind == "phase"`, `single_phase == true`, or kind-less legacy session -> detailed bite-sized TDD plan with exact files, complete code, dependencies, and executable verification commands.
 5. For a child Phase, include only its manifest batches and write `docs/superpowers/plans/{parent_slug}-p{phase_index}.md`. Otherwise write `docs/superpowers/plans/YYYY-MM-DD-{slug}.md`.
 6. Invoke `superpowers:writing-plans`. Require every task to map to one specialist or executor-direct glue; decompose multi-domain tasks before review.
-7. Record status, artifact, level, task_count, batch_count, and completed_at. Release the lock.
+7. Record status, artifact, level, task_count, batch_count, and completed_at. Release the lock. Final line (its own line, exact prefix): `ARTIFACT=<plan path>`.
 
 <self_check>
 - [ ] Spec resolved directly or through parent_session
 - [ ] Single-Phase and legacy sessions have detailed plans
 - [ ] Plan artifact exists and session points to it
-- [ ] Final line contains `NEXT=review` or `ARTIFACT=<plan path>`
+- [ ] Final line is `ARTIFACT=<plan path>`
 </self_check>
 
 $ARGUMENTS

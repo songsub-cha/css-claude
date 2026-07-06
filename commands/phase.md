@@ -24,7 +24,7 @@ Decide whether an Epic stays in one session or becomes dependency-ordered child 
    Child slug is `{slug}-p{idx}` and branch is `css/{slug}/p{idx}`. For an independent Phase, base_branch is the Epic's captured base/current branch; for a dependent Phase, base_branch is the branch of the greatest declared dependency index.
    Copy immutable downstream context from the parent: `idea`, `repo_root`, `repo_name`, `master_flow`, `config`, `language_profile`, and `phases.interview` including its artifact. Initialize plan/review/execute/verify/document/pr stages, retry counters (`retries = {review: 0, verify: 0}`), and independent Gate 2/Gate 3 state.
 9. Child commands resolve missing context from `parent_session` for compatibility with child sessions created by older CSS versions.
-10. Use `locks/{child_slug}-phasing.lock` (stale after 60 min → replace with a note; a fresh lock from another run → abort with guidance); update `_active.json.active_epic` and `active_phase`; release locks on every exit path.
+10. Use `locks/{slug}-phasing.lock` (Epic slug — phasing runs once per Epic before any child exists, so keying on a child slug is undefined on the single-Phase path; stale after 60 min → replace with a note; a fresh lock from another run → abort with guidance); update `_active.json.active_epic` and `active_phase`; release locks on every exit path. Final line (its own line, exact prefix): `NEXT=review`.
 
 <self_check>
 - [ ] Manifest satisfies the inline validation rules

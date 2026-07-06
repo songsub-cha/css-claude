@@ -15,7 +15,7 @@ argument-hint: "[--session <name>] [--exec-log <path>]"
 4. worktree, 브랜치, language_profile, spec, plan, phase_index, 실행 로그(`--exec-log` 에서, 없으면 `session.phases.execute.artifact` — 그 주장된 결과를 실제 재실행 결과와 교차 검증한다), 정확한 `rich_specs` 와 함께 `css-verifier` 를 디스패치한다.
 5. worktree 안에서 모든 Rich Spec 의 `GREEN command` 를 재실행한 뒤, 전체 `language_profile.test_command` 와 `coverage_command` 를 실행한다.
 6. 범위 내 모든 수용 기준을 구체적인 코드와 테스트 증거에 매핑한다. `css-code-reviewer` 와 `css-security-reviewer` 를 병렬로 디스패치한다; 그들은 쓸 수 없으므로 반환된 리포트를 `.claude/css/verifies/` 아래 저장한다.
-7. GREEN 명령 실패, 전체 테스트 실패, `session.config.verify.coverage_threshold`(기본 85) 미만 커버리지, 매핑되지 않은 기준, 또는 CRITICAL/HIGH 발견 사항은 재시도 한도까지 `LOOPBACK_TO_EXECUTE`(`retries.verify` 증가)를 유발하고, 그 후에는 `ESCALATE` 한다.
+7. GREEN 명령 실패, 전체 테스트 실패, `session.config.verify.coverage_threshold`(기본 85) 미만 커버리지, 매핑되지 않은 기준, 또는 CRITICAL/HIGH 발견 사항(두 리뷰어 중 하나의 `VERDICT=ISSUES_FOUND critical=<n> high=<n> ...` 마지막 줄에서 읽음)은 재시도 한도까지 `LOOPBACK_TO_EXECUTE`(`retries.verify` 증가)를 유발하고, 그 후에는 `ESCALATE` 한다.
 8. 집계 리포트, `verdict`, `phases.verify.test_summary = {tests, passed, coverage_pct}` 를 기록한다(gh_sync stage-summary 코멘트가 이를 읽는다); 락을 해제한다.
 
 <self_check>

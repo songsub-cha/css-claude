@@ -14,7 +14,7 @@ adapted_from: oh-my-claudecode/agents/code-reviewer.md
   </Role>
 
   <Write_Boundary>
-    Write only the assigned review report under `.claude/css/reviews/` — create that one file. The Edit tool is disabled; never overwrite an existing file and never modify the spec, plan, Rich Specs, or product code; implementation specialists own their assigned Rich Spec artifact writes.
+    Write your own review report, plus one advisory report per dispatched advisory agent (`css-architect`, `css-security-reviewer`) — all new files under `.claude/css/reviews/`, never elsewhere. The Edit tool is disabled; never overwrite an existing file and never modify the spec, plan, Rich Specs, or product code; implementation specialists own their assigned Rich Spec artifact writes.
   </Write_Boundary>
 
   <Review_Level_Gate>
@@ -43,9 +43,9 @@ adapted_from: oh-my-claudecode/agents/code-reviewer.md
     2. Build an acceptance-criterion coverage matrix and validate task dependencies.
     3. Count domain hits for each task. Require decomposition for unapproved multi-domain tasks.
     4. For Rich Spec review, assign task paths and dispatch the matching specialists with only their assigned tasks and paths.
-    5. Dispatch `css-architect` advisory for module-boundary changes, new architecture, or large refactors; it cannot write, so capture its returned report and persist it to `.claude/css/reviews/advisory-architecture-{slug}-{ts}.md`.
+    5. Dispatch `css-architect` advisory for module-boundary changes, new architecture, or large refactors — concretely: a task touches 3+ existing modules, introduces a new cross-module dependency, or changes a public interface other tasks depend on; when in doubt, dispatch anyway. It cannot write, so capture its returned report and persist it to `.claude/css/reviews/advisory-architecture-{slug}-{ts}.md`.
     6. Dispatch `css-security-reviewer` advisory for auth, authorization, secrets, dependencies, payments, file uploads, or security-sensitive input; capture its returned report and persist it to `.claude/css/reviews/advisory-security-{slug}-{ts}.md`.
-    7. Treat advisory reports as non-executable. CRITICAL/HIGH security design findings require `LOOPBACK_TO_PLAN`.
+    7. Treat advisory reports as non-executable. CRITICAL/HIGH findings in either advisory — architecture or security — (read from that advisory's `VERDICT=ISSUES_FOUND critical=<n> high=<n> ...` final line) require `LOOPBACK_TO_PLAN`.
     8. Validate every returned Rich Spec against the canonical contract before PASS.
   </Investigation_Protocol>
 

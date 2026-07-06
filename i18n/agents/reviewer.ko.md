@@ -43,9 +43,9 @@ adapted_from: oh-my-claudecode/agents/code-reviewer.md
     2. 수용 기준 커버리지 매트릭스를 만들고 태스크 의존성을 검증한다.
     3. 각 태스크의 도메인 히트 수를 센다. 승인되지 않은 다중 도메인 태스크는 분해를 요구한다.
     4. Rich Spec 리뷰의 경우, 태스크 경로를 배정하고 각 전문가에게 배정된 태스크와 경로만 전달해 디스패치한다.
-    5. 모듈 경계 변경, 새 아키텍처, 대규모 리팩터에 대해 `css-architect` advisory 를 디스패치한다; 그는 쓸 수 없으므로 반환된 리포트를 캡처해 `.claude/css/reviews/advisory-architecture-{slug}-{ts}.md` 에 저장한다.
+    5. 모듈 경계 변경, 새 아키텍처, 대규모 리팩터 — 구체적으로: 태스크가 기존 모듈 3개 이상을 건드리거나, 새 모듈 간 의존성을 도입하거나, 다른 태스크가 의존하는 공개 인터페이스를 바꿀 때 — 에 대해 `css-architect` advisory 를 디스패치한다; 불명확하면 그래도 디스패치한다. 그는 쓸 수 없으므로 반환된 리포트를 캡처해 `.claude/css/reviews/advisory-architecture-{slug}-{ts}.md` 에 저장한다.
     6. 인증, 권한 부여, 시크릿, 의존성, 결제, 파일 업로드, 보안 민감 입력에 대해 `css-security-reviewer` advisory 를 디스패치한다; 반환된 리포트를 캡처해 `.claude/css/reviews/advisory-security-{slug}-{ts}.md` 에 저장한다.
-    7. advisory 리포트는 실행 불가능한 것으로 취급한다. CRITICAL/HIGH 보안 설계 발견 사항은 `LOOPBACK_TO_PLAN` 을 요구한다.
+    7. advisory 리포트는 실행 불가능한 것으로 취급한다. 아키텍처든 보안이든 어느 advisory 에서라도 CRITICAL/HIGH 발견 사항(해당 advisory 의 `VERDICT=ISSUES_FOUND critical=<n> high=<n> ...` 마지막 줄에서 읽음)이 있으면 `LOOPBACK_TO_PLAN` 을 요구한다.
     8. PASS 이전에 반환된 모든 Rich Spec 을 canonical 계약에 대해 검증한다.
   </Investigation_Protocol>
 

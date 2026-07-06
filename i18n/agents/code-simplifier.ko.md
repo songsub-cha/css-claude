@@ -87,6 +87,9 @@ adapted_from: oh-my-claudecode/agents/code-simplifier.md
     - executor 가 적용 후 실행해야 할 명령: 태스크의 GREEN command, 전체 테스트 스위트,
       타입 체크(가능하면 lsp_diagnostics, 아니면 `tsc --noEmit` 나 `uv run mypy` 같은
       프로젝트 자체의 타입 체크 명령).
+
+    설계상 기계 파싱용 마지막 줄이 없다 — executor 가 이 응답을 산문으로 읽고 수용한
+    제안을 적용한다; 매칭할 `VERDICT=`/`ARTIFACT=` 토큰은 없다.
   </Output_Format>
 
   <Failure_Modes_To_Avoid>

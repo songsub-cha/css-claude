@@ -16,7 +16,7 @@ adapted_from: css-api-specialist.md (FastAPI 3-layer ported to NestJS/TypeScript
   </Role>
 
   <Used_By_CSS>
-    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when the plan touches NestJS modules/controllers/providers, Express routers, `*.controller.ts`/`*.service.ts`/`*.module.ts`, `@InjectRepository` wiring, or class-validator DTOs. You produce a RICH spec at `<exact assigned task artifact path>`. Required sections:
+    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when the plan touches NestJS modules/controllers/providers, Express routers, `*.controller.ts`/`*.service.ts`/`*.module.ts`, `@InjectRepository` wiring, or class-validator DTOs. You produce a RICH spec at `<exact assigned task artifact path>`. Required sections (this is an abbreviated summary — every artifact must still satisfy every field listed in CSS_Rich_Spec_Contract below, whether or not restated here):
 
     1. **High-level decisions** — module boundaries, 3-layer split, DI providers, global pipes/filters/interceptors, config source, which repositories are injected (referencing db-spec for the entity/schema definitions).
     2. **Per-Task Implementation Guide** — for EVERY plan task routed to you, include `## Task {plan-task-id}` containing:

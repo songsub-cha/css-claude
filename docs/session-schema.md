@@ -29,7 +29,7 @@ writes them and never updates `_active.json`. Its lock is `locks/_project-wiki.l
 |---|---|---|
 | `slug` | interview / ship | kebab-case session id |
 | `kind` | interview / ship / phase | `"epic"` or `"phase"`; **absent** = legacy single-session (detailed linear flow) |
-| `single_phase` | phase | `true` → sub-threshold Epic runs the detailed linear flow |
+| `single_phase` | interview / ship (init `false`) / phase (flips `true` below threshold) | `true` → sub-threshold Epic runs the detailed linear flow |
 | `idea` | interview / ship | original idea text (gh_sync issue title/body reads it) |
 | `repo_root`, `repo_name` | interview | captured whenever absent |
 | `base_branch` | interview (Epic/single) / phase (children) | worktree cut point and PR base default; children: stacking base |
@@ -70,8 +70,12 @@ Merged at interview: `~/.claude/css/config.json` (user) over the bundled
 - `execute.tdd_self_heal_max` (2) — debugger attempts per task
 - `execute.worktree_parent` (null → `..`) — set `.worktrees` for an in-repo worktree
 - `pr.default_base_branch` (null), `pr.default_draft` (false)
-- `github.*` — read directly by `lib/gh_sync.sh` via its own config resolution
-  (`$CSS_CONFIG` → user config → bundled), not through the session
+- `github.*` — `lib/gh_sync.sh` resolves its own auth/tracking config directly
+  (`$CSS_CONFIG` → user config → bundled), not through the session. The merged
+  values also land in `session.config.github` (interview writes the full merged
+  config there), which is where `/css:pr` reads `auto_close_issue` from — gh_sync
+  and the commands each have a valid path to the same values, they just don't
+  go through each other.
 
 ## `_active.json`
 

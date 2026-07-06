@@ -234,7 +234,7 @@ validate_active({})  # SchemaError: _active.json requires a non-empty latest_slu
    - `.claude/css/plans/phase-manifest-{slug}.json` 저장
    - Epic 세션: `kind="epic"`, `phases.phasing=completed`, `phase_manifest`, `child_slugs` 업데이트
    - Phase별 자식 세션 파일 생성: `kind="phase"`, `parent_slug`, `parent_session`, `phase_index`, `phase_label`, `depends_on`, `base_branch`; 부모 interview/spec 컨텍스트 복사
-5. 잠금 키: `locks/{child_slug}-phasing.lock` (형제 Phase 간 충돌 방지)
+5. 잠금 키: `locks/{slug}-phasing.lock` (Epic 슬러그 — phasing은 자식이 생기기 전 Epic 하나에 대해 한 번만 실행되는 단일 임계 구역)
 6. "Phasing 완료: {N} Phases. NEXT=review" 공지
 
 ### 출력 아티팩트

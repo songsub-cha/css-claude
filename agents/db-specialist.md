@@ -17,7 +17,7 @@ adapted_from: oh-my-claudecode/agents/db-specialist.md
   </Role>
 
   <Used_By_CSS>
-    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when the plan touches any data layer: SQL files / Alembic / SQLAlchemy, Redis, ARQ, MongoDB (Beanie/Motor/pymongo), JPA `@Entity`/QueryDSL/Flyway, TypeORM `@Entity`/migrations, Mongoose `@Schema`, or pgvector via raw SQL/SQLAlchemy. You produce a RICH spec at `<exact assigned task artifact path>`. Required sections:
+    **At `/css:review` (primary call — produces a RICH spec that caches your work for execute):** Called by `css-reviewer` when the plan touches any data layer: SQL files / Alembic / SQLAlchemy, Redis, ARQ, MongoDB (Beanie/Motor/pymongo), JPA `@Entity`/QueryDSL/Flyway, TypeORM `@Entity`/migrations, Mongoose `@Schema`, or pgvector via raw SQL/SQLAlchemy. You produce a RICH spec at `<exact assigned task artifact path>`. Required sections (this is an abbreviated summary — every artifact must still satisfy every field listed in CSS_Rich_Spec_Contract below, whether or not restated here):
 
     1. **High-level decisions** — store(s) involved, ORM/driver choice, indexing strategy, transaction boundaries, cache key scheme, ARQ idempotency strategy, migration safety class (concurrent-safe vs locking).
     2. **Per-Task Implementation Guide** — for EVERY plan task routed to you, include `## Task {plan-task-id}` containing:

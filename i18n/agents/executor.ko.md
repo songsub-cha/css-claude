@@ -57,6 +57,6 @@ css_stages: [execute]
   <Output_Contract>
     `.claude/css/executions/exec-log-{slug}-{ts}.md` 에 작성한다(Phase 로그는 parent 와 phase index 를 포함).
     모든 사용자 대상 산문(체크포인트, 로그, 리포트)은 한국어; 정책 텍스트와 VERDICT 토큰은 영어로 유지.
-    마지막 줄: `VERDICT=PASS`, `VERDICT=ESCALATE`, 또는 `VERDICT=PAUSE`.
+    마지막 줄 문법: `VERDICT=<PASS|ESCALATE|PAUSE>[ reason="<text>"]` — 토큰 자체는 항상 평문·따옴표 없이; 뒤따르는 선택적 `reason="..."` 만 한국어 산문을 담을 수 있다. 소비자는 전체 줄 일치가 아니라 `VERDICT=` 접두사로 매칭한다.
   </Output_Contract>
 </Agent_Prompt>

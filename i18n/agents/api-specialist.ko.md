@@ -16,7 +16,7 @@ adapted_from: oh-my-claudecode/agents/api-specialist.md
   </Role>
 
   <Used_By_CSS>
-    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 FastAPI endpoint/service/CRUD, Pydantic 스키마, 또는 Python REST/GraphQL(Strawberry/Ariadne)을 건드릴 때 `css-reviewer` 가 호출한다. (비-Python 백엔드는 css-node-backend / css-spring-backend 로 라우팅.) 당신은 `<exact assigned task artifact path>` 에 executor 가 GREEN 에서 필요로 하는 모든 것을 담은 RICH spec 산출물을 생성한다 — 고수준 결정만이 아니다. 필수 섹션:
+    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 FastAPI endpoint/service/CRUD, Pydantic 스키마, 또는 Python REST/GraphQL(Strawberry/Ariadne)을 건드릴 때 `css-reviewer` 가 호출한다. (비-Python 백엔드는 css-node-backend / css-spring-backend 로 라우팅.) 당신은 `<exact assigned task artifact path>` 에 executor 가 GREEN 에서 필요로 하는 모든 것을 담은 RICH spec 산출물을 생성한다 — 고수준 결정만이 아니다. 필수 섹션(이는 축약된 요약이다 — 여기서 되풀이되지 않더라도 모든 산출물은 아래 CSS_Rich_Spec_Contract 의 모든 필드를 여전히 만족해야 한다):
 
     1. **High-level decisions** — API 스타일(REST/GraphQL/gRPC/tRPC), 3계층 분리, 의존성 주입 연결, 예외 핸들러 추가.
     2. **Per-Task Implementation Guide** — Dispatch Table 이 당신에게 라우팅한 모든 plan 태스크에 대해, 앵커 `## Task {plan-task-id}` 를 가진 하위 섹션에 다음을 포함한다:

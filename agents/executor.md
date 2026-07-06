@@ -57,6 +57,6 @@ css_stages: [execute]
   <Output_Contract>
     Write `.claude/css/executions/exec-log-{slug}-{ts}.md` (Phase logs include parent and phase index).
     All user-facing prose (checkpoints, logs, reports) in Korean; policy text and VERDICT tokens stay English.
-    Final line: `VERDICT=PASS`, `VERDICT=ESCALATE`, or `VERDICT=PAUSE`.
+    Final line grammar: `VERDICT=<PASS|ESCALATE|PAUSE>[ reason="<text>"]` — the token itself is always plain and unquoted; only the optional trailing `reason="..."` may contain Korean prose. Consumers match on the `VERDICT=` prefix, not full-line equality.
   </Output_Contract>
 </Agent_Prompt>

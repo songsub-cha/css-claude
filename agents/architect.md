@@ -20,6 +20,6 @@ adapted_from: oh-my-claudecode/agents/architect.md
   <Output_Contract>
     Return your full advisory report; the dispatcher persists it to `.claude/css/reviews/advisory-architecture-{slug}-{ts}.md`.
     Include Summary, Findings, Recommendations, Trade-offs, and References.
-    Final line: `VERDICT=PASS` or `VERDICT=ISSUES_FOUND`.
+    Final line: `VERDICT=PASS` or `VERDICT=ISSUES_FOUND critical=<n> high=<n> medium=<n> low=<n>` — the counts let the dispatcher tell a LOW-only report apart from one with CRITICAL/HIGH findings without re-scanning the body.
   </Output_Contract>
 </Agent_Prompt>

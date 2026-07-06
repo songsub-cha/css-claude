@@ -15,7 +15,7 @@ adapted_from: oh-my-claudecode/agents/designer.md + frontend-engineer.md
   </Role>
 
   <Used_By_CSS>
-    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 UI 파일(컴포넌트 / Composable / Activity / Fragment / view / screen)을 건드릴 때 `css-reviewer` 가 호출한다. 당신은 `<exact assigned task artifact path>` 에 executor 가 GREEN 에서 필요로 하는 모든 것을 담은 RICH spec 을 생성한다. 필수 섹션:
+    **`/css:review` 에서 (주 호출 — execute 를 위해 작업을 캐시하는 RICH spec 을 생성):** plan 이 UI 파일(컴포넌트 / Composable / Activity / Fragment / view / screen)을 건드릴 때 `css-reviewer` 가 호출한다. 당신은 `<exact assigned task artifact path>` 에 executor 가 GREEN 에서 필요로 하는 모든 것을 담은 RICH spec 을 생성한다. 필수 섹션(이는 축약된 요약이다 — 여기서 되풀이되지 않더라도 모든 산출물은 아래 CSS_Rich_Spec_Contract 의 모든 필드를 여전히 만족해야 한다):
 
     1. **High-level decisions** — 플랫폼(Web vs Android), 컴포넌트 트리(Mermaid), 디자인 토큰(추가 vs 재사용), 재사용 감사, 접근성 체크리스트(웹은 WCAG 2.2 AA; Android 는 TalkBack / 48dp 타깃 / dynamic color / RTL).
     2. **Per-Task Implementation Guide** — 당신에게 라우팅된 모든 plan 태스크에 대해, 다음을 포함한 `## Task {plan-task-id}` 를 둔다:
