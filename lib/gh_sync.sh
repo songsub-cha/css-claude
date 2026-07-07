@@ -414,15 +414,17 @@ cmd_wiki_publish() {
   parse_opts "$@"; local sha="${OPT[sha]:-HEAD}"
   local src="${CSS_ROOT:-$PWD}/docs/project"
   [[ -d "$src" ]] || { log "wiki-publish: docs/project 없음 — skip"; return 0; }
-  local url="${CSS_WIKI_URL:-}" repo=""
+  local url="${CSS_WIKI_URL:-}" info="" repo_url=""
   if [[ -z "$url" ]]; then
     gh_enabled || { log "wiki-publish: gh 사용 불가 — skip"; return 0; }
-    repo="$(gh repo view --json nameWithOwner -q '.nameWithOwner' 2>/dev/null || echo '')"
-    [[ -n "$repo" ]] || { log "wiki-publish: repo 식별 실패 — skip"; return 0; }
-    if [[ "$(gh api "repos/$repo" --jq '.has_wiki' 2>/dev/null)" != "true" ]]; then
+    info="$(gh repo view --json url,hasWikiEnabled 2>/dev/null || echo '')"
+    repo_url="$(printf '%s' "$info" | jq -r '.url // empty' 2>/dev/null)"
+    [[ -n "$repo_url" ]] || { log "wiki-publish: repo 식별 실패 — skip"; return 0; }
+    if [[ "$(printf '%s' "$info" | jq -r '.hasWikiEnabled' 2>/dev/null)" != "true" ]]; then
       log "wiki-publish: 이 repo는 Wiki 비활성(설정 꺼짐 또는 private+Free 요금제) — skip"; return 0
     fi
-    url="https://github.com/$repo.wiki.git"
+    # repo view 가 반환한 URL 을 그대로 사용 — github.com 하드코딩 없이 GitHub Enterprise 에서도 동작
+    url="${repo_url%/}.wiki.git"
   fi
   local tmp; tmp="$(mktemp -d)"; local wt="$tmp/wiki"
   # autocrlf=false: 미러는 byte-deterministic해야 no-change 감지가 동작한다

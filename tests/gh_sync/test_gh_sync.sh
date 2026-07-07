@@ -325,6 +325,19 @@ test_wiki_publish_noop_when_unchanged() {
   unset CSS_WIKI_URL
   teardown
 }
+test_wiki_publish_derives_wiki_url_from_repo_view() {
+  # CSS_WIKI_URL 없이 gh 경로로 진입: repo view 가 반환한 URL(+.wiki.git)을 그대로 써야
+  # github.com 하드코딩 없이 GitHub Enterprise host 에서도 동작한다.
+  setup; seed_wiki_remote; seed_project_docs
+  unset CSS_WIKI_URL
+  export FAKE_REPO_URL="${WIKI_REMOTE%.wiki.git}"  # 임의 host 의 repo URL 을 흉내
+  run wiki-publish --sha abc1234
+  local chk="$SANDBOX/check-derived"; git clone -q "$WIKI_REMOTE" "$chk"
+  assert_file "derived-url Home" "$chk/Home.md"
+  assert_contains "derived-url footer sha" "$(cat "$chk/_Footer.md")" "abc1234"
+  unset FAKE_REPO_URL
+  teardown
+}
 test_wiki_publish_reports_push_failure() {
   setup; seed_wiki_remote; seed_project_docs
   printf '#!/bin/sh\nexit 1\n' > "$WIKI_REMOTE/hooks/pre-receive"
@@ -337,7 +350,7 @@ test_wiki_publish_reports_push_failure() {
 }
 
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_init_issue_ensures_labels test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records test_pr_link_comments_and_sets_pr test_finalize_sets_done test_link_child_creates_subissue test_link_child_subissue_idempotent test_link_child_appends_checklist test_config_path_resolution test_adr_list_prints_only_adr_bodies test_adr_list_empty_when_tracking_off test_wiki_publish_skips_without_docs_dir test_wiki_publish_skips_when_wiki_disabled test_wiki_publish_skips_on_clone_failure test_wiki_publish_maps_pages_and_pushes test_wiki_publish_noop_when_unchanged test_wiki_publish_reports_push_failure )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_init_issue_ensures_labels test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records test_pr_link_comments_and_sets_pr test_finalize_sets_done test_link_child_creates_subissue test_link_child_subissue_idempotent test_link_child_appends_checklist test_config_path_resolution test_adr_list_prints_only_adr_bodies test_adr_list_empty_when_tracking_off test_wiki_publish_skips_without_docs_dir test_wiki_publish_skips_when_wiki_disabled test_wiki_publish_skips_on_clone_failure test_wiki_publish_maps_pages_and_pushes test_wiki_publish_noop_when_unchanged test_wiki_publish_derives_wiki_url_from_repo_view test_wiki_publish_reports_push_failure )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]
