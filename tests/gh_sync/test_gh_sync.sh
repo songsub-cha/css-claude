@@ -52,6 +52,38 @@ test_enabled_off_when_flag_false() {
   teardown
 }
 
+test_project_scope_present() {
+  setup
+  assert_eq "scope=1" "$(run project-scope)" "1"
+  teardown
+}
+test_project_scope_missing() {
+  setup
+  export FAKE_OAUTH_SCOPES="gist, read:org, repo"   # read:project 유사 토큰도 없이
+  assert_eq "scope=0" "$(run project-scope)" "0"
+  unset FAKE_OAUTH_SCOPES
+  teardown
+}
+test_project_scope_unknown_when_header_empty() {
+  setup
+  export FAKE_OAUTH_SCOPES=""   # fine-grained PAT 등 — 판별 불가는 막지 않는다
+  assert_eq "scope=1 (unknown)" "$(run project-scope)" "1"
+  unset FAKE_OAUTH_SCOPES
+  teardown
+}
+
+test_init_issue_survives_board_create_failure() {
+  setup
+  export FAKE_PROJECT_CREATE_FAIL=1   # project 스코프 없는 토큰의 gh project create 실패 재현
+  local out rc=0; out="$(run init-issue --session demo)" || rc=$?
+  assert_eq "exit 0 (board-less)" "$rc" "0"
+  assert_eq "issue number still printed" "$out" "42"
+  assert_contains "issue still created" "$(ghlog)" "issue create"
+  assert_not_contains "no board item-add" "$(ghlog)" "project item-add"
+  unset FAKE_PROJECT_CREATE_FAIL
+  teardown
+}
+
 test_set_board_status_calls_item_edit() {
   setup
   jq '.github.project_number=7 | .github.project_owner="tester"' "$CSS_CONFIG" > "$CSS_CONFIG.x" && mv "$CSS_CONFIG.x" "$CSS_CONFIG"
@@ -350,7 +382,7 @@ test_wiki_publish_reports_push_failure() {
 }
 
 # --- registry (append new test_* names here) ---
-TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_init_issue_ensures_labels test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records test_pr_link_comments_and_sets_pr test_finalize_sets_done test_link_child_creates_subissue test_link_child_subissue_idempotent test_link_child_appends_checklist test_config_path_resolution test_adr_list_prints_only_adr_bodies test_adr_list_empty_when_tracking_off test_wiki_publish_skips_without_docs_dir test_wiki_publish_skips_when_wiki_disabled test_wiki_publish_skips_on_clone_failure test_wiki_publish_maps_pages_and_pushes test_wiki_publish_noop_when_unchanged test_wiki_publish_derives_wiki_url_from_repo_view test_wiki_publish_reports_push_failure )
+TESTS=( test_usage_exits_2 test_enabled_true test_enabled_off_when_flag_false test_project_scope_present test_project_scope_missing test_project_scope_unknown_when_header_empty test_init_issue_survives_board_create_failure test_set_board_status_calls_item_edit test_init_issue_creates_and_persists test_init_issue_idempotent test_init_issue_ensures_labels test_comment_summary_review test_comment_full_plan_embeds_doc test_comment_chunks_when_oversized test_set_state_swaps_labels test_adr_numbers_and_persists test_gate_open_mentions_and_labels test_gate_wait_returns_new_reply test_gate_wait_empty_on_timeout test_gate_close_removes_label_and_records test_pr_link_comments_and_sets_pr test_finalize_sets_done test_link_child_creates_subissue test_link_child_subissue_idempotent test_link_child_appends_checklist test_config_path_resolution test_adr_list_prints_only_adr_bodies test_adr_list_empty_when_tracking_off test_wiki_publish_skips_without_docs_dir test_wiki_publish_skips_when_wiki_disabled test_wiki_publish_skips_on_clone_failure test_wiki_publish_maps_pages_and_pushes test_wiki_publish_noop_when_unchanged test_wiki_publish_derives_wiki_url_from_repo_view test_wiki_publish_reports_push_failure )
 for t in "${TESTS[@]}"; do "$t"; done
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]

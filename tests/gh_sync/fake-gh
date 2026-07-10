@@ -6,6 +6,7 @@ if [[ "$1" == "api" ]]; then
   case "$*" in
     *"--method POST"*"/sub_issues"*) exit 0 ;;                        # add sub-issue
     *"/sub_issues"*) printf '%s\n' "${FAKE_SUBISSUES-}"; exit 0 ;;    # list (empty = unlinked)
+    "api user -i"*)  printf 'X-Oauth-Scopes: %s\n' "${FAKE_OAUTH_SCOPES-gist, repo, project}"; exit 0 ;;
     "api user"*)     echo "tester"; exit 0 ;;
     *"/issues/"*"/comments"*) printf '%s\n' "${FAKE_ISSUE_COMMENTS:-[]}"; exit 0 ;; # REST comment list
     *"/issues/"*)    printf '%s\n' "${FAKE_ISSUE_ID-9943}"; exit 0 ;; # child .id (db id)
@@ -22,7 +23,7 @@ case "$1 $2" in
     esac ;;
   "api user")           echo "tester" ;;
   "issue create")       echo "https://github.com/owner/repo/issues/42" ;;
-  "project create")     echo '{"number":7,"id":"PVT_board","url":"u"}' ;;
+  "project create")     if [[ -n "${FAKE_PROJECT_CREATE_FAIL:-}" ]]; then exit 1; fi; echo '{"number":7,"id":"PVT_board","url":"u"}' ;;
   "project field-list") echo '{"fields":[{"id":"FLD","name":"CSS Stage","options":[{"id":"OPT_Interview","name":"Interview"},{"id":"OPT_Execute","name":"Execute"},{"id":"OPT_Done","name":"Done"},{"id":"OPT_PR","name":"PR"}]}]}' ;;
   "project view")       echo '{"id":"PVT_board"}' ;;
   "project item-add")   echo '{"id":"PVTI_item"}' ;;

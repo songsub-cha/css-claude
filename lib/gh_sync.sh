@@ -9,7 +9,7 @@ die() { log "ERROR: $*"; exit 1; }
 usage() {
   cat >&2 <<'USAGE'
 gh_sync.sh <subcommand> [--flag value ...]
-  enabled | init-issue | comment | set-state | adr | adr-list
+  enabled | project-scope | init-issue | comment | set-state | adr | adr-list
   gate-open | gate-wait | gate-close | pr-link | finalize | link-child | wiki-publish
 USAGE
 }
@@ -66,6 +66,23 @@ gh_enabled() {
 }
 cmd_enabled() { if gh_enabled; then echo 1; else echo 0; fi; }
 
+# Prints 1 when the token can create/update Projects boards, 0 when the classic
+# token's scope list definitely lacks `project`. 스코프 헤더가 없거나 비어 있는
+# 토큰(fine-grained PAT, GitHub App 등)은 판별 불가 → 1 (진행을 막지 않는다).
+cmd_project_scope() {
+  gh_enabled || { echo 0; return 0; }
+  local hdr scopes
+  hdr="$(gh api user -i 2>/dev/null | tr -d '\r' | grep -i '^x-oauth-scopes:' | head -1 || true)"
+  scopes="$(printf '%s' "${hdr#*:}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+  [[ -n "$hdr" && -n "$scopes" ]] || { echo 1; return 0; }
+  if printf '%s' "$scopes" | tr ',' '\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+      | grep -qx 'project'; then
+    echo 1
+  else
+    echo 0
+  fi
+}
+
 # --- board --------------------------------------------------------------------
 board_owner() {
   local o; o="$(cfg '.github.project_owner' '')"
@@ -76,7 +93,12 @@ ensure_board() {
   BOARD_OWNER="$(board_owner)"
   BOARD_NUMBER="$(cfg '.github.project_number' '')"
   [[ -n "$BOARD_NUMBER" ]] && return 0
-  local out; out="$(gh project create --owner "$BOARD_OWNER" --title 'CSS Pipeline' --format json)"
+  local out
+  if ! out="$(gh project create --owner "$BOARD_OWNER" --title 'CSS Pipeline' --format json 2>/dev/null)"; then
+    # project 스코프 없음이 대표 원인 — 보드만 포기하고 이슈/라벨/코멘트 추적은 계속
+    log "Projects 보드 생성 실패(project 스코프 없음일 수 있음 — 'gh auth refresh -s project') — 보드 없이 진행"
+    BOARD_NUMBER=""; return 0
+  fi
   BOARD_NUMBER="$(printf '%s' "$out" | jq -r '.number')"
   gh project field-create "$BOARD_NUMBER" --owner "$BOARD_OWNER" --name 'CSS Stage' \
     --data-type SINGLE_SELECT \
@@ -135,10 +157,13 @@ cmd_init_issue() {
   title="[CSS] $(printf '%s' "$idea" | tr '\n' ' ' | cut -c1-60)"
   url="$(gh issue create --title "$title" --body "$(init_body "$slug")" --label css:tracked --label css:interview)"
   num="${url##*/}"
-  item="$(gh project item-add "$BOARD_NUMBER" --owner "$BOARD_OWNER" --url "$url" --format json | jq -r '.id')"
+  item=""
+  if [[ -n "$BOARD_NUMBER" ]]; then
+    item="$(gh project item-add "$BOARD_NUMBER" --owner "$BOARD_OWNER" --url "$url" --format json | jq -r '.id')"
+  fi
   repo="$(gh repo view --json nameWithOwner -q '.nameWithOwner' 2>/dev/null || echo '')"
   sess_set "$slug" ".github = {issue_number: ($num|tonumber), issue_url: \"$url\", repo: \"$repo\", project_item_id: \"$item\", adrs: []}"
-  set_board_status "$item" Interview
+  [[ -n "$item" ]] && set_board_status "$item" Interview
   echo "$num"
 }
 
@@ -443,6 +468,7 @@ main() {
   local sub="${1:-}"; shift || true
   case "$sub" in
     enabled)       cmd_enabled "$@" ;;
+    project-scope) cmd_project_scope "$@" ;;
     init-issue)    cmd_init_issue "$@" ;;
     comment)       cmd_comment "$@" ;;
     set-state)     cmd_set_state "$@" ;;
