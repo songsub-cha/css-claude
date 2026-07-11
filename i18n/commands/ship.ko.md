@@ -17,7 +17,12 @@ argument-hint: "[--session <name>] <idea>"
    - `--session` 없음 → 아이디어로부터 슬러그 도출(kebab-case, 필요 시 충돌 접미사), 세션 초기화, `_active.json` 갱신.
    - `session.master_flow = true` 로 설정.
    - Canonical 세션 상태 참조: CSS 소스/플러그인 디렉토리의 `docs/session-schema.md`(모든 필드, 작성자, 독자). 커맨드는 자체 완결적으로 유지된다 — 필드명이나 소유자가 모호할 때만 참조한다.
-   - **GitHub 추적 초기화**: 두 설치 모드 모두를 위해 CSS 설치 디렉토리를 해석한 뒤 헬퍼를 정의한다 — `CSS_PLUGIN_DIR="${CLAUDE_PLUGIN_ROOT}"; CSS_PLUGIN_DIR="${CSS_PLUGIN_DIR:-$HOME/.claude/css}"; GHS() { bash "${CSS_LIB:-$CSS_PLUGIN_DIR/lib}/gh_sync.sh" "$@"; }`(플러그인 모드에서는 `${CLAUDE_PLUGIN_ROOT}` 가 인라인으로 치환되고; 스크립트 모드에서는 비어 있어 `$HOME/.claude/css` 로 폴백). Bash 툴 호출 사이에는 셸 상태가 유지되지 않는다 — `GHS` 를 사용하는 **모든** Bash 호출에서 이 헬퍼를 재정의한다. 설치 디렉토리를 절대 `CSS_ROOT` 라는 이름으로 명명하거나 `export` 하지 않는다: gh_sync.sh 는 `CSS_ROOT` 를 세션 파일 조회를 위한 *프로젝트* 루트로 읽으며, 그 이름으로 설치 디렉토리를 export 하면 모든 세션 읽기가 조용히 깨진다. `GHS` 는 항상 프로젝트 루트에서 실행한다. `gh_on = ("$(GHS enabled --session <slug>)" == "1")` 로 설정한다. `gh_on` 이면 `GHS init-issue --session <slug>` 를 실행한다(멱등적 — 이슈를 생성하고 사용자 Projects 보드에 추가하거나, resume 시 저장된 이슈를 재사용).
+   - **GitHub 추적 초기화**: 두 설치 모드 모두를 위해 CSS 설치 디렉토리를 해석한 뒤 헬퍼를 정의한다 — `CSS_PLUGIN_DIR="${CLAUDE_PLUGIN_ROOT}"; CSS_PLUGIN_DIR="${CSS_PLUGIN_DIR:-$HOME/.claude/css}"; GHS() { bash "${CSS_LIB:-$CSS_PLUGIN_DIR/lib}/gh_sync.sh" "$@"; }`(플러그인 모드에서는 `${CLAUDE_PLUGIN_ROOT}` 가 인라인으로 치환되고; 스크립트 모드에서는 비어 있어 `$HOME/.claude/css` 로 폴백). Bash 툴 호출 사이에는 셸 상태가 유지되지 않는다 — `GHS` 를 사용하는 **모든** Bash 호출에서 이 헬퍼를 재정의한다. 설치 디렉토리를 절대 `CSS_ROOT` 라는 이름으로 명명하거나 `export` 하지 않는다: gh_sync.sh 는 `CSS_ROOT` 를 세션 파일 조회를 위한 *프로젝트* 루트로 읽으며, 그 이름으로 설치 디렉토리를 export 하면 모든 세션 읽기가 조용히 깨진다. `GHS` 는 항상 프로젝트 루트에서 실행한다. `gh_on = ("$(GHS enabled --session <slug>)" == "1")` 로 설정한다.
+   - **Projects 스코프 HITL** (`gh_on` 이고 병합된 config 에 `github.project_number` 가 없을 때만 — 즉 보드가 아직 생성되지 않은 경우): `GHS project-scope` 를 실행한다. `1` → 계속 진행. `0` → gh 토큰에 보드에 필요한 classic `project` 스코프가 없다; 조용히 강등하지 말 것 — AskUserQuestion: "GitHub Projects 보드 생성·갱신에 필요한 `project` 스코프가 gh 토큰에 없습니다. 어떻게 할까요? [지금 부여 / 보드 없이 계속 / 취소]".
+     - **지금 부여** → `gh auth refresh -s project` 는 브라우저/디바이스 인증 대화형 플로우이므로 절대 툴 호출로 직접 실행하지 않는다: 사용자에게 이 세션에서 `! gh auth refresh -s project` 를 입력하거나(또는 별도 터미널에서 같은 명령 실행) 완료 후 알려 달라고 안내한다. 그다음 `GHS project-scope` 를 재실행한다; 여전히 `0` 이면 그 결과를 보여주고 다시 묻는다(같은 세 옵션).
+     - **보드 없이 계속** → 계속 진행: 이슈/라벨/코멘트 추적은 그대로 동작하고, 헬퍼 스스로 보드 생성과 보드 상태 갱신을 우아하게 건너뛴다.
+     - **취소** → 지금까지 획득한 것을 해제하고 종료.
+   - `gh_on` 이면 `GHS init-issue --session <slug>` 를 실행한다(멱등적 — 이슈를 생성하고 사용자 Projects 보드에 추가하거나, resume 시 저장된 이슈를 재사용).
 
 3. **락 획득**. 락 규약(모든 스테이지 커맨드가 공유): `<project>/.claude/css/locks/{slug}-{stage}.lock` 에 `{acquired_at}` 을 담는다. 60분보다 오래된 락은 stale — 교체하고 인수(takeover) 사실을 남긴다. 다른 실행의 신선한 락 → 진행 대신 안내와 함께 중단. loopback 과 취소를 포함한 모든 종료 경로에서 락을 해제한다.
 
