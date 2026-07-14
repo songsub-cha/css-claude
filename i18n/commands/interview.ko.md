@@ -36,7 +36,7 @@ argument-hint: "[--session <name>] <idea>"
    ```
    호출된 스킬의 컨텍스트 안에서 아이디어 텍스트를 사용자의 최초 요청으로 전달한다. **중요 오버라이드**: brainstorming 이 종료 단계인 "Invoke writing-plans skill" 에 도달하더라도 writing-plans 를 자동 호출하지 **않는다**. CSS 는 각 명령을 독립적으로 실행 가능하게 유지하기 위해 `/css:plan` 을 별도 단계로 호출한다. brainstorming 에게 다음과 같이 지시한다: "Stop after the user-approves-spec gate; CSS will continue from there."
 
-   **최소 질문 깊이**: brainstorming 에게 요구사항, 범위, 엣지 케이스, 설계 트레이드오프를 아이디어가 구체화될 때까지 계속 파고들도록 지시한다 — feature/Epic 규모 아이디어는 일반적으로 **최소 10개 이상**의 실질적인 질문, 정말로 작고 이미 구체적인 변경이라도 **최소 3개 미만은 절대 안 됨**. 범위, 엣지 케이스, 트레이드오프가 열려 있는 한 spec 으로 절대 건너뛰지 않는다.
+   **질문 깊이 — 개수가 아니라 소진**: brainstorming 에게 아이디어 뒤에 숨은 암묵지가 소진될 때까지 계속 파고들도록 지시한다 — 질문 개수 할당량을 채우는 방식은 절대 아니다. 운영 가능한 정지 판정: spec 골격(목적/사용자, 범위 in/out, 동작 시나리오, 엣지 케이스, 에러 처리, 연동·제약, 비기능 요구, 수용 기준)을 인터뷰 내내 유지하면서, 사용자가 확인하지 않은 가정으로 채워질 섹션이 남아 있는 한 그 섹션이 다음 질문을 생성한다. (a) 모든 섹션이 사용자 확인 완료이거나 명시적 N/A 이고, (b) 마지막 스윕 질문("아직 다루지 않은 부분이 있나요?")에서 새 항목이 나오지 않을 때에만 인터뷰를 종료한다. filler 질문으로 채우지 않는다; 답이 spec 을 바꿀 수 있는 질문이 남아 있는 한 절대 멈추지 않는다.
 
 6. **brainstorming 완료 시**:
    - brainstorming 이 작성한 spec 파일을 찾는다(일반적으로 `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`).
@@ -49,6 +49,7 @@ argument-hint: "[--session <name>] <idea>"
 
 <self_check>
 - [ ] Artifact written by brainstorming (spec markdown file exists)
+- [ ] Interview ended by exhaustion: every spec-outline section user-confirmed or explicitly N/A
 - [ ] session file (sessions/{slug}.json) phase status updated to completed
 - [ ] _active.json.latest_slug updated
 - [ ] Final line is `ARTIFACT=<spec path>`
