@@ -41,6 +41,12 @@ class PipelineCommandContractTests(unittest.TestCase):
         self.assertIn("single_phase:false", text)
         self.assertIn("kind-less", text)
 
+    def test_interview_questioning_is_exhaustion_based(self):
+        text = read("commands/interview.md")
+        self.assertIn("exhaustion over count", text)
+        self.assertIn("user-confirmed or explicitly N/A", text)
+        self.assertNotIn("at least 10", text)
+
     def test_review_requires_phasing_for_candidate_epic(self):
         self.assertIn("phases.phasing.status == completed", read("commands/review.md"))
 

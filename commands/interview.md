@@ -36,7 +36,7 @@ Run a deep, Socratic brainstorming session to turn an idea into a CSS spec. Wrap
    ```
    Pass the idea text as the user's initial request inside the invoked skill's context. **Important override**: when brainstorming reaches its terminal "Invoke writing-plans skill" step, do NOT auto-invoke writing-plans. CSS calls `/css:plan` as a separate stage to keep each command independently runnable. Tell brainstorming: "Stop after the user-approves-spec gate; CSS will continue from there."
 
-   **Minimum questioning depth**: instruct brainstorming to keep probing requirements, scope, edge cases, and design trade-offs until the idea is concrete — typically **at least 10** substantive questions for feature/Epic-scale ideas, and **never fewer than 3** even for a genuinely small, already-concrete change. Never shortcut to the spec while scope, edge cases, or trade-offs remain open.
+   **Questioning depth — exhaustion over count**: instruct brainstorming to keep probing until the tacit knowledge behind the idea is exhausted — never until a question quota is met. Operational stop test: maintain a running spec outline (purpose/users, scope in/out, behavior scenarios, edge cases, error handling, integrations & constraints, non-functional needs, acceptance criteria). While any section would be filled by an assumption the user has not confirmed, that section generates the next question. End the interview only when (a) every section is user-confirmed or explicitly N/A, and (b) a final sweep question ("anything we haven't covered?") surfaces nothing new. Never pad with filler questions; never stop while an answer could still change the spec.
 
 6. **On brainstorming completion**:
    - Locate the spec file written by brainstorming (typically `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`).
@@ -49,6 +49,7 @@ Run a deep, Socratic brainstorming session to turn an idea into a CSS spec. Wrap
 
 <self_check>
 - [ ] Artifact written by brainstorming (spec markdown file exists)
+- [ ] Interview ended by exhaustion: every spec-outline section user-confirmed or explicitly N/A
 - [ ] session file (sessions/{slug}.json) phase status updated to completed
 - [ ] _active.json.latest_slug updated
 - [ ] Final line is `ARTIFACT=<spec path>`
